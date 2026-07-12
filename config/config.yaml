@@ -36,13 +36,13 @@ ensemble:
   members: [iforest, autoencoder, ocsvm]   # unsupervised models only
 
 kafka:
-  bootstrap_servers: localhost:9092
+  bootstrap_servers: localhost:19092   # 9092 left free for other local stacks
   topic_transactions: transactions
   topic_alerts: alerts
   replay_rates: [50, 200, 1000]      # msg/s; one streaming run per rate
   consumer_batch_max: 64             # micro-batch size for scoring
 
 postgres:
-  dsn: postgresql://anomaly:anomaly@localhost:5432/anomaly
+  dsn: postgresql://anomaly:anomaly@localhost:15432/anomaly
 
 results_dir: results
