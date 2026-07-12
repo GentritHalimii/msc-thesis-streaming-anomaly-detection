@@ -6,12 +6,14 @@ from types import SimpleNamespace
 from src.config import REPO_ROOT
 from src.models.autoencoder import AutoencoderModel
 from src.models.base import AnomalyModel
+from src.models.ensemble import EnsembleModel
 from src.models.iforest import IForestModel
 from src.models.logreg import LogRegReference
 from src.models.ocsvm import OCSVMModel
 
 UNSUPERVISED = ["iforest", "autoencoder", "ocsvm"]
 ALL_MODELS = [*UNSUPERVISED, "logreg"]
+ENSEMBLES = ["ensemble_avg", "ensemble_vote"]
 
 _EXT = {"autoencoder": "pt"}
 _CLASSES = {
@@ -19,6 +21,8 @@ _CLASSES = {
     "autoencoder": AutoencoderModel,
     "ocsvm": OCSVMModel,
     "logreg": LogRegReference,
+    "ensemble_avg": EnsembleModel,
+    "ensemble_vote": EnsembleModel,
 }
 
 
