@@ -1,0 +1,48 @@
+seed: 42
+
+data:
+  raw_csv: data/raw/creditcard.csv
+  artifacts_dir: results/artifacts   # saved models + scaler
+
+split:
+  train_fraction: 0.70               # chronological, by Time order — never shuffled
+
+# Fraction of training scores treated as anomalous when deriving the
+# percentile threshold. null = use the fraud rate observed in the TRAINING
+# window (uses train labels only; same availability assumption as the LR
+# reference). Swept in experiment 2 regardless.
+contamination: null
+
+models:
+  iforest:
+    n_estimators: 200
+    max_samples: 256
+  ocsvm:
+    train_subsample: 20000           # exact RBF OCSVM is O(n^2+); seeded subsample of normals
+    kernel: rbf
+    nu: 0.05
+    gamma: scale
+  autoencoder:
+    hidden_dim: 16
+    latent_dim: 8
+    epochs: 20
+    batch_size: 512
+    lr: 0.001
+  logreg:                            # supervised upper-bound REFERENCE, not a competitor
+    max_iter: 2000
+    class_weight: balanced
+
+ensemble:
+  members: [iforest, autoencoder, ocsvm]   # unsupervised models only
+
+kafka:
+  bootstrap_servers: localhost:9092
+  topic_transactions: transactions
+  topic_alerts: alerts
+  replay_rates: [50, 200, 1000]      # msg/s; one streaming run per rate
+  consumer_batch_max: 64             # micro-batch size for scoring
+
+postgres:
+  dsn: postgresql://anomaly:anomaly@localhost:5432/anomaly
+
+results_dir: results
