@@ -1,6 +1,8 @@
-data/
-results/
+/data/
+/results/
 __pycache__/
 .venv/
 *.pkl
 *.pt
+.idea/
+uv.lock.bak
