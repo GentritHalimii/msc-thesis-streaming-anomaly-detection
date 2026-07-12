@@ -27,6 +27,7 @@ evaluate:
 	$(RUN) python -m experiments.exp1_main_table
 	$(RUN) python -m experiments.exp2_contamination_sweep
 	$(RUN) python -m experiments.exp3_curves
+	$(RUN) python -m experiments.exp4_ensemble
 	$(RUN) python -m experiments.exp5_ae_ablation
 
 stream:
