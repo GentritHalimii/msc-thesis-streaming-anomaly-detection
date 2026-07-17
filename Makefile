@@ -29,6 +29,9 @@ evaluate:
 	$(RUN) python -m experiments.exp3_curves
 	$(RUN) python -m experiments.exp4_ensemble
 	$(RUN) python -m experiments.exp5_ae_ablation
+	$(RUN) python -m experiments.exp6_shuffled_split
+	$(RUN) python -m experiments.exp7_bootstrap_ci
+	$(RUN) python -m experiments.exp8_ensemble_correlation
 
 stream:
 	$(RUN) python -m experiments.run_streaming
