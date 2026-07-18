@@ -1,0 +1,235 @@
+{
+  "uid": "sad-anomaly",
+  "title": "Streaming Anomaly Detection — Pipeline Monitor",
+  "tags": ["thesis", "kafka", "anomaly-detection"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": true,
+  "refresh": "5s",
+  "time": { "from": "now-30m", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Scored events",
+      "description": "Rows in scored_events within the time range (one row per message per model run)",
+      "datasource": { "type": "grafana-postgresql-datasource", "uid": "sad-postgres" },
+      "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 },
+      "fieldConfig": {
+        "defaults": { "unit": "short", "color": { "mode": "fixed", "fixedColor": "#2a78d6" } },
+        "overrides": []
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "graphMode": "none", "colorMode": "value" },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "rawSql": "SELECT count(*) AS \"events\" FROM scored_events WHERE produced_at_ns BETWEEN $__unixEpochFrom()::bigint*1000000000 AND $__unixEpochTo()::bigint*1000000000"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Alerts published",
+      "datasource": { "type": "grafana-postgresql-datasource", "uid": "sad-postgres" },
+      "gridPos": { "x": 6, "y": 0, "w": 6, "h": 4 },
+      "fieldConfig": {
+        "defaults": { "unit": "short", "color": { "mode": "fixed", "fixedColor": "#eb6834" } },
+        "overrides": []
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "graphMode": "none", "colorMode": "value" },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "rawSql": "SELECT count(*) AS \"alerts\" FROM alerts WHERE alerted_at_ns BETWEEN $__unixEpochFrom()::bigint*1000000000 AND $__unixEpochTo()::bigint*1000000000"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "True-fraud alerts",
+      "description": "Alerts whose transaction is a labelled fraud (evaluation-only signal, carried through the stream)",
+      "datasource": { "type": "grafana-postgresql-datasource", "uid": "sad-postgres" },
+      "gridPos": { "x": 12, "y": 0, "w": 6, "h": 4 },
+      "fieldConfig": {
+        "defaults": { "unit": "short", "color": { "mode": "fixed", "fixedColor": "#0ca30c" } },
+        "overrides": []
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "graphMode": "none", "colorMode": "value" },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "rawSql": "SELECT count(*) AS \"true-fraud alerts\" FROM scored_events WHERE is_alert AND label = 1 AND produced_at_ns BETWEEN $__unixEpochFrom()::bigint*1000000000 AND $__unixEpochTo()::bigint*1000000000"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Fraud events streamed",
+      "description": "Scored events whose label is fraud (per model run)",
+      "datasource": { "type": "grafana-postgresql-datasource", "uid": "sad-postgres" },
+      "gridPos": { "x": 18, "y": 0, "w": 6, "h": 4 },
+      "fieldConfig": {
+        "defaults": { "unit": "short", "color": { "mode": "fixed", "fixedColor": "#52514e" } },
+        "overrides": []
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "graphMode": "none", "colorMode": "value" },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "rawSql": "SELECT count(*) AS \"fraud events\" FROM scored_events WHERE label = 1 AND produced_at_ns BETWEEN $__unixEpochFrom()::bigint*1000000000 AND $__unixEpochTo()::bigint*1000000000"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Scoring throughput (events/s by model)",
+      "datasource": { "type": "grafana-postgresql-datasource", "uid": "sad-postgres" },
+      "gridPos": { "x": 0, "y": 4, "w": 12, "h": 9 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 8, "showPoints": "never" }
+        },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "iforest" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "#2a78d6" } }] },
+          { "matcher": { "id": "byName", "options": "autoencoder" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "#1baf7a" } }] },
+          { "matcher": { "id": "byName", "options": "ocsvm" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "#4a3aa7" } }] },
+          { "matcher": { "id": "byName", "options": "logreg" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "#52514e" } }] },
+          { "matcher": { "id": "byName", "options": "ensemble_avg" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "#e34948" } }] },
+          { "matcher": { "id": "byName", "options": "ensemble_vote" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "#eb6834" } }] }
+        ]
+      },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "time_series",
+          "rawSql": "SELECT (produced_at_ns/5000000000)*5 AS time, model AS metric, count(*)/5.0 AS value FROM scored_events WHERE produced_at_ns BETWEEN $__unixEpochFrom()::bigint*1000000000 AND $__unixEpochTo()::bigint*1000000000 GROUP BY 1, 2 ORDER BY 1"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Alerts over time (by model)",
+      "datasource": { "type": "grafana-postgresql-datasource", "uid": "sad-postgres" },
+      "gridPos": { "x": 12, "y": 4, "w": 12, "h": 9 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": { "drawStyle": "bars", "lineWidth": 1, "fillOpacity": 70, "showPoints": "never" }
+        },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "iforest" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "#2a78d6" } }] },
+          { "matcher": { "id": "byName", "options": "autoencoder" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "#1baf7a" } }] },
+          { "matcher": { "id": "byName", "options": "ocsvm" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "#4a3aa7" } }] },
+          { "matcher": { "id": "byName", "options": "logreg" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "#52514e" } }] },
+          { "matcher": { "id": "byName", "options": "ensemble_avg" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "#e34948" } }] },
+          { "matcher": { "id": "byName", "options": "ensemble_vote" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "#eb6834" } }] }
+        ]
+      },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "time_series",
+          "rawSql": "SELECT (alerted_at_ns/10000000000)*10 AS time, model AS metric, count(*) AS value FROM alerts WHERE alerted_at_ns BETWEEN $__unixEpochFrom()::bigint*1000000000 AND $__unixEpochTo()::bigint*1000000000 GROUP BY 1, 2 ORDER BY 1"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "End-to-end latency percentiles (all models pooled)",
+      "description": "Producer timestamp to alert decision; 1 s research target drawn as threshold line",
+      "datasource": { "type": "grafana-postgresql-datasource", "uid": "sad-postgres" },
+      "gridPos": { "x": 0, "y": 13, "w": 12, "h": 9 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 0,
+            "showPoints": "never",
+            "thresholdsStyle": { "mode": "line" }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "transparent", "value": null },
+              { "color": "#d03b3b", "value": 1000 }
+            ]
+          }
+        },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "p50" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "#86b6ef" } }] },
+          { "matcher": { "id": "byName", "options": "p95" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "#2a78d6" } }] },
+          { "matcher": { "id": "byName", "options": "p99" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "#104281" } }] }
+        ]
+      },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "time_series",
+          "rawSql": "SELECT (produced_at_ns/10000000000)*10 AS time, 'p50' AS metric, percentile_cont(0.5) WITHIN GROUP (ORDER BY e2e_ms) AS value FROM scored_events WHERE produced_at_ns BETWEEN $__unixEpochFrom()::bigint*1000000000 AND $__unixEpochTo()::bigint*1000000000 GROUP BY 1 UNION ALL SELECT (produced_at_ns/10000000000)*10 AS time, 'p95' AS metric, percentile_cont(0.95) WITHIN GROUP (ORDER BY e2e_ms) AS value FROM scored_events WHERE produced_at_ns BETWEEN $__unixEpochFrom()::bigint*1000000000 AND $__unixEpochTo()::bigint*1000000000 GROUP BY 1 UNION ALL SELECT (produced_at_ns/10000000000)*10 AS time, 'p99' AS metric, percentile_cont(0.99) WITHIN GROUP (ORDER BY e2e_ms) AS value FROM scored_events WHERE produced_at_ns BETWEEN $__unixEpochFrom()::bigint*1000000000 AND $__unixEpochTo()::bigint*1000000000 GROUP BY 1 ORDER BY 1"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Inference latency p95 by model (forward pass only)",
+      "datasource": { "type": "grafana-postgresql-datasource", "uid": "sad-postgres" },
+      "gridPos": { "x": 12, "y": 13, "w": 12, "h": 9 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 0, "showPoints": "never" }
+        },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "iforest" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "#2a78d6" } }] },
+          { "matcher": { "id": "byName", "options": "autoencoder" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "#1baf7a" } }] },
+          { "matcher": { "id": "byName", "options": "ocsvm" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "#4a3aa7" } }] },
+          { "matcher": { "id": "byName", "options": "logreg" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "#52514e" } }] },
+          { "matcher": { "id": "byName", "options": "ensemble_avg" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "#e34948" } }] },
+          { "matcher": { "id": "byName", "options": "ensemble_vote" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "#eb6834" } }] }
+        ]
+      },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "time_series",
+          "rawSql": "SELECT (produced_at_ns/10000000000)*10 AS time, model AS metric, percentile_cont(0.95) WITHIN GROUP (ORDER BY infer_ms) AS value FROM scored_events WHERE produced_at_ns BETWEEN $__unixEpochFrom()::bigint*1000000000 AND $__unixEpochTo()::bigint*1000000000 GROUP BY 1, 2 ORDER BY 1"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "type": "table",
+      "title": "Latest alerts",
+      "datasource": { "type": "grafana-postgresql-datasource", "uid": "sad-postgres" },
+      "gridPos": { "x": 0, "y": 22, "w": 24, "h": 8 },
+      "fieldConfig": { "defaults": { "custom": { "align": "left" } }, "overrides": [] },
+      "options": { "showHeader": true },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "rawSql": "SELECT to_timestamp(alerted_at_ns/1000000000.0) AS \"time\", tx_id, model, round(score::numeric, 4) AS score, round(threshold::numeric, 4) AS threshold, run_tag FROM alerts WHERE alerted_at_ns BETWEEN $__unixEpochFrom()::bigint*1000000000 AND $__unixEpochTo()::bigint*1000000000 ORDER BY alerted_at_ns DESC LIMIT 100"
+        }
+      ]
+    }
+  ]
+}
