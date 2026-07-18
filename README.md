@@ -30,7 +30,24 @@ make latency-report        # aggregate -> results/latency_summary.*, figures
 ```
 
 Kafka binds host port **19092** and Postgres **15432** (9092/5432 left free
-for other local stacks).
+for other local stacks). Grafana (OSS, free) binds **3000**.
+
+## Grafana monitoring (optional)
+
+`docker compose -f docker/docker-compose.yml up -d` also starts Grafana OSS
+with a fully provisioned Postgres datasource and dashboard — no manual
+clicks. Open <http://localhost:3000/d/sad-anomaly> (anonymous viewer access;
+admin/admin to edit). Panels: scoring throughput and alerts over time per
+model (thesis figure colors), pooled e2e latency p50/p95/p99 with the 1 s
+target line, inference latency p95 per model, headline stat tiles, and a
+live table of the latest alerts. Data appears when a streaming run persists
+to Postgres:
+
+```bash
+make stream-store          # the latency sweep, persisted
+# or a quick demo run:
+uv run python -m experiments.run_streaming --models autoencoder --rates 200 --max-messages 4000 --store
+```
 
 ## Methodology — the decisions an examiner will probe
 
