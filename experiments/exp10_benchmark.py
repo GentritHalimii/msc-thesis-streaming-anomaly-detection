@@ -180,6 +180,64 @@ def figure_family_boxplot(per_fold: pd.DataFrame, cfg):
     save_figure(fig, REPO_ROOT / cfg.results_dir, "benchmark_family_box")
 
 
+_CROWDED_OFFSETS = {
+    "copod": 10,
+    "ecod": -13,
+    "ocsvm": -4,
+    "knn": 7,
+    "lof": 3,
+    "loda": 3,
+    "iforest": 3,
+}
+
+
+def figure_quality_cost(summary: pd.DataFrame, cfg):
+    """The trade-off RQ2 actually asks about: detection quality against the
+    cost of producing one score. Both axes matter on a stream, and the
+    picture is more informative than either column alone."""
+    fig, ax = new_figure(figsize=(6.8, 4.6))
+    for row in summary.itertuples(index=False):
+        name = row.model
+        ax.scatter(
+            row.score_us_per_tx,
+            row.ap_mean,
+            s=90,
+            color=model_color(name),
+            alpha=0.85,
+            edgecolor="white",
+            linewidth=1.2,
+            zorder=3,
+            marker="D" if name == "logreg" else "o",
+        )
+        # The right-hand side is crowded (several detectors cost 20-70 us per
+        # transaction); fan those labels out vertically instead of letting
+        # them collide.
+        dy = _CROWDED_OFFSETS.get(name, 3) if row.score_us_per_tx > 15 else 3
+        ax.annotate(
+            MODEL_LABELS.get(name, name),
+            (row.score_us_per_tx, row.ap_mean),
+            fontsize=7.8,
+            color="#52514e",
+            xytext=(7, dy),
+            textcoords="offset points",
+        )
+    ax.set_xscale("log")
+    ax.set_xlabel("Kosto e pikëzimit (mikrosekonda për transaksion, shkallë log)")
+    ax.set_ylabel(AX["ap"] + " — mesatare mbi 8 fold-e")
+    ax.set_xlim(0.03, 200)
+    best = summary.loc[summary["model"] != "logreg"].nlargest(1, "ap_mean").iloc[0]
+    ax.annotate(
+        "kompromisi më i mirë i pambikëqyrur",
+        xy=(best.score_us_per_tx, best.ap_mean),
+        xytext=(0.30, 0.62),
+        textcoords="axes fraction",
+        fontsize=8.2,
+        color="#52514e",
+        arrowprops={"arrowstyle": "->", "color": "#898781", "linewidth": 1},
+    )
+    save_figure(fig, REPO_ROOT / cfg.results_dir, "benchmark_quality_cost")
+
+
 def main(cfg=None):
     cfg = cfg or load_config()
     results_dir = REPO_ROOT / cfg.results_dir
@@ -197,6 +255,7 @@ def main(cfg=None):
     figure_ap_per_fold(per_fold, cfg)
     figure_ap_ranking(summary, cfg)
     figure_family_boxplot(per_fold[per_fold["model"].isin(ALL_MODELS)], cfg)
+    figure_quality_cost(summary, cfg)
 
     write_manifest(results_dir, "exp10_benchmark", cfg.raw)
     cols = [

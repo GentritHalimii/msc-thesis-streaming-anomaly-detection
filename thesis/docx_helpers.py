@@ -17,7 +17,12 @@ from pathlib import Path
 from docx import Document
 from docx.enum.section import WD_SECTION
 from docx.enum.table import WD_TABLE_ALIGNMENT
-from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_BREAK
+from docx.enum.text import (
+    WD_ALIGN_PARAGRAPH,
+    WD_BREAK,
+    WD_TAB_ALIGNMENT,
+    WD_TAB_LEADER,
+)
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from docx.shared import Cm, Pt, RGBColor
@@ -27,6 +32,8 @@ BODY_SIZE = Pt(12)
 CAPTION_SIZE = Pt(11)
 TITLE_SIZE = Pt(14)
 LINE_SPACING = 1.5
+# A4 (21 cm) minus the 3 cm binding margin and the 2.5 cm outer margin.
+TEXT_WIDTH_CM = 15.5
 INK = RGBColor(0, 0, 0)
 MUTED = RGBColor(0x40, 0x40, 0x40)
 
@@ -48,7 +55,7 @@ def new_document() -> Document:
     for section in doc.sections:
         section.top_margin = Cm(2.5)
         section.bottom_margin = Cm(2.5)
-        section.left_margin = Cm(3.0)   # binding edge
+        section.left_margin = Cm(3.0)  # binding edge
         section.right_margin = Cm(2.5)
     _set_update_fields_on_open(doc)
     return doc
@@ -121,9 +128,16 @@ def start_new_section(doc: Document, fmt: str, start: int | None = None):
 # --------------------------------------------------------------------------
 # text blocks
 # --------------------------------------------------------------------------
-def add_paragraph(doc: Document, text: str, *, italic: bool = False,
-                  align=WD_ALIGN_PARAGRAPH.JUSTIFY, size=BODY_SIZE,
-                  space_after: int = 6, first_line_indent: float | None = None):
+def add_paragraph(
+    doc: Document,
+    text: str,
+    *,
+    italic: bool = False,
+    align=WD_ALIGN_PARAGRAPH.JUSTIFY,
+    size=BODY_SIZE,
+    space_after: int = 6,
+    first_line_indent: float | None = None,
+):
     para = doc.add_paragraph()
     para.alignment = align
     pf = para.paragraph_format
@@ -147,8 +161,10 @@ def add_heading(doc: Document, text: str, level: int, number: str | None = None)
     pf.space_before = Pt(18 if level == 1 else 12)
     pf.space_after = Pt(8)
     pf.keep_with_next = True
-    label = f"{number}\t{text.upper() if level == 1 else text}" if number else (
-        text.upper() if level == 1 else text
+    label = (
+        f"{number}\t{text.upper() if level == 1 else text}"
+        if number
+        else (text.upper() if level == 1 else text)
     )
     run = para.add_run(label)
     run.font.name = BODY_FONT
@@ -227,9 +243,16 @@ def add_equation(doc: Document, expression: str, number: int):
     return para
 
 
-def add_table(doc: Document, dataframe, caption: str, *, number: int,
-              font_size: float = 9.5, col_widths: list[float] | None = None,
-              max_rows: int | None = None):
+def add_table(
+    doc: Document,
+    dataframe,
+    caption: str,
+    *,
+    number: int,
+    font_size: float = 9.5,
+    col_widths: list[float] | None = None,
+    max_rows: int | None = None,
+):
     """Table with its numbered title above it, as the template illustrates."""
     add_caption(doc, f"Tabela {number}. {caption}", above=True)
     df = dataframe if max_rows is None else dataframe.head(max_rows)
@@ -253,8 +276,9 @@ def add_table(doc: Document, dataframe, caption: str, *, number: int,
         for cell, value in zip(cells, row, strict=True):
             cell.text = ""
             para = cell.paragraphs[0]
-            para.alignment = (WD_ALIGN_PARAGRAPH.LEFT if isinstance(value, str)
-                              else WD_ALIGN_PARAGRAPH.RIGHT)
+            para.alignment = (
+                WD_ALIGN_PARAGRAPH.LEFT if isinstance(value, str) else WD_ALIGN_PARAGRAPH.RIGHT
+            )
             para.paragraph_format.line_spacing = 1.0
             para.paragraph_format.space_after = Pt(1)
             run = para.add_run(str(value))
@@ -280,3 +304,39 @@ def add_toc_field(doc: Document, instruction: str, placeholder: str):
 
 def page_break(doc: Document):
     doc.add_paragraph().add_run().add_break(WD_BREAK.PAGE)
+
+
+def add_toc_entry(doc, text: str, level: int, page: str | None):
+    """One line of a statically generated table of contents.
+
+    A Word TOC field is the usual solution, but it renders as a placeholder
+    until someone opens the file and refreshes it — and a thesis that is
+    printed or converted without that refresh has an empty contents page.
+    These entries are written out with real page numbers instead, recovered
+    from a first rendering pass, and a right-aligned tab stop with dot leaders
+    reproduces the usual appearance.
+
+    Two details matter. The paragraph must be left-aligned, because justified
+    text stretches the leader dots across the whole line. And the tab stop has
+    to sit at the right edge of the *indented* text area, not of the page, or
+    the number is pushed onto a line of its own.
+    """
+    indent_cm = 0.7 * (level - 1)
+    para = doc.add_paragraph()
+    para.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    pf = para.paragraph_format
+    pf.line_spacing = 1.15
+    pf.space_after = Pt(3)
+    pf.left_indent = Cm(indent_cm)
+    pf.right_indent = Cm(0)
+    pf.tab_stops.add_tab_stop(
+        Cm(TEXT_WIDTH_CM - indent_cm), WD_TAB_ALIGNMENT.RIGHT, WD_TAB_LEADER.DOTS
+    )
+    # Any tab inside the caption itself would jump to the leader stop, so the
+    # separator between a section number and its title is written as spaces.
+    label = text.replace("\t", "   ")
+    run = para.add_run(label if page is None else f"{label}\t{page}")
+    run.font.name = BODY_FONT
+    run.font.size = BODY_SIZE
+    run.bold = level == 1
+    return para

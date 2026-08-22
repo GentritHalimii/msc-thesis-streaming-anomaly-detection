@@ -13,6 +13,7 @@ everywhere.
 
 import argparse
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -21,19 +22,15 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from docx.enum.text import WD_ALIGN_PARAGRAPH  # noqa: E402
-
 from docx_helpers import (  # noqa: E402
     add_bullets,
-    add_caption,
     add_equation,
     add_figure,
     add_heading,
     add_paragraph,
     add_table,
-    add_toc_field,
     new_document,
     page_break,
-    set_page_numbering,
     start_new_section,
 )
 from references import REFERENCES  # noqa: E402
@@ -82,6 +79,7 @@ class Numbering:
 
 def resolve_citations(text: str, numbering: Numbering) -> str:
     """Replace [@a][@b] runs with a single bracket group, IEEE style."""
+
     def repl(match: re.Match) -> str:
         return f"[{numbering.cite(match.group(1))}]"
 
@@ -113,6 +111,21 @@ def load_table(csv_name: str, options: dict) -> pd.DataFrame:
     return df.reset_index(drop=True)
 
 
+def collect_outline(chapters: list[list]) -> list[tuple[int, str]]:
+    """Headings in document order, as (level, display text) pairs.
+
+    Used to build the table of contents; figure and table lists are collected
+    separately because their numbering is assigned during rendering.
+    """
+    out = []
+    for blocks in chapters:
+        for block in blocks:
+            if block[0] in ("h1", "h2", "h3"):
+                level = int(block[0][1])
+                out.append((level, f"{block[1]}\t{block[2]}"))
+    return out
+
+
 def first_pass(chapters: list[list], numbering: Numbering) -> None:
     for blocks in chapters:
         for block in blocks:
@@ -122,11 +135,7 @@ def first_pass(chapters: list[list], numbering: Numbering) -> None:
             elif kind in ("bullets", "numbers"):
                 for item in block[1]:
                     numbering.scan_text(item)
-            elif kind in ("h1", "h2", "h3"):
-                numbering.scan_text(block[2])
-            elif kind == "fig":
-                numbering.scan_text(block[2])
-            elif kind == "tab":
+            elif kind in ("h1", "h2", "h3") or kind == "fig" or kind == "tab":
                 numbering.scan_text(block[2])
 
 
@@ -154,14 +163,20 @@ def render_blocks(doc, blocks: list, numbering: Numbering, counters: dict) -> No
             if not path.exists():
                 raise FileNotFoundError(f"missing figure: {path}")
             n = counters["figure"]()
-            add_figure(doc, path, f"Figura {n}. {resolve_citations(caption, numbering)}",
-                       width_cm=width)
+            add_figure(
+                doc, path, f"Figura {n}. {resolve_citations(caption, numbering)}", width_cm=width
+            )
         elif kind == "tab":
             csv_name, caption, options = block[1], block[2], block[3]
             df = load_table(csv_name, options)
             n = counters["table"]()
-            add_table(doc, df, resolve_citations(caption, numbering), number=n,
-                      font_size=options.get("font_size", 9.0))
+            add_table(
+                doc,
+                df,
+                resolve_citations(caption, numbering),
+                number=n,
+                font_size=options.get("font_size", 9.0),
+            )
         elif kind == "eq":
             add_equation(doc, block[1], counters["equation"]())
         elif kind == "pagebreak":
@@ -170,7 +185,7 @@ def render_blocks(doc, blocks: list, numbering: Numbering, counters: dict) -> No
             raise ValueError(f"unknown block kind: {kind}")
 
 
-def build(output: Path) -> Path:
+def build(output: Path, page_map: dict[str, str] | None = None):
     from content import (
         ch1_hyrje,
         ch2_literatura,
@@ -182,6 +197,7 @@ def build(output: Path) -> Path:
         front_matter,
     )
 
+    page_map = page_map or {}
     numbering = Numbering()
     body_chapters = [
         ch1_hyrje.BLOCKS,
@@ -194,9 +210,16 @@ def build(output: Path) -> Path:
     ]
     first_pass(body_chapters, numbering)
 
+    # Figure and table captions have to be known before the lists that
+    # reference them are written, so the body is walked once in "dry" mode to
+    # assign their numbers, then rendered for real.
+    dry = Numbering()
+    first_pass(body_chapters, dry)
+    dry_fig, dry_tab = _scan_captions(body_chapters)
+
     doc = new_document()
     front_matter.render_cover(doc)
-    front_matter.render_prelims(doc, numbering)
+    front_matter.render_prelims(doc, collect_outline(body_chapters), dry_fig, dry_tab, page_map)
 
     # Body restarts page numbering at Arabic 1, per the template.
     start_new_section(doc, "decimal", start=1)
@@ -229,8 +252,9 @@ def build(output: Path) -> Path:
     add_heading(doc, "REFERENCAT", 1, "7")
     ordered = sorted(numbering.citations.items(), key=lambda kv: kv[1])
     for key, num in ordered:
-        para = add_paragraph(doc, f"[{num}]\t{REFERENCES[key]}",
-                             align=WD_ALIGN_PARAGRAPH.JUSTIFY, space_after=6)
+        para = add_paragraph(
+            doc, f"[{num}]\t{REFERENCES[key]}", align=WD_ALIGN_PARAGRAPH.JUSTIFY, space_after=6
+        )
         para.paragraph_format.left_indent = __import__("docx").shared.Cm(1.2)
         para.paragraph_format.first_line_indent = __import__("docx").shared.Cm(-1.2)
 
@@ -238,17 +262,132 @@ def build(output: Path) -> Path:
     return output, numbering, fig_no["n"], tab_no["n"], eq_no["n"]
 
 
+def _scan_captions(chapters: list[list]) -> tuple[list[str], list[str]]:
+    """Figure and table captions in document order, with their numbers."""
+    figures, tables = [], []
+    for blocks in chapters:
+        for block in blocks:
+            if block[0] == "fig":
+                figures.append(f"Figura {len(figures) + 1}. {block[2]}")
+            elif block[0] == "tab":
+                tables.append(f"Tabela {len(tables) + 1}. {block[2]}")
+    return figures, tables
+
+
+def _pdf_pages(pdf_path: Path) -> list[str]:
+    text = subprocess.run(
+        ["pdftotext", "-layout", str(pdf_path), "-"],
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout
+    return text.split("\f")
+
+
+def _normalise(text: str) -> str:
+    return re.sub(r"\s+", " ", text).strip().lower()
+
+
+def extract_page_numbers(pdf_path: Path, entries: list[str], body_anchor: str) -> dict[str, str]:
+    """Map each contents entry to the printed page it appears on.
+
+    Two traps here. The body restarts numbering at Arabic 1, so the offset is
+    found from the rendered pages rather than assumed. And the table of
+    contents itself contains every heading string, so a naive search matches
+    the contents page for everything — the scan therefore starts only after
+    the first page of actual body text, located with a distinctive sentence
+    from the opening paragraph.
+    """
+    pages = [_normalise(p) for p in _pdf_pages(pdf_path)]
+    anchor = _normalise(body_anchor)[:60]
+    offset = next((i for i, page in enumerate(pages) if anchor and anchor in page), None)
+    if offset is None:
+        return {}
+
+    mapping: dict[str, str] = {}
+    for entry in entries:
+        probe = _normalise(entry)[:70]
+        for i in range(offset, len(pages)):
+            if probe and probe in pages[i]:
+                mapping[entry] = str(i - offset + 1)
+                break
+    return mapping
+
+
+def render_pdf(docx_path: Path) -> Path:
+    subprocess.run(
+        [
+            "/snap/bin/libreoffice",
+            "--headless",
+            "--convert-to",
+            "pdf",
+            "--outdir",
+            str(docx_path.parent),
+            str(docx_path),
+        ],
+        capture_output=True,
+        check=True,
+        timeout=900,
+    )
+    return docx_path.with_suffix(".pdf")
+
+
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--output", default=str(REPO_ROOT / "thesis" / "out" /
-                                                "Punimi_Diplomes_GentritHalimi.docx"))
+    parser.add_argument(
+        "--output", default=str(REPO_ROOT / "thesis" / "out" / "Punimi_Diplomes_GentritHalimi.docx")
+    )
+    parser.add_argument(
+        "--single-pass", action="store_true", help="skip the page-number resolution pass"
+    )
     args = parser.parse_args()
     out = Path(args.output)
     out.parent.mkdir(parents=True, exist_ok=True)
+
+    # Pass 1: the contents entries exist but carry no page numbers, so the
+    # front matter already occupies its final number of pages.
     path, numbering, n_fig, n_tab, n_eq = build(out)
+    print(f"faza 1: {path}")
+
+    if not args.single_pass:
+        pdf = render_pdf(path)
+        entries, anchor = _all_entries(out)
+        mapping = extract_page_numbers(pdf, entries, anchor)
+        print(f"faza 2: u gjetën numra faqesh për {len(mapping)}/{len(entries)} zëra")
+        path, numbering, n_fig, n_tab, n_eq = build(out, page_map=mapping)
+        render_pdf(path)
+
     print(f"shkruar: {path}")
     print(f"  referenca të cituara: {len(numbering.citations)}")
     print(f"  figura: {n_fig} | tabela: {n_tab} | ekuacione: {n_eq}")
+
+
+def _all_entries(_output: Path) -> tuple[list[str], str]:
+    from content import (
+        ch1_hyrje,
+        ch2_literatura,
+        ch3_problemi,
+        ch4_metodologjia,
+        ch5_rezultatet,
+        ch6_diskutime,
+        ch8_shtojcat,
+    )
+
+    chapters = [
+        ch1_hyrje.BLOCKS,
+        ch2_literatura.BLOCKS,
+        ch3_problemi.BLOCKS,
+        ch4_metodologjia.BLOCKS,
+        ch5_rezultatet.BLOCKS,
+        ch6_diskutime.BLOCKS,
+        ch8_shtojcat.BLOCKS,
+    ]
+    headings = [text for _, text in collect_outline(chapters)]
+    figures, tables = _scan_captions(chapters)
+    # Distinctive opening sentence of the body, used to find where Arabic page
+    # numbering starts in the rendered PDF.
+    anchor = next(b[1] for b in ch1_hyrje.BLOCKS if b[0] == "p")
+    return headings + figures + tables + ["7\tREFERENCAT"], anchor
 
 
 if __name__ == "__main__":
