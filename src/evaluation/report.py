@@ -58,7 +58,7 @@ MODEL_LABELS = {
     "copod": "COPOD",
     "hbos": "HBOS",
     "loda": "LODA",
-    "logreg": "LR (referencë e mbikëqyrur)",
+    "logreg": "LR (referencë)",  # kept short: it appears in narrow table columns
     "ensemble_avg": "Ansambël (mesatare z)",
     "ensemble_vote": "Ansambël (votim)",
     "ensemble_rank": "Ansambël (rang)",

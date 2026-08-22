@@ -220,6 +220,7 @@ _PROTOKOLLI = [
         "t pemë, ψ madhësia e nën-mostrës, e epoka, h njësi të fshehura, i iteracione, "
         "k komponentë ose projeksione.",
         font_size=7.5,
+        widths=[2.6, 1.9, 4.6, 1.8, 4.6],
     ),
     p("""Tri vendime implementimi meritojnë shpjegim, sepse ndikojnë drejtpërdrejt në
       rezultate."""),
