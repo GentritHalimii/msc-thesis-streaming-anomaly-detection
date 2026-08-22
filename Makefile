@@ -53,6 +53,7 @@ evaluate:                  ## every table and figure, from saved scores only
 	$(RUN) python -m experiments.exp15_explainability
 	$(RUN) python -m experiments.exp16_adaptive_threshold
 	$(RUN) python -m experiments.exp17_protocol_comparison
+	$(RUN) python -m experiments.exp19_unsupervised_selection
 	$(RUN) python -m experiments.make_rq_summary
 
 # --- streaming pipeline (needs docker) -------------------------------------
