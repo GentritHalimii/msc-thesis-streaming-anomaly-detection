@@ -30,7 +30,31 @@ BLOCKS = [
       sa mirë funksionojnë ato vërtet, kur vlerësohen nën kushtet kohore që do të hasnin
       në prodhim, dhe sa kushton mungesa e etiketave e shprehur në njësi të
       matshme."""),
-    h2("1.2", "Deklarimi i shkurtër i problemit"),
+    h2("1.2", "Pse një rrjedhë e simuluar dhe pse ky dataset"),
+    p("""Një vërejtje e mundshme ndaj këtij punimi është se rrjedha nuk është reale: të
+      dhënat janë historike dhe riprodhohen. Kjo është e vërtetë dhe e qëllimshme, dhe
+      arsyet meritojnë të thuhen qartë që në fillim."""),
+    p("""E para është aksesueshmëria e të dhënave. Të dhënat reale të transaksioneve me
+      karta janë ndër më të mbrojturat në sektorin financiar; asnjë institucion nuk i
+      lëshon ato për një punim diplome, dhe punimet që përdorin të dhëna të brendshme
+      janë të pariprodhueshme nga jashtë. Dataset-i i përdorur këtu është publik, i
+      dokumentuar dhe tashmë i përdorur gjerësisht, gjë që e bën këtë studim të
+      verifikueshëm nga kushdo."""),
+    p("""E dyta, dhe metodologjikisht më e rëndësishmja, është se riprodhimi kronologjik i
+      të dhënave historike ruan pikërisht atë veti që ka rëndësi: rendin. Një sistem
+      zbulimi në prodhim e sheh transaksionin e sotëm pasi ka parë atë të djeshmin dhe
+      kurrë anasjelltas. Kjo veti është e ruajtur plotësisht këtu, dhe pikërisht ajo
+      shkatërrohet nga ndarja e rastësishme që përdor një pjesë e literaturës. Pra
+      simulimi nuk e dobëson vlefshmërinë statistikore të krahasimit; ai e dobëson vetëm
+      interpretimin e matjeve operacionale, sepse ritmi i mbërritjes është i imponuar nga
+      eksperimentuesi dhe jo nga trafiku real."""),
+    p("""E treta është kontrolli. Në një mjedis të simuluar mund të variohet ritmi i
+      mbërritjes, të përsëritet i njëjti eksperiment me seed të fiksuar dhe të matet
+      ndikimi i një ndryshimi të vetëm. Në një sistem prodhimi asnjëra prej këtyre nuk
+      është e mundur. Meqë pyetja qendrore e këtij punimi është krahasuese — cili
+      algoritëm, nën cilin protokoll, me çfarë kostoje — kontrolli eksperimental vlen më
+      shumë se realizmi i trafikut."""),
+    h2("1.3", "Deklarimi i shkurtër i problemit"),
     p("""Problemi që trajtohet në këtë punim është dizajnimi, implementimi dhe vlerësimi i
       ndershëm eksperimental i një sistemi për zbulimin e anomalive financiare mbi një
       rrjedhë të simuluar transaksionesh, duke integruar një platformë reale streaming me
@@ -45,7 +69,7 @@ BLOCKS = [
       pretendon të jetë. Kjo zgjedhje nuk e dobëson vlefshmërinë e matjeve statistikore,
       por e kufizon interpretimin e matjeve operacionale, dhe ky kufizim shënohet
       shprehimisht kudo ku raportohen numra vonese."""),
-    h2("1.3", "Pyetjet hulumtuese"),
+    h2("1.4", "Pyetjet hulumtuese"),
     p("""Punimi organizohet rreth tri pyetjeve hulumtuese, të cilat janë formuluar në
       projekt-propozimin e miratuar dhe janë ruajtur të pandryshuara gjatë gjithë
       implementimit:"""),
@@ -70,7 +94,7 @@ BLOCKS = [
       përgjigjen e saj në një kontekst ku ajo mund të interpretohet: pa e ditur ku
       qëndrojnë këto tre algoritme përballë familjeve të tjera, nuk dihet nëse dallimet
       mes tyre janë të mëdha apo të parëndësishme."""),
-    h2("1.4", "Objektivat e punimit"),
+    h2("1.5", "Objektivat e punimit"),
     p("""Objektivat specifike, të renditura sipas rendit në të cilin realizohen:"""),
     numbers(
         [
@@ -93,7 +117,7 @@ BLOCKS = [
             "Grafana të konfiguruar plotësisht nga kodi.",
         ]
     ),
-    h2("1.5", "Kontributet"),
+    h2("1.6", "Kontributet"),
     p("""Punimi jep pesë kontribute që i konsideroj të veçanta, dy prej të cilave dolën
       gjatë punës dhe jo nga plani fillestar."""),
     bullets(
@@ -115,7 +139,7 @@ BLOCKS = [
             "ngarkesën hetimore dhe njëkohësisht përmirëson cilësinë e zbulimit.",
         ]
     ),
-    h2("1.6", "Ajo që ky punim nuk e trajton"),
+    h2("1.7", "Ajo që ky punim nuk e trajton"),
     p("""Përcaktimi i qartë i asaj që mbetet jashtë është po aq i rëndësishëm sa
       përcaktimi i asaj që përfshihet. Ky punim nuk trajton fortësimin për prodhim
       (disponueshmëri e lartë, autentikim, orkestrim me Kubernetes), nuk ndërton
@@ -124,7 +148,7 @@ BLOCKS = [
       streaming mes tyre. Gjithashtu, punimi nuk pretendon të matë vonesë në kushte
       trafiku real: ritmi i mbërritjes është sintetik dhe i kontrolluar, dhe çdo pohim
       për vonesën shoqërohet me ritmin nën të cilin u mat."""),
-    h2("1.7", "Struktura e punimit"),
+    h2("1.8", "Struktura e punimit"),
     p("""Kapitulli 2 rishikon literaturën në katër drejtime: familjet e metodave të
       zbulimit të anomalive, puna specifike mbi zbulimin e mashtrimeve me karta,
       arkitekturat streaming, dhe — më e rëndësishmja për këtë punim — metodologjia e
