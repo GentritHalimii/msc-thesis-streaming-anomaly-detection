@@ -14,6 +14,11 @@ dependencies = [
     "confluent-kafka>=2.5",
     "psycopg[binary]>=3.2",
     "psutil>=6.0",
+    "scipy>=1.14",
+    "pyod>=2.0",
+    "optuna>=4.0",
+    "shap>=0.46",
+    "python-docx>=1.1",
 ]
 
 [dependency-groups]

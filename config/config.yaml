@@ -7,11 +7,33 @@ data:
 split:
   train_fraction: 0.70               # chronological, by Time order — never shuffled
 
+# Rolling-origin (prequential) protocol: the headline 70/30 split is one point
+# on this curve. Each fold trains on everything before its cut and tests on the
+# block that follows, so every conclusion can be checked for stability against
+# the arbitrary choice of a single cut point.
+protocol:
+  # 8 folds is a deliberate compromise, not a round number: fewer folds leave
+  # the paired Wilcoxon test unable to reach significance (with N folds its
+  # smallest attainable two-sided p is 2/2^N, so N=6 gives 0.031 and dies
+  # under Holm correction), while more folds shrink the test blocks until
+  # some hold fewer than ten frauds and the per-fold AP becomes noise.
+  # At N=8 every block holds at least 13 positives and the attainable p is
+  # 0.0078, which survives correction for up to six planned comparisons.
+  n_folds: 8
+  initial_train_fraction: 0.40       # first fold trains on the first 40% of the stream
+  min_test_frauds: 10                # folds below this are reported but flagged
+
 # Fraction of training scores treated as anomalous when deriving the
 # percentile threshold. null = use the fraud rate observed in the TRAINING
 # window (uses train labels only; same availability assumption as the LR
-# reference). Swept in experiment 2 regardless.
+# reference). Swept in the sensitivity experiment regardless.
 contamination: null
+
+# Operational evaluation: how many alerts a human team can actually process.
+# Precision/recall are reported at these budgets in addition to the
+# threshold-derived operating point.
+alert_budgets: [50, 100, 250, 500, 1000]
+investigation_cost_eur: 3.0          # analyst cost of reviewing one alert
 
 models:
   iforest:
@@ -22,18 +44,65 @@ models:
     kernel: rbf
     nu: 0.05
     gamma: scale
+  deep_svdd:
+    hidden_dim: 32
+    rep_dim: 12
+    epochs: 30
+    batch_size: 512
+    lr: 0.001
+    weight_decay: 0.00001
+  lof:
+    n_neighbors: 20
+    fit_subsample: 20000
+  knn:
+    n_neighbors: 10
+    fit_subsample: 20000
+  pca_recon:
+    n_components: 12
   autoencoder:
     hidden_dim: 16
     latent_dim: 8
     epochs: 20
     batch_size: 512
     lr: 0.001
+  vae:
+    hidden_dim: 24
+    latent_dim: 8
+    epochs: 30
+    batch_size: 512
+    lr: 0.001
+    beta: 1.0
+  gmm:
+    n_components: 8
+    covariance_type: full
+  mahalanobis:
+    support_fraction: 0.9
+    fit_subsample: 30000
+  ecod: {}
+  copod: {}
+  hbos:
+    n_bins: 50
+    alpha: 0.1
+  loda:
+    n_bins: 20
+    n_random_cuts: 100
   logreg:                            # supervised upper-bound REFERENCE, not a competitor
     max_iter: 2000
     class_weight: balanced
 
+# Hyperparameter search. Selection never sees test labels: candidates are
+# ranked either on an inner validation slice of the TRAINING window, or by a
+# fully unsupervised criterion (Excess-Mass / Mass-Volume).
+tuning:
+  n_trials: 25
+  inner_val_fraction: 0.25           # last 25% of the training window
+  criterion: em                      # em | mv | inner_ap
+  em_mv_samples: 20000               # Monte-Carlo volume samples
+
 ensemble:
   members: [iforest, autoencoder, ocsvm]   # unsupervised models only
+  # Greedy selection pool for the diversity-aware ensemble experiment
+  pool: [iforest, ocsvm, deep_svdd, lof, knn, pca_recon, autoencoder, vae, gmm, mahalanobis, ecod, copod, hbos, loda]
 
 kafka:
   bootstrap_servers: localhost:19092   # 9092 left free for other local stacks
@@ -41,6 +110,12 @@ kafka:
   topic_alerts: alerts
   replay_rates: [50, 200, 1000]      # msg/s; one streaming run per rate
   consumer_batch_max: 64             # micro-batch size for scoring
+  # Adaptive thresholding in the consumer: quantile of the most recent
+  # `window` scores, refreshed every `refresh_every` messages.
+  adaptive_threshold:
+    enabled: false
+    window: 5000
+    refresh_every: 500
 
 postgres:
   dsn: postgresql://anomaly:anomaly@localhost:15432/anomaly
