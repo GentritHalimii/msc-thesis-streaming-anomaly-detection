@@ -46,10 +46,12 @@ def gaussian_blob():
 def test_em_mv_prefer_a_real_detector_over_a_random_one(gaussian_blob):
     """The whole point of these criteria is ranking detectors without labels;
     if they cannot separate a fitted forest from noise they are useless."""
-    good = em_mv_scores(_iforest_factory(150), gaussian_blob, n_subspaces=4,
-                        subspace_dim=4, n_mc=5000, seed=1)
-    noise = em_mv_scores(_random_scorer, gaussian_blob, n_subspaces=4,
-                         subspace_dim=4, n_mc=5000, seed=1)
+    good = em_mv_scores(
+        _iforest_factory(150), gaussian_blob, n_subspaces=4, subspace_dim=4, n_mc=5000, seed=1
+    )
+    noise = em_mv_scores(
+        _random_scorer, gaussian_blob, n_subspaces=4, subspace_dim=4, n_mc=5000, seed=1
+    )
     assert good["em_auc"] > noise["em_auc"], "EM must reward mass concentration"
     assert good["mv_auc"] < noise["mv_auc"], "MV must penalise diffuse level sets"
 
@@ -57,6 +59,7 @@ def test_em_mv_prefer_a_real_detector_over_a_random_one(gaussian_blob):
 def test_em_is_non_negative(gaussian_blob):
     """EM(t) is a supremum that always admits the empty level set, so a
     negative value means the score convention has been flipped."""
-    r = em_mv_scores(_iforest_factory(100), gaussian_blob, n_subspaces=3,
-                     subspace_dim=4, n_mc=4000, seed=2)
+    r = em_mv_scores(
+        _iforest_factory(100), gaussian_blob, n_subspaces=3, subspace_dim=4, n_mc=4000, seed=2
+    )
     assert r["em_auc"] >= 0.0
