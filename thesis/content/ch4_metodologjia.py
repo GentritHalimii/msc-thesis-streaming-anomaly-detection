@@ -299,7 +299,10 @@ _PRAGU = [
       krahasueshmëri me literaturën, dhe rezultatet e Kapitullit 5 e tregojnë qartë pse
       ai nuk duhet të jetë metrika vendimtare."""),
     p("""Precizioni, ndjeshmëria dhe F1-shi raportohen në pragun e nxjerrë nga trajnimi
-      dhe, veçmas, në pragun orakull."""),
+      dhe, veçmas, në pragun orakull. Për çdo metrikë raportohet edhe shpërhapja nëpër
+      folds, sepse një vlerë e vetme pa masën e pasigurisë së saj është e vështirë
+      të interpretohet; aty ku nevojitet një interval besimi mbi një bashkësi të
+      vetme testimi, ai nxirret me riparashtrim bootstrap [@efron1993]."""),
     h3("4.5.2", "Metrikat operacionale"),
     p("""Asnjë ekip hetimi nuk shqyrton një renditje të plotë; ai shqyrton aq alarme sa i
       lejon kapaciteti. Prandaj raportohen edhe precizioni dhe ndjeshmëria në buxhet
@@ -326,7 +329,10 @@ _PRAGU = [
     p("""Rruga e parë është validimi i brendshëm kohor: dritarja e trajnimit ndahet
       përsëri sipas kohës, kandidatët përshtaten mbi 75 për qindëshin e parë dhe
       renditen sipas precizionit mesatar në 25 për qindëshin e fundit. Kërkimi kryhet me
-      Optuna duke përdorur mostruesin TPE [@akiba2019]. Kandidatët përshtaten mbi një
+      Optuna duke përdorur mostruesin TPE [@akiba2019]; edhe një kërkim thjesht i
+      rastësishëm do të ishte alternativë e arsyeshme, sepse mbi hapësira me pak
+      dimensione efektive ai është konkurrues me kërkimin sistematik në rrjetë
+      [@bergstra2012]. Kandidatët përshtaten mbi një
       nën-mostër me seed të fiksuar, që një kërkim me njëzet e pesë prova mbi dymbëdhjetë
       detektorë të përfundojë në minuta e jo në ditë; konfigurimi fitues ripërshtatet
       pastaj mbi dritaren e plotë."""),
@@ -408,6 +414,11 @@ _PRAGU = [
         rename={"Komponenti": "Komponenti", "Versioni / vlera": "Versioni / vlera"},
         font_size=9.5,
     ),
+    p("""Implementimi mbështetet në një grumbull softuerësh të lirë: scikit-learn për
+      modelet klasike dhe metrikat [@pedregosa2011], PyTorch për modelet e thella
+      [@paszke2019], PyOD për detektorët statistikorë të referencës [@zhao2019pyod],
+      NumPy për llogaritjen numerike [@harris2020] dhe Matplotlib për figurat
+      [@hunter2007]. Versionet e sakta janë pjesë e çdo manifesti ekzekutimi."""),
     p("""Të gjitha modelet trajnohen dhe ekzekutohen në CPU. Kjo është një zgjedhje e
       qëllimshme dhe jo një kufizim i pashmangshëm: modelet e thella të përdorura këtu
       janë të vogla, dhe matja e kostos operacionale mbi CPU është më e afërt me realitetin
