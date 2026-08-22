@@ -207,6 +207,7 @@ def render_blocks(doc, blocks: list, numbering: Numbering, counters: dict) -> No
                 resolve_citations(caption, numbering),
                 number=n,
                 font_size=options.get("font_size", 9.0),
+                col_widths=options.get("widths"),
             )
         elif kind == "eq":
             add_equation(doc, block[1], counters["equation"]())

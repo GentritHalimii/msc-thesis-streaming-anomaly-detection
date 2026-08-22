@@ -302,9 +302,7 @@ def add_table(
             run.font.size = Pt(font_size)
 
     if col_widths:
-        for row in table.rows:
-            for cell, w in zip(row.cells, col_widths, strict=False):
-                cell.width = Cm(w)
+        _apply_column_widths(table, col_widths)
     doc.add_paragraph().paragraph_format.space_after = Pt(6)
     return table
 
@@ -356,3 +354,38 @@ def add_toc_entry(doc, text: str, level: int, page: str | None):
     run.font.size = BODY_SIZE
     run.bold = level == 1
     return para
+
+
+def _apply_column_widths(table, col_widths: list[float]) -> None:
+    """Force fixed column widths.
+
+    Three things have to agree or the width is quietly ignored: the layout
+    algorithm must be "fixed", the table grid must declare each column, and
+    every cell in a column must carry the same width. Setting only cell widths
+    — the obvious approach — leaves the renderer free to re-balance the
+    columns, which is what squeezed a long detector name into a two-character
+    column in an earlier draft. Widths are rescaled to the printable width so
+    a grid that overshoots the margin cannot trigger re-balancing either.
+    """
+    scale = TEXT_WIDTH_CM / sum(col_widths)
+    scaled = [Cm(w * scale) for w in col_widths]
+
+    table.autofit = False
+    tbl_pr = table._tbl.tblPr
+    layout = OxmlElement("w:tblLayout")
+    layout.set(qn("w:type"), "fixed")
+    tbl_pr.append(layout)
+
+    grid = table._tbl.find(qn("w:tblGrid"))
+    if grid is not None:
+        table._tbl.remove(grid)
+    grid = OxmlElement("w:tblGrid")
+    for width in scaled:
+        col = OxmlElement("w:gridCol")
+        col.set(qn("w:w"), str(int(width.twips)))
+        grid.append(col)
+    table._tbl.insert(list(table._tbl).index(tbl_pr) + 1, grid)
+
+    for row in table.rows:
+        for cell, width in zip(row.cells, scaled, strict=False):
+            cell.width = width
