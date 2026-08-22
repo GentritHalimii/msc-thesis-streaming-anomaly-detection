@@ -37,7 +37,9 @@ _PJESA_1 = [
       organizojnë metodat sipas mekanizmit me të cilin përcaktohet se çfarë është normale
       [@ruff2021]. Kjo organizim është më i dobishëm sesa ndarja e zakonshme
       "klasike kundrejt të thella", sepse dy metoda nga epoka të ndryshme mund të ndajnë
-      të njëjtin mekanizëm dhe të kenë të njëjtat dobësi. Në këtë punim përdoret pikërisht
+      të njëjtin mekanizëm dhe të kenë të njëjtat dobësi; rishikimi i Pang-ut dhe
+      bashkautorëve mbi metodat e thella ndjek një logjikë të ngjashme organizimi
+      [@pang2021]. Në këtë punim përdoret pikërisht
       kjo taksonomi, me gjashtë familje: izolim, kufi vendimi, afërsi, rindërtim, densitet
       dhe statistikore marginale. Zgjedhja për ta organizuar eksperimentin sipas familjeve
       dhe jo sipas algoritmeve individuale u vërtetua e dobishme: dallimet brenda një
@@ -163,7 +165,11 @@ _PJESA_1 = [
       e klasës pozitive ndryshon me kalimin e kohës."""),
     p("""Në një punim të mëvonshëm, të njëjtët autorë propozojnë një modelim realist që e
       merr parasysh vonesën e verifikimit dhe tregojnë se vlerësimi që e injoron këtë
-      vonesë e mbivlerëson performancën [@dalpozzolo2018]. Kjo është pikërisht kritika
+      vonesë e mbivlerëson performancën [@dalpozzolo2018]. Të njëjtët autorë kanë treguar
+      gjithashtu se nën-mostrimi i klasës shumicë, teknikë e zakonshme kundër
+      çekuilibrit, i shtrembëron probabilitetet e prodhuara dhe kërkon rikalibrim
+      [@dalpozzolo2015] — një arsye më shumë pse ky punim nuk përdor ri-mostrim
+      fare. Kjo është pikërisht kritika
       metodologjike që ky punim e zgjeron: nëse renditja kohore ka rëndësi për etiketat,
       ajo ka rëndësi edhe për ndarjen e të dhënave."""),
     p("""Një drejtim i rëndësishëm i punës aplikative është inxhinieria e veçorive përmes
