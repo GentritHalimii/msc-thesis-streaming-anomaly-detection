@@ -34,6 +34,7 @@ tune:                      ## Optuna search on an inner temporal split of the tr
 
 protocol-tuned:            ## re-run the protocol with the tuned hyperparameters
 	$(RUN) python -m experiments.run_protocol --tuned
+	$(RUN) python -m experiments.exp18_tuning_effect
 
 evaluate:                  ## every table and figure, from saved scores only
 	$(RUN) python -m experiments.exp0_eda
@@ -52,6 +53,7 @@ evaluate:                  ## every table and figure, from saved scores only
 	$(RUN) python -m experiments.exp15_explainability
 	$(RUN) python -m experiments.exp16_adaptive_threshold
 	$(RUN) python -m experiments.exp17_protocol_comparison
+	$(RUN) python -m experiments.make_rq_summary
 
 # --- streaming pipeline (needs docker) -------------------------------------
 stream:

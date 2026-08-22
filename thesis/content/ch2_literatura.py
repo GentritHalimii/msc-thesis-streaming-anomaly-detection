@@ -1,6 +1,6 @@
 """Kapitulli 2 — SHQYRTIMI I LITERATURËS."""
 
-from blocks import bullets, h1, h2, h3, note, p
+from blocks import bullets, eq, h1, h2, h3, note, p
 
 _PJESA_1 = [
     h1("2", "Shqyrtimi i literaturës"),
@@ -50,6 +50,15 @@ _PJESA_1 = [
       ndarje të rastësishme dhe përdor gjatësinë mesatare të shtegut deri te izolimi si
       pikë anomalie. Argumenti është elegant: pikat anormale, duke qenë të pakta dhe të
       largëta, izolohen me më pak ndarje."""),
+    p("""Formalisht, për një pikë x pika e anomalisë përcaktohet nga gjatësia mesatare e
+      shtegut E[h(x)] mbi ansamblin e pemëve, e normalizuar me gjatësinë e pritur të
+      shtegut c(n) në një pemë kërkimi binare me n nyje:"""),
+    eq("s(x, n) = 2^( −E[h(x)] / c(n) ),   c(n) = 2H(n−1) − 2(n−1)/n"),
+    p("""ku H është numri harmonik. Normalizimi e bën pikën të krahasueshme mes pemëve me
+      thellësi të ndryshme dhe e kufizon atë në intervalin (0, 1), ku vlerat afër njëshit
+      tregojnë izolim të lehtë. Në implementimin e përdorur këtu pika merret me shenjë të
+      kundërt të funksionit të bibliotekës, që të respektohet konventa e vetme e këtij
+      punimi: vlerë më e lartë do të thotë më anormale."""),
     p("""Popullariteti i tij vjen nga kompleksiteti nënlinear dhe nga mungesa e nevojës
       për të llogaritur distanca. Megjithatë, literatura ka dokumentuar edhe dobësi
       sistematike. Ndarjet zgjidhen në mënyrë të rastësishme mbi dimensione dhe pragje, pa
@@ -66,6 +75,12 @@ _PJESA_1 = [
       kuadratike me numrin e mostrave, gjë që i bën të papërdorshme drejtpërdrejt mbi
       qindra mijëra rreshta — një kufizim praktik që në këtë punim u zgjidh me
       nën-mostrim të dokumentuar."""),
+    p("""Formulimi i One-Class SVM-së kërkon zgjidhjen e problemit të optimizimit"""),
+    eq("min ½‖w‖² + (1/νn)Σξ_i − ρ,   ⟨w, φ(x_i)⟩ ≥ ρ − ξ_i,  ξ_i ≥ 0"),
+    p("""ku ν ∈ (0, 1] është njëkohësisht kufi i sipërm për fraksionin e pikave jashtë
+      kufirit dhe kufi i poshtëm për fraksionin e vektorëve mbështetës. Kjo veti e dyfishtë
+      e bën ν parametrin e vetëm vërtet të interpretueshëm të metodës, dhe shpjegon pse ai
+      zakonisht vendoset afër normës së pritur të kontaminimit."""),
     p("""Deep SVDD e transferon idenë e SVDD-së në një rrjet nervor: në vend të një sfere
       në hapësirën e kernelit, mësohet një transformim që i mbledh të dhënat normale
       brenda një sfere me qendër fikse [@ruff2018]. Autorët identifikojnë rrezikun
@@ -94,6 +109,15 @@ _PJESA_1 = [
       kryesorë [@shyu2003]. Autoenkoderët e zgjerojnë idenë në rastin jolinear: rrjeti
       mëson një kodim të ngjeshur dhe një dekodim, dhe gabimi i rindërtimit shërben si
       pikë anomalie [@hinton2006], [@sakurada2014]."""),
+    p("""Objektivi i autoenkoderit është minimizimi i gabimit të rindërtimit mbi të dhënat
+      normale, dhe po ai gabim shërben si pikë anomalie në kohën e inferencës:"""),
+    eq("L = (1/n) Σ ‖x_i − g(f(x_i))‖²,    s(x) = ‖x − g(f(x))‖²"),
+    p("""Supozimi i heshtur këtu është se rrjeti, i trajnuar vetëm mbi normale, nuk do të
+      mësojë funksionin identitet. Kjo garantohet vetëm nga ngushtica e hapësirës latente:
+      nëse dimensioni latent i afrohet atij hyrës, rrjeti mund t'i rindërtojë mirë edhe
+      anomalitë dhe pika e humbet fuqinë dalluese. Ky mekanizëm, i njohur teorikisht, u
+      vëzhgua në mënyrë të matur në eksperimentet e këtij punimi te Deep SVDD-ja pas
+      akordimit të hiperparametrave."""),
     p("""Autoenkoderi variacional shton një shtresë probabilistike: kodimi latent
       rregullohet drejt një shpërndarjeje të njohur, dhe pikëzimi mund të bazohet në
       kufirin e poshtëm të evidencës ose në probabilitetin e rindërtimit [@kingma2014],
@@ -270,7 +294,21 @@ _PJESA_2 = [
       protokolle më të standardizuara [@campos2016]. Emmott dhe bashkautorët kishin
       ngritur më herët problemin e ndërtimit sistematik të benchmark-eve
       [@emmott2013]."""),
-    h3("2.5.4", "Krahasimi statistikor i algoritmeve"),
+    h3("2.5.4", "Vonesa e verifikimit dhe pasojat e saj"),
+    p("""Një aspekt që e dallon zbulimin e mashtrimeve nga shumica e problemeve të
+      klasifikimit është se etiketa nuk mbërrin bashkë me shembullin, por javë më vonë dhe
+      vetëm për një pjesë të tij. Dal Pozzolo dhe bashkautorët e modeluan këtë shprehimisht
+      dhe treguan se një skemë vlerësimi që e injoron vonesën e verifikimit e mbivlerëson
+      performancën e sistemit, sepse i jep modelit akses te etiketa që në realitet nuk do
+      t'i kishte pasur [@dalpozzolo2018]."""),
+    p("""Pasoja për këtë punim është e drejtpërdrejtë dhe përcaktoi disa zgjedhje dizajni.
+      Nëse etiketa e sotme nuk ekziston, atëherë asnjë komponent që vepron mbi rrjedhën
+      aktuale nuk mund të varet prej saj: as modeli, as skaluesi, as pragu. Nga ana tjetër,
+      etiketat e së kaluarës së largët ekzistojnë, dhe përjashtimi i tyre do të ishte një
+      supozim tepër i ashpër dhe jorealist për një bankë. Kufiri i tërhequr këtu — etiketa
+      historike po, etiketa aktuale jo — është pikërisht kufiri që vonesa e verifikimit e
+      imponon në praktikë."""),
+    h3("2.5.5", "Krahasimi statistikor i algoritmeve"),
     p("""Demšar-i dha protokollin që mbetet standard për krahasimin e disa algoritmeve mbi
       disa bashkësi të dhënash: testi jo-parametrik i Friedman-it mbi matricën e
       rangjeve, i ndjekur nga testi post-hoc i Nemenyi-t dhe nga diagrami i diferencës
