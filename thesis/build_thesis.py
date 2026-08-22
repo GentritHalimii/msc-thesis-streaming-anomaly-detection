@@ -38,6 +38,8 @@ from references import REFERENCES  # noqa: E402
 REPO_ROOT = Path(__file__).resolve().parent.parent
 RESULTS = REPO_ROOT / "results"
 CITE_RE = re.compile(r"\[@([a-zA-Z0-9_]+)\]")
+# Printed stand-in for a value that does not exist, rather than "nan".
+MISSING = "—"
 
 
 class Numbering:
@@ -98,8 +100,14 @@ def load_table(csv_name: str, options: dict) -> pd.DataFrame:
         df = df.sort_values(options["sort"], ascending=options.get("ascending", True))
     if "round" in options:
         for col, digits in options["round"].items():
-            if col in df.columns:
-                df[col] = df[col].astype(float).round(digits)
+            if col not in df.columns:
+                continue
+            values = df[col].astype(float).round(digits)
+            if digits > 0:
+                # Fixed decimals, so a column does not mix "0.29" with "0.449".
+                df[col] = values.map(lambda v, d=digits: MISSING if pd.isna(v) else f"{v:.{d}f}")
+            else:
+                df[col] = values
     if "fmt" in options:
         for col, spec in options["fmt"].items():
             if col in df.columns:
@@ -108,7 +116,11 @@ def load_table(csv_name: str, options: dict) -> pd.DataFrame:
         df = df.rename(columns=options["rename"])
     if "max_rows" in options:
         df = df.head(options["max_rows"])
-    return _tidy_integers(df.reset_index(drop=True), options.get("round", {}))
+    df = _tidy_integers(df.reset_index(drop=True), options.get("round", {}))
+    # A missing value is meaningful in some tables (a detector with no
+    # hyperparameters cannot have a tuning delta) but "nan" reads as a bug in a
+    # printed thesis; an em dash says the same thing without alarming anyone.
+    return df.astype(object).where(df.notna(), MISSING)
 
 
 def _tidy_integers(df: pd.DataFrame, rounded: dict) -> pd.DataFrame:

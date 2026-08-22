@@ -1,10 +1,20 @@
 """Kapitulli 6 — DISKUTIME DHE PËRFUNDIME."""
 
-from blocks import bullets, h1, h2, h3, note, numbers, p
+from blocks import bullets, h1, h2, h3, note, numbers, p, tab
 
 _SINTEZA = [
     h1("6", "Diskutime dhe përfundime"),
     h2("6.1", "Përmbledhje e gjetjeve"),
+    p("""Përpara diskutimit të hollësishëm, tabela më poshtë jep përgjigjen e drejtpërdrejtë
+      për secilën nga tri pyetjet hulumtuese, së bashku me evidencën përkatëse. Ajo
+      gjenerohet automatikisht nga artefaktet e eksperimenteve, prandaj nuk mund të bjerë
+      ndesh me kapitujt që e paraprijnë."""),
+    tab(
+        "rq_summary",
+        "Përgjigjet e drejtpërdrejta për tri pyetjet hulumtuese dhe evidenca mbi të cilën "
+        "ato mbështeten.",
+        font_size=8.5,
+    ),
     p("""Ky punim ndërtoi dhe vlerësoi një sistem të plotë për zbulimin e anomalive mbi një
       rrjedhë të simuluar transaksionesh financiare, duke integruar Apache Kafka-n me
       katërmbëdhjetë detektorë të pambikëqyrur dhe një referencë të mbikëqyrur. Gjetjet
