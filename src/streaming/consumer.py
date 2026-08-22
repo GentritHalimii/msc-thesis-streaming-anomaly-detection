@@ -17,6 +17,7 @@ import json
 import threading
 import time
 import uuid
+from collections import deque
 from pathlib import Path
 
 import numpy as np
@@ -46,7 +47,47 @@ def _load_scoring_stack(cfg, model_name: str):
         threshold = MAJORITY_THRESHOLD  # majority rule, not a percentile
     else:
         threshold = percentile_threshold(train_scores, contamination)
-    return scaler, model, threshold
+    return scaler, model, threshold, contamination
+
+
+class _AdaptiveThreshold:
+    """Sliding-window quantile threshold maintained on the live stream.
+
+    Keeps the alert *rate* stable rather than the alert *score*, so the
+    investigation workload stays predictable when the score distribution
+    drifts. Every decision uses only scores that arrived earlier: a message is
+    never part of the buffer that judges it.
+    """
+
+    def __init__(
+        self,
+        contamination: float,
+        window: int,
+        refresh_every: int,
+        warmup: float,
+        min_warmup: int = 500,
+    ):
+        self._contamination = contamination
+        self._buffer: deque[float] = deque(maxlen=window)
+        self._refresh_every = refresh_every
+        self._current = warmup
+        self._min_warmup = min_warmup
+        self._seen = 0
+        self.refreshes = 0
+
+    @property
+    def value(self) -> float:
+        return self._current
+
+    def decide(self, score: float) -> bool:
+        """Threshold this score, then admit it to the buffer."""
+        if len(self._buffer) >= self._min_warmup and self._seen % self._refresh_every == 0:
+            self._current = float(np.quantile(self._buffer, 1.0 - self._contamination))
+            self.refreshes += 1
+        flagged = score >= self._current
+        self._buffer.append(float(score))
+        self._seen += 1
+        return bool(flagged)
 
 
 def consume(
@@ -56,12 +97,21 @@ def consume(
     out_dir: Path | None = None,
     store: bool = False,
     ready_file: Path | str | None = None,
+    adaptive: bool | None = None,
 ) -> Path:
     """`ready_file`: written once the consumer has joined the group and been
     assigned partitions. The orchestrator gates the producer on it so latency
     runs measure steady state, not consumer-startup backlog."""
-    scaler, model, threshold = _load_scoring_stack(cfg, model_name)
+    scaler, model, threshold, contamination = _load_scoring_stack(cfg, model_name)
     model.score(scaler.transform(np.zeros((1, 29))))  # warm-up: JIT/lazy-init out of band
+
+    at_cfg = cfg.kafka.adaptive_threshold
+    use_adaptive = at_cfg.enabled if adaptive is None else adaptive
+    adaptive_thr = (
+        _AdaptiveThreshold(contamination, at_cfg.window, at_cfg.refresh_every, threshold)
+        if use_adaptive
+        else None
+    )
     sink = None
     if store:
         from src.storage.postgres import PostgresSink
@@ -155,13 +205,18 @@ def consume(
 
             rows = []
             for record, score in zip(batch, scores, strict=True):
-                is_alert = bool(score >= threshold)
+                if adaptive_thr is not None:
+                    is_alert = adaptive_thr.decide(float(score))
+                    active_threshold = adaptive_thr.value
+                else:
+                    is_alert = bool(score >= threshold)
+                    active_threshold = threshold
                 if is_alert:
                     alert = {
                         "tx_id": record["tx_id"],
                         "model": model_name,
                         "score": float(score),
-                        "threshold": threshold,
+                        "threshold": float(active_threshold),
                         "produced_at_ns": record["produced_at_ns"],
                         "alerted_at_ns": time.time_ns(),
                     }
@@ -214,6 +269,8 @@ def consume(
         "run_tag": run_tag,
         "model": model_name,
         "threshold": threshold,
+        "adaptive_threshold": bool(use_adaptive),
+        "adaptive_refreshes": adaptive_thr.refreshes if adaptive_thr else 0,
         "n_processed": n_processed,
         "n_alerts": n_alerts,
         "elapsed_s": round(elapsed, 2),
@@ -234,10 +291,25 @@ if __name__ == "__main__":
     parser.add_argument("--alert-topic", default=None, help="override alerts topic")
     parser.add_argument("--store", action="store_true", help="persist to PostgreSQL")
     parser.add_argument("--ready-file", default=None, help="touched when consumer is assigned")
+    parser.add_argument(
+        "--adaptive",
+        dest="adaptive",
+        action="store_true",
+        help="sliding-window quantile threshold instead of a fixed one",
+    )
+    parser.add_argument("--no-adaptive", dest="adaptive", action="store_false")
+    parser.set_defaults(adaptive=None)
     args = parser.parse_args()
     config = load_config()
     if args.tx_topic:
         config.kafka.topic_transactions = args.tx_topic
     if args.alert_topic:
         config.kafka.topic_alerts = args.alert_topic
-    consume(config, args.model, args.run_tag, store=args.store, ready_file=args.ready_file)
+    consume(
+        config,
+        args.model,
+        args.run_tag,
+        store=args.store,
+        ready_file=args.ready_file,
+        adaptive=args.adaptive,
+    )

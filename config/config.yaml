@@ -96,7 +96,12 @@ models:
 tuning:
   n_trials: 25
   inner_val_fraction: 0.25           # last 25% of the training window
-  criterion: em                      # em | mv | inner_ap
+  # Candidates are fitted on a seeded subsample so a 25-trial search stays
+  # affordable for the deep models; the winning configuration is then refitted
+  # on the full window before it is evaluated anywhere.
+  fit_subsample: 60000
+  em_subspaces: 8                    # random feature subspaces for EM/MV
+  em_subspace_dim: 5
   em_mv_samples: 20000               # Monte-Carlo volume samples
 
 ensemble:

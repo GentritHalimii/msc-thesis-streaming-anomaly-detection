@@ -35,12 +35,14 @@ def fresh_topics(cfg, run_id: str) -> tuple[str, str]:
     return tx, alerts
 
 
-def run_one(cfg, model: str, rate: float, max_messages: int, store: bool = False) -> None:
+def run_one(
+    cfg, model: str, rate: float, max_messages: int, store: bool = False, adaptive: bool = False
+) -> None:
     run_id = uuid.uuid4().hex[:8]
     tx_topic, alert_topic = fresh_topics(cfg, run_id)
     cfg.kafka.topic_transactions = tx_topic
     cfg.kafka.topic_alerts = alert_topic
-    run_tag = f"{model}_rate{rate:g}"
+    run_tag = f"{model}{'-adaptive' if adaptive else ''}_rate{rate:g}"
 
     env_args = [
         "--tx-topic",
@@ -62,6 +64,7 @@ def run_one(cfg, model: str, rate: float, max_messages: int, store: bool = False
             str(ready_file),
             *env_args,
             *(["--store"] if store else []),
+            *(["--adaptive"] if adaptive else ["--no-adaptive"]),
         ],
         cwd=REPO_ROOT,
     )
@@ -102,6 +105,9 @@ def main():
     parser.add_argument("--rates", nargs="*", type=float, default=None)
     parser.add_argument("--max-messages", type=int, default=20000)
     parser.add_argument("--store", action="store_true", help="persist to PostgreSQL")
+    parser.add_argument(
+        "--adaptive", action="store_true", help="sliding-window quantile threshold in the consumer"
+    )
     args = parser.parse_args()
 
     cfg = load_config()
@@ -109,7 +115,14 @@ def main():
     for model in args.models:
         for rate in rates:
             print(f"=== streaming run: {model} @ {rate} msg/s ===")
-            run_one(load_config(), model, rate, args.max_messages, store=args.store)
+            run_one(
+                load_config(),
+                model,
+                rate,
+                args.max_messages,
+                store=args.store,
+                adaptive=args.adaptive,
+            )
     write_manifest(REPO_ROOT / cfg.results_dir, "run_streaming", cfg.raw)
 
 
