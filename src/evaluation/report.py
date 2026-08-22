@@ -1,10 +1,17 @@
-"""Table (CSV + booktabs LaTeX) and figure (300-dpi PDF + PNG) output helpers.
+"""Tables (CSV + booktabs LaTeX) and figures (300-dpi PDF + PNG) for the thesis.
 
-Figure style: fixed color per model across every figure (color follows the
-entity), thin recessive grid, legend always present for multi-series plots.
-Palette validated for CVD separation on a white print surface; the aqua slot
-is sub-3:1 contrast, which is acceptable because every figure's values also
-exist in a CSV/LaTeX table (relief rule).
+Figure design decisions worth stating once here rather than repeating at every
+call site:
+
+* Colour encodes the detector *family*, not the individual detector. Fourteen
+  categorical hues would be unreadable and unsafe for colour-vision
+  deficiency; six families sit comfortably inside a validated palette, and the
+  family is what the comparison is actually about. Members of a family are
+  separated by line style, which also survives greyscale printing.
+* The supervised reference is always grey and dash-dotted so it can never be
+  mistaken for one of the unsupervised competitors.
+* Axis labels are in Albanian because the figures are embedded in an Albanian
+  thesis; algorithm names keep their standard technical form.
 """
 
 from pathlib import Path
@@ -13,28 +20,81 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import pandas as pd
 
-# Fixed model -> color assignment, identical in every figure. The LR reference
-# is deliberately gray + dashed: it is a supervised upper bound, not a peer.
-MODEL_COLORS = {
-    "iforest": "#2a78d6",
-    "autoencoder": "#1baf7a",
-    "ocsvm": "#4a3aa7",
-    "ensemble_avg": "#e34948",
-    "ensemble_vote": "#eb6834",
-    "logreg": "#52514e",
+from src.models.build import FAMILY_OF
+
+# Validated categorical slots (light surface), used in their documented order.
+FAMILY_COLORS = {
+    "isolation": "#2a78d6",
+    "boundary": "#1baf7a",
+    "proximity": "#eda100",
+    "reconstruction": "#008300",
+    "density": "#4a3aa7",
+    "statistical": "#e34948",
 }
-MODEL_LINESTYLES = {"logreg": "--"}
+REFERENCE_COLOR = "#52514e"
+ENSEMBLE_COLORS = {
+    "ensemble_avg": "#e87ba4",
+    "ensemble_vote": "#eb6834",
+    "ensemble_rank": "#e87ba4",
+    "ensemble_greedy": "#eb6834",
+    "ensemble_max": "#d55181",
+}
+
+# Line style separates members inside a family.
+_STYLE_CYCLE = ["-", "--", ":", "-."]
+
 MODEL_LABELS = {
     "iforest": "Isolation Forest",
-    "autoencoder": "Autoencoder",
     "ocsvm": "One-Class SVM",
-    "logreg": "LR (supervised ref.)",
-    "ensemble_avg": "Ensemble (avg.)",
-    "ensemble_vote": "Ensemble (vote)",
+    "deep_svdd": "Deep SVDD",
+    "lof": "LOF",
+    "knn": "kNN",
+    "pca_recon": "PCA (rindërtim)",
+    "autoencoder": "Autoencoder",
+    "vae": "VAE",
+    "gmm": "GMM",
+    "mahalanobis": "Mahalanobis",
+    "ecod": "ECOD",
+    "copod": "COPOD",
+    "hbos": "HBOS",
+    "loda": "LODA",
+    "logreg": "LR (referencë e mbikëqyrur)",
+    "ensemble_avg": "Ansambël (mesatare z)",
+    "ensemble_vote": "Ansambël (votim)",
+    "ensemble_rank": "Ansambël (rang)",
+    "ensemble_greedy": "Ansambël (greedy)",
+    "ensemble_max": "Ansambël (maksimum)",
+}
+
+FAMILY_LABELS = {
+    "isolation": "Izolim",
+    "boundary": "Kufi vendimi",
+    "proximity": "Afërsi",
+    "reconstruction": "Rindërtim",
+    "density": "Densitet",
+    "statistical": "Statistikore",
+}
+
+# Albanian axis vocabulary, kept in one place so every figure agrees.
+AX = {
+    "ap": "Precizioni mesatar (AP)",
+    "precision": "Preciziteti",
+    "recall": "Ndjeshmëria (recall)",
+    "fpr": "Norma e alarmeve false (FPR)",
+    "tpr": "Norma e zbulimit (TPR)",
+    "f1": "F1",
+    "fold": "Fold-i kohor",
+    "contamination": "Kontaminimi (prag nga shpërndarja e trajnimit)",
+    "budget": "Buxheti i alarmeve (k)",
+    "rate": "Ritmi i replay-it (mesazhe/s)",
+    "latency_ms": "Vonesa fund-më-fund (ms)",
+    "savings": "Raporti i kursimeve neto",
+    "amount_recall": "Ndjeshmëria e vlerës monetare",
+    "rank": "Rangu mesatar",
 }
 
 STYLE = {
-    "figure.figsize": (5.5, 4.0),
+    "figure.figsize": (6.0, 4.2),
     "figure.dpi": 120,
     "savefig.dpi": 300,
     "savefig.bbox": "tight",
@@ -56,7 +116,7 @@ STYLE = {
     "axes.spines.top": False,
     "axes.spines.right": False,
     "legend.frameon": False,
-    "legend.fontsize": 9,
+    "legend.fontsize": 8.5,
 }
 
 
@@ -65,12 +125,44 @@ def new_figure(**kwargs):
     return plt.subplots(**kwargs)
 
 
-def model_plot_kwargs(model_name: str) -> dict:
-    return {
-        "color": MODEL_COLORS[model_name],
-        "linestyle": MODEL_LINESTYLES.get(model_name, "-"),
-        "label": MODEL_LABELS[model_name],
-    }
+def model_color(name: str) -> str:
+    if name in ENSEMBLE_COLORS:
+        return ENSEMBLE_COLORS[name]
+    if name == "logreg":
+        return REFERENCE_COLOR
+    return FAMILY_COLORS[FAMILY_OF[name]]
+
+
+def model_linestyle(name: str) -> str:
+    if name == "logreg":
+        return "-."
+    if name in ENSEMBLE_COLORS:
+        return "-"
+    from src.models.build import FAMILIES
+
+    members = FAMILIES[FAMILY_OF[name]]
+    return _STYLE_CYCLE[members.index(name) % len(_STYLE_CYCLE)]
+
+
+def model_plot_kwargs(name: str, with_label: bool = True) -> dict:
+    kw = {"color": model_color(name), "linestyle": model_linestyle(name)}
+    if with_label:
+        kw["label"] = MODEL_LABELS.get(name, name)
+    return kw
+
+
+def family_legend_handles():
+    """One handle per family plus the reference — used when plotting every
+    detector would produce an unreadable legend."""
+    from matplotlib.lines import Line2D
+
+    handles = [
+        Line2D([], [], color=c, lw=2, label=FAMILY_LABELS[f]) for f, c in FAMILY_COLORS.items()
+    ]
+    handles.append(
+        Line2D([], [], color=REFERENCE_COLOR, lw=2, ls="-.", label="Referencë e mbikëqyrur")
+    )
+    return handles
 
 
 def _latex_escape(s: str) -> str:
@@ -88,9 +180,8 @@ def _booktabs(df: pd.DataFrame, float_fmt: str) -> str:
     cols = " & ".join(_latex_escape(str(c)) for c in df.columns)
     rows = [" & ".join(fmt(v) for v in row) + r" \\" for row in df.itertuples(index=False)]
     body = "\n".join(rows)
-    colspec = "l" * df.select_dtypes(exclude="number").shape[1] + "r" * (
-        df.shape[1] - df.select_dtypes(exclude="number").shape[1]
-    )
+    n_text = df.select_dtypes(exclude="number").shape[1]
+    colspec = "l" * n_text + "r" * (df.shape[1] - n_text)
     return (
         f"\\begin{{tabular}}{{{colspec}}}\n\\toprule\n{cols} \\\\\n"
         f"\\midrule\n{body}\n\\bottomrule\n\\end{{tabular}}\n"
