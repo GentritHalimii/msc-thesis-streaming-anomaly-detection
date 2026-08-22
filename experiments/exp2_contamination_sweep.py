@@ -12,10 +12,17 @@ from src.config import REPO_ROOT, load_config
 from src.evaluation.harness import score_test_window
 from src.evaluation.manifest import write_manifest
 from src.evaluation.metrics import thresholded_metrics
-from src.evaluation.report import model_plot_kwargs, new_figure, save_figure, save_table
+from src.evaluation.report import (
+    AX,
+    model_plot_kwargs,
+    new_figure,
+    save_figure,
+    save_table,
+)
 from src.evaluation.thresholds import percentile_threshold
 
 CONTAMINATIONS = [0.0005, 0.001, 0.002, 0.005, 0.01, 0.02, 0.05]
+METRIC_LABELS = {"precision": "Preciziteti", "recall": "Ndjeshmëria", "f1": "F1"}
 
 
 def main(cfg=None):
@@ -50,8 +57,8 @@ def main(cfg=None):
             )
         ax.set_xscale("log")
         ax.set_xticks(CONTAMINATIONS, [f"{c:g}" for c in CONTAMINATIONS])
-        ax.set_xlabel("contamination (train-percentile threshold)")
-        ax.set_ylabel(f"{metric} on test window")
+        ax.set_xlabel(AX["contamination"])
+        ax.set_ylabel(f"{METRIC_LABELS[metric]} në bllokun e testimit")
         ax.set_ylim(0, 1)
         ax.legend()
         save_figure(fig, REPO_ROOT / cfg.results_dir, fname)

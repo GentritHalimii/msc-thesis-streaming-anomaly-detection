@@ -12,7 +12,13 @@ import pandas as pd
 
 from src.config import REPO_ROOT, load_config
 from src.evaluation.manifest import write_manifest
-from src.evaluation.report import model_plot_kwargs, new_figure, save_figure, save_table
+from src.evaluation.report import (
+    AX,
+    model_plot_kwargs,
+    new_figure,
+    save_figure,
+    save_table,
+)
 
 
 def main(cfg=None):
@@ -65,11 +71,11 @@ def main(cfg=None):
         ax.plot(sub["rate_msg_s"], sub["e2e_ms_p50"], marker="o", markersize=3, **kw_p50)
     ax.set_xscale("log")
     ax.set_yscale("log")
-    ax.set_xlabel("replay rate (msg/s, synthetic constant arrivals)")
-    ax.set_ylabel("end-to-end latency (ms) — p99 solid, p50 faded")
+    ax.set_xlabel(AX["rate"] + " — mbërritje sintetike konstante")
+    ax.set_ylabel(AX["latency_ms"])
     ax.axhline(1000, color="#c3c2b7", linewidth=1)
     ax.annotate(
-        "1 s target",
+        "objektivi prej 1 sekonde",
         xy=(0.02, 0.97),
         xycoords="axes fraction",
         fontsize=8,
