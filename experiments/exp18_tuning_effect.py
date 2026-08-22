@@ -189,12 +189,28 @@ def main(cfg=None):
     )
     save_figure(fig, REPO_ROOT / cfg.results_dir, "tuning_effect")
 
+    if rho_rank >= 0.8:
+        stability = "renditja e detektorëve mbetet praktikisht e njëjtë"
+    elif rho_rank >= 0.5:
+        stability = "renditja e detektorëve zhvendoset pjesërisht"
+    else:
+        stability = "renditja e detektorëve ndryshon thelbësisht"
+    winner_before = default_ap[tuned_only].mean().idxmax()
+    winner_after = tuned_ap[tuned_only].mean().idxmax()
     verdict = (
         f"Akordimi i hiperparametrave përmirëson AP-në mesatare të testit për {improved} "
-        f"nga {len(sub)} detektorë të akorduar; renditja mbetet praktikisht e njëjtë "
-        f"(rho = {rho_rank:.3f}). Korrelacioni mes përmirësimit të matur në validimin e "
-        f"brendshëm dhe atij të realizuar në test është rho = {rho_transfer:.2f} "
-        f"(p = {p_transfer:.2g})."
+        f"nga {len(sub)} detektorë të akorduar, dhe përmirësimi i grumbulluar është i "
+        f"qëndrueshëm nëpër fold-e (Wilcoxon i çiftuar, "
+        f"{int(wil['wins_a'].iloc[0])}/{len(paired)} fold-e, p = "
+        f"{wil['p_value'].iloc[0]:.4f}). Megjithatë {stability}: korrelacioni i rangjeve "
+        f"para dhe pas akordimit është rho = {rho_rank:.3f} (p = {p_rank:.2g}), dhe "
+        f"detektori më i mirë i pambikëqyrur ndryshon nga "
+        f"{MODEL_LABELS.get(winner_before, winner_before)} (AP "
+        f"{default_ap[tuned_only].mean().max():.3f}) në "
+        f"{MODEL_LABELS.get(winner_after, winner_after)} (AP "
+        f"{tuned_ap[tuned_only].mean().max():.3f}). Përmirësimi i matur në validimin e "
+        f"brendshëm e parashikon atë të testit vetëm pjesërisht (rho = "
+        f"{rho_transfer:.2f}, p = {p_transfer:.2g})."
     )
     (results_dir / "tuning_verdict.txt").write_text(verdict + "\n")
     print("\n" + verdict)

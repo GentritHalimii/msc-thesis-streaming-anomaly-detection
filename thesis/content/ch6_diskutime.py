@@ -23,6 +23,13 @@ _SINTEZA = [
             "Mes tre algoritmeve të propozimit, Autoenkoderi ofron balancën më të mirë. Kur "
             "fusha zgjerohet në katërmbëdhjetë detektorë, Deep SVDD-ja e tejkalon atë me më "
             "shumë se dyfish në precizion mesatar me kosto pikëzimi praktikisht të njëjtë.",
+            "Akordimi i hiperparametrave e përmirëson cilësinë në mënyrë të "
+            "qëndrueshme (në të tetë folds-at, p = 0.0078), por e ndryshon "
+            "renditjen thelbësisht: korrelacioni i rangjeve para dhe pas "
+            "akordimit është 0.17 dhe kryesimi kalon nga Deep SVDD-ja te një "
+            "vlerësues i akorduar i Mahalanobis-it. Përgjigjja për pyetjen se "
+            "cili algoritëm është më i miri është pra e kushtëzuar nga "
+            "protokolli i akordimit.",
             "Isolation Forest-i, një nga dy algoritmet qendrore të propozimit, renditet i "
             "trembëdhjeti nga katërmbëdhjetë. Analiza e atribuimit e shpjegon këtë "
             "mekanikisht dhe jo si rastësi.",
@@ -92,6 +99,25 @@ _SINTEZA = [
       rrezik konkret: kombinimi i verbër i të gjithë detektorëve në dispozicion, një
       praktikë e zakonshme, e uli precizionin mesatar nga 0.449 në 0.249, pra e përgjysmoi
       cilësinë e zbulimit."""),
+    h3("6.2.4", "Pse renditja nuk mbijeton akordimin"),
+    p("""Gjetja se akordimi e ndryshon renditjen pothuajse plotësisht meriton interpretim,
+      sepse në pamje të parë duket se bie ndesh me gjetjen tjetër, atë se protokolli i
+      ndarjes nuk e ndryshon atë. Të dyja janë të vërteta dhe nuk përjashtojnë njëra-tjetrën:
+      ndarja ndryshon mbi çfarë vlerësohet një metodë, ndërsa akordimi ndryshon se cila
+      metodë saktësisht po vlerësohet. Një Mahalanobis me fraksion mbështetjeje 0.9 dhe një
+      me 0.988 janë në praktikë dy metoda të ndryshme — njëra robuste dhe tjetra klasike —
+      dhe nuk ka arsye pse renditja e njërës të parashikojë atë të tjetrës."""),
+    p("""Kjo ka pasojë të drejtpërdrejtë për leximin e literaturës. Kur dy punime raportojnë
+      renditje të ndryshme për të njëjtat algoritme mbi të njëjtin dataset, shpjegimi më i
+      mundshëm nuk është gabim në njërin prej tyre, por protokolle të ndryshme akordimi që
+      rrallë raportohen me hollësinë e nevojshme. Rezultatet këtu sugjerojnë se raportimi i
+      vlerave të hiperparametrave dhe i procedurës së përzgjedhjes së tyre është po aq i
+      domosdoshëm sa raportimi i vetë metrikave."""),
+    p("""Rasti i Deep SVDD-së shton një paralajmërim të dytë. Përzgjedhja e bazuar në një
+      sllicë të vetme validimi mund të kapë zhurmë: një diferencë prej 0.028 në validimin e
+      brendshëm u përkthye në një humbje prej 0.293 në blloqet e testimit. Për modele me
+      variancë të lartë një sllicë e vetme nuk mjafton, dhe do të duhej validim i brendshëm
+      me disa folds, me kosto llogaritëse përkatësisht më të lartë."""),
     h2("6.3", "Krahasimi me literaturën"),
     p("""Vlerat absolute të raportuara këtu janë dukshëm më të ulëta se shumica e
       rezultateve të publikuara mbi këtë dataset. Ky punim ofron një shpjegim të matur
@@ -234,7 +260,9 @@ _SINTEZA = [
     p("""Nëse do të duhej të nxirrja një mësim të vetëm nga kjo punë, do të ishte ky: në
       këtë fushë vendimet metodologjike ndikojnë në rezultatin e raportuar më shumë se
       zgjedhja e algoritmit. Një ndarje e rastësishme e fryn precizionin mesatar më shumë
-      se sa e përmirëson atë kalimi nga algoritmi më i dobët te ai më i miri. Kjo do të
+      se sa e përmirëson atë kalimi nga algoritmi më i dobët te ai më i miri; dhe
+      akordimi i hiperparametrave, i kryer krejtësisht pa parë bashkësinë e testimit,
+      e rirendit fushën aq shumë sa korrelacioni i rangjeve bie në 0.17. Kjo do të
       thotë se përparimi i vërtetë në këtë fushë matet vetëm nën protokolle të rrepta, dhe
       se raportimi i një numri të vetëm pa treguar pasigurinë e tij fsheh më shumë sesa
       zbulon."""),

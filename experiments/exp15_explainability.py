@@ -138,7 +138,7 @@ def main(cfg=None):
         "p_value": 0.0,
         "top3": ", ".join(signal["abs_auc_gap"].sort_values(ascending=False).head(3).index),
     }
-    save_table(agreement, results_dir, "explain_signal_agreement", float_fmt="%.4f")
+    save_table(agreement, results_dir, "explain_signal_agreement", float_fmt="%.6g")
     print(agreement.to_string(index=False))
 
     # --- Figure: reconstruction error, fraud vs legitimate ---------------
