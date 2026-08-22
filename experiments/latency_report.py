@@ -27,10 +27,13 @@ def main(cfg=None):
         df = pd.read_csv(path)
         summary_path = lat_dir / path.name.replace("latency_", "summary_").replace(".csv", ".json")
         summary = json.loads(summary_path.read_text()) if summary_path.exists() else {}
-        model, rate = path.stem.removeprefix("latency_").rsplit("_rate", 1)
+        tag, rate = path.stem.removeprefix("latency_").rsplit("_rate", 1)
+        adaptive = tag.endswith("-adaptive")
+        model = tag.removesuffix("-adaptive")
         rows.append(
             {
                 "model": model,
+                "prag_adaptiv": adaptive,
                 "rate_msg_s": float(rate),
                 "n": len(df),
                 "e2e_ms_mean": df["e2e_ms"].mean(),
@@ -45,13 +48,17 @@ def main(cfg=None):
                 "rss_peak_mb": summary.get("rss_peak_mb"),
             }
         )
-    table = pd.DataFrame(rows).sort_values(["model", "rate_msg_s"])
+    table = pd.DataFrame(rows).sort_values(["model", "prag_adaptiv", "rate_msg_s"])
+    # Achieved-vs-target throughput shows where the consumer stops keeping up.
+    table["throughput_ratio"] = table["throughput_msg_s"] / table["rate_msg_s"]
     save_table(table, REPO_ROOT / cfg.results_dir, "latency_summary")
     print(table.to_string(index=False))
 
     fig, ax = new_figure()
     for model in table["model"].unique():
-        sub = table[table["model"] == model].sort_values("rate_msg_s")
+        sub = table[(table["model"] == model) & (~table["prag_adaptiv"])].sort_values("rate_msg_s")
+        if sub.empty:
+            continue
         kw = model_plot_kwargs(model)
         ax.plot(sub["rate_msg_s"], sub["e2e_ms_p99"], marker="o", markersize=4, **kw)
         kw_p50 = {**kw, "alpha": 0.45, "label": None}
