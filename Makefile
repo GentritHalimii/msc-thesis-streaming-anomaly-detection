@@ -35,6 +35,7 @@ tune:                      ## Optuna search on an inner temporal split of the tr
 protocol-tuned:            ## re-run the protocol with the tuned hyperparameters
 	$(RUN) python -m experiments.run_protocol --tuned
 	$(RUN) python -m experiments.exp18_tuning_effect
+	$(RUN) python -m experiments.exp12_ensembles --tuned
 
 evaluate:                  ## every table and figure, from saved scores only
 	$(RUN) python -m experiments.exp0_eda

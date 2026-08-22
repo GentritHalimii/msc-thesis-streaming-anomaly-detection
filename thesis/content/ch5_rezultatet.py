@@ -496,9 +496,45 @@ _PH3 = [
       anëtarëve plus një, prandaj shumica e transaksioneve marrin pikë identike dhe
       renditja brenda tyre është arbitrare. Për një metrikë si precizioni mesatar, që
       varet nga renditja e plotë, kjo është dëmtuese."""),
-    h3("5.3.3", "Përgjigjja për PH3"),
-    p("""Përgjigjja është negative: në këtë problem dhe nën këtë protokoll, qasja ensemble
-      nuk e përmirëson zbulimin krahasuar me modelin më të mirë individual. Përzgjedhja e
+    h3("5.3.3", "A qëndron rezultati edhe me anëtarë të akorduar"),
+    p("""Një kundërshtim i drejtë ndaj një rezultati negativ është se anëtarët mund të mos
+      kenë qenë të akorduar mirë. Prandaj i gjithë eksperimenti u përsërit mbi folds-at e
+      prodhuar me hiperparametrat e akorduar, ku modeli më i mirë individual nuk është më
+      Deep SVDD-ja por vlerësuesi i akorduar i Mahalanobis-it me AP 0.664."""),
+    tab(
+        "ensemble_summary_tuned",
+        "Variantet e ansamblit kur anëtarët janë të akorduar. Modeli më i mirë individual "
+        "në këtë regjim është Mahalanobis me AP 0.664.",
+        columns=[
+            "pool",
+            "combiner",
+            "ap_mean",
+            "ap_std",
+            "vs_best_single",
+            "fold_wins_vs_best_single",
+        ],
+        rename={
+            "pool": "Bashkësia e anëtarëve",
+            "combiner": "Rregulla",
+            "ap_mean": "AP",
+            "ap_std": "s.d.",
+            "vs_best_single": "Δ ndaj më të mirit",
+            "fold_wins_vs_best_single": "Folds të fituara",
+        },
+        round={"ap_mean": 4, "ap_std": 4, "vs_best_single": 4},
+        font_size=9.0,
+    ),
+    p("""Përfundimi jo vetëm që qëndron, por forcohet. Në regjimin e akorduar hendeku mes
+      ansamblit më të mirë dhe modelit më të mirë individual zgjerohet nga 0.005 në 0.055
+      njësi AP, dhe asnjë variant nuk fiton në më shumë se një fold nga tetë. Arsyeja
+      është e njëjtë me atë të mëparshmen, vetëm më e theksuar: sa më i fortë të jetë
+      anëtari kryesues në raport me të tjerët, aq më shumë e dëmton mesatarizimi. Kur
+      Mahalanobis-i i akorduar arrin 0.664 ndërsa mesatarja e anëtarëve të tjerë qëndron
+      shumë më poshtë, çdo kombinim që u jep atyre peshë e ul rezultatin."""),
+    h3("5.3.4", "Përgjigjja për PH3"),
+    p("""Përgjigjja është negative, dhe ajo qëndron nën të dy regjimet e hiperparametrave:
+      në këtë problem qasja ensemble nuk e përmirëson zbulimin krahasuar me modelin më të
+      mirë individual. Përzgjedhja e
       kujdesshme e anëtarëve e afron ansamblin deri në barazim, ndërsa kombinimi i verbër
       e përkeqëson rezultatin ndjeshëm. Shkaku është i matur dhe jo hipotetik: anëtarët
       janë të korreluar dhe u mungon diversiteti që mesatarizimi kërkon."""),

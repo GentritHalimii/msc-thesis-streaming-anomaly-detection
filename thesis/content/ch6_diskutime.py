@@ -46,9 +46,11 @@ _SINTEZA = [
             "Referenca e mbikëqyrur mbetet dukshëm përpara, me precizion mesatar 0.720 "
             "kundrejt 0.449 të metodës më të mirë të pambikëqyrur, duke fituar në të tetë "
             "folds-at.",
-            "Qasja ensemble nuk e përmirëson zbulimin në asnjë nga njëmbëdhjetë variantet e "
-            "testuara. Përzgjedhja prekuenciale e anëtarëve arrin barazim me modelin më të "
-            "mirë individual; kombinimi i verbër është dukshëm më i keq.",
+            "Qasja ensemble nuk e përmirëson zbulimin në asnjë nga njëmbëdhjetë variantet "
+            "e testuara, dhe kjo qëndron si me hiperparametra të parazgjedhur ashtu edhe me "
+            "të akorduar. Përzgjedhja prekuenciale e anëtarëve arrin barazim me modelin më "
+            "të mirë individual në regjimin e parazgjedhur dhe mbetet 0.055 njësi AP prapa "
+            "në atë të akorduar; kombinimi i verbër është dukshëm më i keq në të dyja.",
             "Degradimi me kalimin e kohës vjen nga ndryshimi i popullatës së mashtrimeve, jo "
             "nga vjetërsimi i modelit të normalitetit. Indeksi i stabilitetit të popullatës "
             "është 3.22 për mashtrimet kundrejt 0.14 për transaksionet normale.",
