@@ -189,16 +189,27 @@ def add_heading(doc: Document, text: str, level: int, number: str | None = None)
 
 
 def add_bullets(doc: Document, items: list[str], numbered: bool = False):
-    for item in items:
-        para = doc.add_paragraph(style="List Number" if numbered else "List Bullet")
+    """Bulleted or numbered list.
+
+    Numbers are written literally rather than through Word's List Number
+    style. That style keeps a single counter for the whole document, so the
+    second list in a chapter carries on from where the first stopped — the
+    fifth list started at sixteen in an early draft. Literal numbering with a
+    hanging indent gives the same appearance and always starts at one.
+    """
+    for index, item in enumerate(items, start=1):
+        para = doc.add_paragraph()
         para.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
         pf = para.paragraph_format
         pf.line_spacing = LINE_SPACING
-        pf.space_after = Pt(3)
-        pf.left_indent = Cm(1.0)
-        run = para.add_run(item)
+        pf.space_after = Pt(4)
+        pf.left_indent = Cm(1.6)
+        pf.first_line_indent = Cm(-0.8)
+        marker = f"{index}." if numbered else "•"
+        run = para.add_run(f"{marker}\t{item}")
         run.font.name = BODY_FONT
         run.font.size = BODY_SIZE
+        pf.tab_stops.add_tab_stop(Cm(1.6))
 
 
 def add_caption(doc: Document, text: str, *, above: bool = False):
@@ -226,16 +237,21 @@ def add_figure(doc: Document, image_path: Path, caption: str, width_cm: float = 
 
 
 def add_equation(doc: Document, expression: str, number: int):
-    """Equations are centred with a right-aligned number, per the template."""
+    """Centred equation with a right-aligned number, per the template.
+
+    The tab stops must be a genuine CENTER stop and a genuine RIGHT stop. With
+    the default left-aligned stops the expression starts at the centre of the
+    line and overruns the margin, and the number is pushed onto a line of its
+    own — which is what a first draft of this document did.
+    """
     para = doc.add_paragraph()
     pf = para.paragraph_format
     pf.line_spacing = LINE_SPACING
-    pf.space_before = Pt(8)
-    pf.space_after = Pt(8)
-    # tab stops: centre for the formula, right edge for the number
-    tabs = pf.tab_stops
-    tabs.add_tab_stop(Cm(7.5))
-    tabs.add_tab_stop(Cm(15.5))
+    pf.space_before = Pt(10)
+    pf.space_after = Pt(10)
+    pf.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    pf.tab_stops.add_tab_stop(Cm(TEXT_WIDTH_CM / 2), WD_TAB_ALIGNMENT.CENTER)
+    pf.tab_stops.add_tab_stop(Cm(TEXT_WIDTH_CM), WD_TAB_ALIGNMENT.RIGHT)
     run = para.add_run(f"\t{expression}\t({number})")
     run.font.name = BODY_FONT
     run.font.size = BODY_SIZE

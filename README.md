@@ -1,184 +1,128 @@
-# Streaming Anomaly Detection on Simulated Financial Transaction Streams
+# Zbulimi i anomalive në rrjedha të simuluara transaksionesh financiare
 
-M.Sc. thesis prototype: anomaly detection on a simulated credit-card
-transaction stream using Apache Kafka and unsupervised machine learning
-(Isolation Forest, Autoencoder, One-Class SVM), against a supervised
-Logistic Regression reference. Research code for a controlled experiment —
-not a production fraud system.
+Implementimi teknik i punimit të diplomës së masterit *"Zbulimi i Anomalive në Rrjedha të
+Simuluara të Transaksioneve Financiare duke përdorur Apache Kafka dhe Unsupervised Machine
+Learning: Studim Rasti me Transaksione të Kartave të Kreditit"* (UBT, Shkenca Kompjuterike
+dhe Inxhinieri).
 
-## Dataset (not committed)
+Ky është një prototip kërkimor në një mjedis të kontrolluar: të dhëna historike reale
+riprodhohen në rend kronologjik për të simuluar një rrjedhë. Nuk është një sistem prodhimi.
 
-Kaggle / ULB "Credit Card Fraud Detection": 284,807 transactions, 492 frauds
-(0.172%), columns `Time`, `V1..V28` (PCA-transformed), `Amount`, `Class`.
+---
 
-1. Download from <https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud>
-2. Place the CSV at `data/raw/creditcard.csv`
+## Çfarë përmban
 
-## Quickstart
+| Komponenti | Përshkrimi |
+|---|---|
+| **14 detektorë të pambikëqyrur** | gjashtë familje: izolim, kufi vendimi, afërsi, rindërtim, densitet, statistikore |
+| **1 referencë e mbikëqyrur** | Regresion Logjistik, i etiketuar gjithmonë si kufi i sipërm, jo si konkurrent |
+| **Protokoll rolling-origin** | 8 pika kohore prerjeje; çdo fold rindërton skalimin, modelet dhe pragjet nga fillimi |
+| **Pipeline streaming** | Apache Kafka (KRaft) → pikëzim → topic `alerts` → PostgreSQL → Grafana |
+| **Prag adaptiv** | kuantil me dritare rrëshqitëse, shkakësor, në konsumator |
+| **Punimi** | dokument Word në shqip, i gjeneruar nga rezultatet (`make thesis`) |
 
-```bash
-make setup                 # installs uv-managed venv (Python 3.12, pinned lockfile)
-make test                  # unit tests (no docker needed)
-make train                 # fit all models, save artifacts to results/artifacts/
-make evaluate              # offline experiments 1,2,3,5 -> results/*.csv/.tex, figures/
-uv run python -m experiments.exp4_ensemble        # experiment 4 (ensembles)
+## Rezultatet kryesore
 
-docker compose -f docker/docker-compose.yml up -d # Kafka (KRaft) + Postgres
-make test-integration      # offline≈streaming parity + postgres round-trip
-make stream                # latency sweep: models x {50,200,1000} msg/s
-make latency-report        # aggregate -> results/latency_summary.*, figures
-```
+- **Vonesa**: mesatarja fund-më-fund 28–85 ms në të gjitha ritmet e testuara, rreth një rend
+  madhësie nën objektivin prej 1 s. Ngopja arrihet rreth **2,400 msg/s** me një konsumator.
+- **Cilësia e zbulimit** (AP mbi 8 folds): referenca e mbikëqyrur 0.720; më i miri i
+  pambikëqyrur Deep SVDD 0.449; Isolation Forest 0.091 (i 13-ti nga 14).
+- **Ansambli**: rezultat negativ — asnjë nga 11 variantet nuk e tejkalon modelin më të mirë
+  individual; shkaku është korrelacioni i lartë mes anëtarëve.
+- **Protokolli**: ndarja e rastësishme e fryn AP-në e metodave të pambikëqyrura **2.74×**
+  mesatarisht, ndërsa referencën e mbikëqyrur nuk e ndihmon.
+- **Zhvendosja**: PSI 3.22 për popullatën e mashtrimeve kundrejt 0.14 për atë normale — nuk
+  vjetërsohet modeli i normalitetit, ndryshojnë vetë mashtrimet.
+- **Interpretueshmëria**: përputhja e vëmendjes së modelit me sinjalin realisht diskriminues
+  (ρ = 0.75 / 0.50 / 0.02 për AE / OCSVM / IForest) parashikon renditjen e cilësisë.
+- **Pragu adaptiv**: F1 mesatar 0.128 → 0.169, me ngarkesë hetimore dukshëm më të
+  qëndrueshme.
 
-Kafka binds host port **19092** and Postgres **15432** (9092/5432 left free
-for other local stacks). Grafana (OSS, free) binds **3000**.
+---
 
-## Grafana monitoring (optional)
+## Dataset-i (nuk përfshihet në depo)
 
-`docker compose -f docker/docker-compose.yml up -d` also starts Grafana OSS
-with a fully provisioned Postgres datasource and dashboard — no manual
-clicks. Open <http://localhost:3000/d/sad-anomaly> (anonymous viewer access;
-admin/admin to edit). Panels: scoring throughput and alerts over time per
-model (thesis figure colors), pooled e2e latency p50/p95/p99 with the 1 s
-target line, inference latency p95 per model, headline stat tiles, and a
-live table of the latest alerts. Data appears when a streaming run persists
-to Postgres:
+Kaggle / ULB *Credit Card Fraud Detection*: 284,807 transaksione, 492 mashtrime (0.172%).
 
-```bash
-make stream-store          # the latency sweep, persisted
-# or a quick demo run:
-uv run python -m experiments.run_streaming --models autoencoder --rates 200 --max-messages 4000 --store
-```
+1. Shkarko nga <https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud>
+2. Vendose në `data/raw/creditcard.csv`
 
-## Methodology — the decisions an examiner will probe
-
-**Chronological, leakage-free split.** Rows are sorted by `Time` (stable
-sort) and split 70/30 *by time order* — never shuffled. With seed-fixed
-config this yields 199,364 training transactions (384 frauds, 0.193%) and
-85,443 test transactions (108 frauds, 0.126%). Unsupervised models train on
-training-window **normals only**. The `StandardScaler` is fit on the
-training window only; `tests/test_leakage.py` asserts its statistics equal
-the train-window moments and are untouched by test data. `Time` itself is
-not a model feature — it orders the stream and defines the split.
-
-**The Logistic Regression baseline is a supervised *reference*, not a
-peer.** LR is trained on the full training window *including its labels*
-(the 384 frauds that naturally fall there). It answers "what would
-label-supervised learning achieve on the same split?" — an upper bound under
-label availability. Every table labels it as a reference; it is excluded
-from the ensemble.
-
-**Thresholds never touch the test set.** Primary protocol: each model's
-alert threshold is the `(1 − contamination)` percentile of its
-**training-score** distribution. `contamination` is a hyperparameter
-(default: the fraud rate observed in the *training* window, 0.00193 — a
-statistic using training labels only, the same availability assumption
-already granted to the LR reference; experiment 2 sweeps it so no conclusion
-depends on the default). Tables additionally report metrics at the **oracle
-best-F1 threshold on test**, clearly labelled, as an upper bound only — the
-two never share a column.
-
-**Primary metric is Average Precision (PR-AUC).** At 0.126% test positives,
-accuracy and ROC-AUC are misleading; ROC-AUC is still reported with that
-caveat. F1/precision/recall are reported at both threshold protocols.
-
-**One-Class SVM subsampling.** Exact kernel OCSVM is O(n²⁺) in training
-size and infeasible on ~199k rows; it trains on a seeded random subsample
-of 20,000 training-window normals (config `models.ocsvm.train_subsample`).
-
-**Latency is measured under a synthetic arrival process.** The producer
-replays the test window at a *constant configured rate* (50/200/1000 msg/s —
-the dataset's real ~14 h test span is compressed accordingly), embedding a
-wall-clock producer timestamp per message (single host; no clock skew).
-The consumer logs, per message: **inference latency** (model forward pass
-only) and **end-to-end latency** (producer timestamp → after alert
-publish), reported as p50/p95/p99 + mean — never just the mean. Any
-"sub-second" claim in the thesis is qualified with the replay rate used.
-
-**Offline ≈ streaming reconciliation.** Both modes load the same saved
-scaler and model artifacts and call the same `score()` code;
-`tests/test_parity.py` replays test transactions through the dockerized
-broker and asserts streaming scores match offline scores row-for-row.
-
-## Architecture
-
-```
-CSV (chronological replay) -> Kafka `transactions` -> consumer:
-    scale (train-fit scaler) -> model.score() -> threshold
-        -> Kafka `alerts` + per-message latency CSV + Postgres
-```
-
-- **Offline evaluation mode** (no Kafka): deterministic batch scoring of the
-  test window; source of all detection metrics. Fast to iterate.
-- **Streaming mode** (Kafka replay): source of all operational metrics
-  (latency distributions, throughput, CPU/RSS).
-
-Kafka runs in KRaft mode (no ZooKeeper), single broker, via docker compose.
-Apache Kafka rather than Redpanda because the thesis names Kafka; a
-single-broker KRaft compose service costs little more. Messages are JSON:
-debuggable, and Python floats round-trip exactly, which makes bit-exact
-parity checks possible. PostgreSQL persists all scored events and alerts
-(tables `scored_events`, `alerts`, keyed by `run_tag`).
-
-Every model implements `fit / score / save / load` with **higher score =
-more anomalous** (`src/models/base.py`), so the evaluation harness, the
-ensemble, and the consumer stay generic.
-
-## Experiments → artifacts (all under `results/`)
-
-| # | Script | Artifacts |
-|---|--------|-----------|
-| 1 | `experiments/exp1_main_table.py` | `metrics_main.csv/.tex` — AP, ROC-AUC, P/R/F1 at percentile & oracle thresholds, fit time, memory, inference latency |
-| 2 | `experiments/exp2_contamination_sweep.py` | `contamination_sweep.csv/.tex`, `figures/sweep_*.pdf/png` |
-| 3 | `experiments/exp3_curves.py` | `figures/pr_curves.*`, `figures/roc_curves.*` |
-| 4 | `experiments/exp4_ensemble.py` | `metrics_ensemble.csv/.tex`, `ensemble_verdict.txt`, `figures/pr_curves_with_ensembles.*` |
-| 5 | `experiments/exp5_ae_ablation.py` | `ae_ablation.csv/.tex` |
-| — | `experiments/run_streaming.py` + `latency_report.py` | `latency/latency_*.csv`, `latency_summary.csv/.tex`, `figures/latency_vs_rate.*` |
-
-Ensembles (score-averaged and majority-vote over IF+AE+OCSVM, statistics
-from training scores only): **negative result** — on this chronological
-split neither variant beats the best single model (the autoencoder). See
-`results/ensemble_verdict.txt`; the thesis reports this as a finding, not a
-failure.
-
-Every experiment writes `results/manifest_<run>.json` with git SHA, config
-hash, package versions, timestamps, and hardware — every number in the
-thesis is traceable to a manifest.
-
-## Honest-results notes
-
-- Detection quality on the chronological split is much lower than the
-  shuffled-split numbers common in the literature for this dataset (train-
-  window AP 0.17–0.49 vs test-window AP 0.03–0.14). The cause is measurable,
-  not a vague "drift" (see `experiments/diag_window_shift.py` →
-  `results/window_shift.csv`): the *fraud population* differs between
-  windows while the normals barely move (median train-scaled ‖z‖ of normals
-  4.16 → 4.25). Test-window frauds sit far closer to the normal manifold
-  (fraud ‖z‖ median 14.5 vs 18.9; p90 18.9 vs **42.7**), and a model-free
-  detector (score = ‖z‖) drops from AP 0.21 (train window) to 0.04 (test
-  window) — the second day's frauds are intrinsically harder for ANY
-  proximity/density method. `Time` is not an input feature (asserted in
-  tests), so this is not a scaling artifact.
-- The supervised LR reference (AP ≈ 0.77) dominates all unsupervised
-  models, as expected when labels are available.
-
-## Repo layout
-
-```
-config/            # single YAML: paths, seed, split, contamination, hyperparams
-src/data/          # load, chronological split, train-only scaling
-src/models/        # iforest, autoencoder, ocsvm, logreg (reference), ensemble
-src/streaming/     # producer (rate-controlled replay), consumer, JSON serde
-src/evaluation/    # metrics, thresholds, harness, report (CSV/LaTeX/figures)
-src/storage/       # postgres sink
-experiments/       # one runnable script per experiment
-tests/             # leakage, split, model contracts, serde, parity, storage
-docker/            # kafka (KRaft) + postgres compose
-results/           # generated artifacts (gitignored)
-```
-
-## Tests
+## Si të riprodhohet
 
 ```bash
-make test              # unit: split/leakage/model contracts/threshold math/serde
-make test-integration  # parity (offline==streaming) + postgres round-trip
+make setup              # mjedis uv me Python 3.12 dhe lockfile të fiksuar
+make test               # teste njësi: rrjedhja e informacionit, protokolli, metrikat
+make train              # përshtat 15 modelet mbi ndarjen 70/30
+make protocol           # 8 folds x 15 modele — hapi më i shtrenjtë (~30 min)
+make tune               # kërkim Optuna mbi ndarje të brendshme kohore
+make protocol-tuned     # ri-ekzekuton protokollin me hiperparametrat e akorduar
+make evaluate           # të gjitha tabelat dhe figurat nga pikët e ruajtura
+make thesis             # gjeneron punimin .docx nga results/
+
+docker compose -f docker/docker-compose.yml up -d
+make test-integration   # pariteti offline≈streaming + PostgreSQL
+make stream             # skanimi i vonesës: modele × ritme
+make stream-adaptive    # i njëjti skanim me prag adaptiv
+make latency-report
 ```
+
+Kafka lidhet në portën **19092**, PostgreSQL në **15432** dhe Grafana në **3000**
+(9092/5432 lihen të lira për stack-e të tjera lokale).
+
+---
+
+## Metodologjia që një komision do ta shqyrtojë
+
+**Ndarje kronologjike, pa përzierje.** Renditje e qëndrueshme sipas `Time`; asnjë rresht i
+testimit nuk paraprin një rresht trajnimi. Modelet e pambikëqyrura shohin vetëm transaksione
+normale të dritares së trajnimit.
+
+**`Time` nuk është veçori hyrëse.** Ajo rendit rrjedhën dhe përcakton ndarjen. Po të ishte
+veçori, në një ndarje kronologjike çdo pikë testimi do të merrte një z-vlerë ekstreme në atë
+dimension dhe do të prishte çdo detektor të bazuar në distancë. E verifikuar me test.
+
+**Rolling-origin me 8 folds.** Numri nuk është i rrumbullakët: me N folds p-vlera më e vogël
+e arritshme nga Wilcoxon-i është 2/2^N, pra N=6 jep 0.031 dhe nuk mbijeton Holm-in; me më
+shumë folds disa blloqe bien nën 10 pozitivë. Me N=8 çdo bllok mban ≥13 pozitivë dhe p-vlera
+e arritshme është 0.0078.
+
+**Pragjet nuk e prekin kurrë testin.** Pragu parësor është percentili (1−c) i pikëve të
+trajnimit. Pragu orakull (best-F1 mbi test) raportohet vetëm si kufi i sipërm, gjithmonë në
+kolonë të veçantë.
+
+**Metrika parësore është AP.** Me 0.17% pozitivë, ROC-AUC mashton: në këto rezultate një
+detektor me AP 0.09 arrin ROC-AUC 0.94.
+
+**Referenca e mbikëqyrur nuk është konkurrent.** LR trajnohet me etiketat e dritares së
+trajnimit dhe raportohet si kufi i sipërm nën disponueshmëri etiketash.
+
+**Vonesa matet nën ritëm sintetik.** Prodhuesi niset vetëm pasi konsumatori ka marrë
+caktimin e particioneve; pa këtë sinkronizim bishti i shpërndarjes ndotet nga koha e nisjes.
+
+## Struktura e depos
+
+```
+config/        një YAML: seed, ndarja, protokolli, hiperparametrat, Kafka, PostgreSQL
+src/data/      lexim, ndarje kronologjike, skalim i fituar vetëm mbi trajnimin
+src/models/    një modul për familje, të gjithë pas fit/score/save/load
+src/evaluation/protokolli, metrikat, kostoja, EM/MV, statistikat, zhvendosja, kombinimi
+src/streaming/ prodhuesi, konsumatori (prag statik ose adaptiv), serializimi
+src/storage/   PostgreSQL
+experiments/   një skript për eksperiment; asnjë logjikë modelimi
+tests/         rrjedhja, protokolli, kontrata e modeleve, metrikat, integrimi
+docker/        Kafka (KRaft) + PostgreSQL + Grafana i provizionuar nga skedarë
+thesis/        gjeneruesi i punimit .docx nga rezultatet
+```
+
+## Monitorimi me Grafana
+
+`docker compose up -d` ngre edhe Grafana OSS me burimin e të dhënave dhe panelin të
+provizionuar nga depo. Hape te <http://localhost:3000/d/sad-anomaly>. Të dhënat shfaqen pas
+një ekzekutimi me `--store`.
+
+## Shënime mbi ndershmërinë e rezultateve
+
+Vlerat e raportuara janë më të ulëta se shumica e punimeve mbi këtë dataset. Kjo është e
+qëllimshme dhe e shpjeguar: `results/protocol_inflation.csv` mat drejtpërdrejt sa i fryn
+rezultatet ndarja e rastësishme. Rezultati negativ i ansamblit raportohet ashtu siç doli,
+së bashku me shpjegimin e tij.

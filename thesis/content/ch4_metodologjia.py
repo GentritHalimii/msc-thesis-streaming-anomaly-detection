@@ -142,7 +142,7 @@ _PROTOKOLLI = [
       përsëritet në tetë pika të njëpasnjëshme prerjeje me dritare trajnimi që zgjerohet,
       sipas skemës rolling-origin të konsoliduar në literaturën e parashikimit
       [@tashman2000], [@bergmeir2012] dhe të vlerësimit prekuencial [@gama2013]."""),
-    eq("Fold i:  trajno mbi rreshtat [0, c_i),  testo mbi [c_i, c_{i+1})"),
+    eq("Fold i:  trajnim [0, c_i),   testim [c_i, c_{i+1})"),
     p("""Pikat e prerjes c_i ndajnë pjesën e rrjedhës pas 40 për qindëshit fillestar në
       tetë blloqe të barabarta sipas numrit të rreshtave. Çdo fold rindërton nga fillimi
       të gjithë zinxhirin: skaluesin e vet, modelet e veta dhe pragjet e veta. Asgjë nuk
@@ -260,7 +260,7 @@ _PRAGU = [
     h3("4.4.1", "Pragu nga percentili i trajnimit"),
     p("""Protokolli parësor e nxjerr pragun nga percentili (1 − c) i shpërndarjes së pikëve
       mbi dritaren e trajnimit:"""),
-    eq("τ = Quantile_{1−c}( { s(x) : x ∈ dritarja e trajnimit } )"),
+    eq("τ = Kuantili_{1−c} { s(x) : x ∈ D_trajnim }"),
     p("""ku c është hiperparametri i kontaminimit. Në mungesë të një vlere të caktuar,
       c merret i barabartë me normën e mashtrimit të vëzhguar në dritaren e trajnimit.
       Kjo përdor etiketa vetëm nga e kaluara — i njëjti supozim i disponueshmërisë që i
@@ -308,7 +308,7 @@ _PRAGU = [
     p("""Kursimet neto llogariten sipas një modeli kostoje të thjeshtë dhe të deklaruar:
       një mashtrim i kapur kursen shumën e tij, ndërsa çdo alarm i ngritur, i vërtetë apo
       i rremë, kushton një hetim:"""),
-    eq("Kursimi(k) = Σ_{i ∈ TP(k)} shuma_i − c_het · |Alarme(k)|"),
+    eq("Kursimi(k) = Σ_{i∈TP(k)} shuma_i − c_het · |Alarme(k)|"),
     p("""Normalizimi bëhet ndaj detektorit të përsosur, i cili kap çdo mashtrim duke
       ngritur saktësisht aq alarme sa ka mashtrime. Kostoja e hetimit vendoset në tre
       euro; ndjeshmëria ndaj kësaj zgjedhjeje diskutohet në Kapitullin 6."""),
@@ -332,7 +332,7 @@ _PRAGU = [
     p("""Rruga e dytë nuk përdor fare etiketa. Kriteret Excess-Mass dhe Mass-Volume
       vlerësojnë sa mirë grupet e nivelit të një funksioni pikëzimi e përqendrojnë masën
       probabilitare në vëllim të vogël [@goix2015], [@goix2016]:"""),
-    eq("EM(t) = sup_u [ P(s ≥ u) − t · Leb(s ≥ u) ],   MV(α) = Leb(s ≥ u_α)  ku P(s ≥ u_α) = α"),
+    eq("EM(t) = sup_u [ P(s≥u) − t·Leb(s≥u) ];   MV(α) = Leb(s≥u_α)"),
     p("""Vlerësimi i masës Lebesgue me Monte Carlo është i pamundur në njëzet e nëntë
       dimensione, prandaj ndiqet zgjidhja e rekomanduar: kriteret mesatarizohen mbi
       nënhapësira të rastësishme me dimension të ulët, ku detektori ripërshtatet në secilën

@@ -108,7 +108,26 @@ def load_table(csv_name: str, options: dict) -> pd.DataFrame:
         df = df.rename(columns=options["rename"])
     if "max_rows" in options:
         df = df.head(options["max_rows"])
-    return df.reset_index(drop=True)
+    return _tidy_integers(df.reset_index(drop=True), options.get("round", {}))
+
+
+def _tidy_integers(df: pd.DataFrame, rounded: dict) -> pd.DataFrame:
+    """Render whole numbers as whole numbers.
+
+    Counts survive the CSV round trip as floats, so a fold index prints as
+    "0.0" and a row count as "113922.0". Any numeric column whose values are
+    all integral, and which was not explicitly asked to keep decimals, is
+    converted back to an integer.
+    """
+    for col in df.columns:
+        if col in rounded and rounded[col] > 0:
+            continue
+        series = df[col]
+        if series.dtype.kind != "f" or series.isna().any():
+            continue
+        if ((series - series.round()).abs() < 1e-9).all():
+            df[col] = series.round().astype("int64")
+    return df
 
 
 def collect_outline(chapters: list[list]) -> list[tuple[int, str]]:
