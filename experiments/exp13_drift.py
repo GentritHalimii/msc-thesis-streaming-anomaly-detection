@@ -11,7 +11,12 @@ import pandas as pd
 
 from src.config import REPO_ROOT, load_config
 from src.data.load import FEATURE_COLUMNS, load_transactions
-from src.evaluation.drift import feature_drift, page_hinkley, separability
+from src.evaluation.drift import (
+    calibrate_page_hinkley,
+    feature_drift,
+    page_hinkley,
+    separability,
+)
 from src.evaluation.manifest import write_manifest
 from src.evaluation.protocol import load_folds, rolling_origin_folds
 from src.evaluation.report import AX, MODEL_LABELS, new_figure, save_figure, save_table
@@ -126,27 +131,48 @@ def main(cfg=None):
     save_figure(fig, REPO_ROOT / cfg.results_dir, "drift_separability")
 
     # --- Unsupervised monitoring: could a change detector have noticed? ---
+    # The threshold is calibrated per fold and per model against a reference
+    # stream drawn from that model's TRAINING score distribution, which by
+    # construction contains no change point. A fixed threshold would be
+    # meaningless: the Page-Hinkley statistic scales with block length, so a
+    # value that is silent over one block fires constantly over a longer one.
     fs = load_folds(results_dir, cfg.protocol.n_folds)
+    rng = np.random.default_rng(cfg.seed)
     monitor_rows = []
     for i, fold_scores in enumerate(fs):
-        for name in ("iforest", "autoencoder", "ocsvm"):
+        for name in ("iforest", "autoencoder", "ocsvm", "deep_svdd"):
             if name not in fold_scores.models:
                 continue
-            s = fold_scores.test_scores(name)
-            s = (s - s.mean()) / (s.std() or 1.0)
-            cps = page_hinkley(s, delta=0.01, threshold=50.0)
+            test_scores = fold_scores.test_scores(name)
+            grid = fold_scores.train_quantiles(name)
+            reference = np.interp(
+                rng.uniform(size=len(test_scores)), np.linspace(0.0, 1.0, len(grid)), grid
+            )
+            centre = float(reference.mean())
+            spread = float(reference.std()) or 1.0
+            threshold = calibrate_page_hinkley(
+                (reference - centre) / spread, delta=0.01, n_permutations=25
+            )
+            cps = page_hinkley((test_scores - centre) / spread, delta=0.01, threshold=threshold)
             monitor_rows.append(
                 {
                     "fold": i,
                     "model": name,
+                    "threshold": threshold,
                     "n_change_points": len(cps),
                     "first_change_index": cps[0] if cps else np.nan,
-                    "block_size": len(s),
+                    "detected_at_fraction": (cps[0] / len(test_scores)) if cps else np.nan,
+                    "block_size": len(test_scores),
                 }
             )
     monitor = pd.DataFrame(monitor_rows)
     monitor["model"] = monitor["model"].map(lambda m: MODEL_LABELS.get(m, m))
-    save_table(monitor, results_dir, "drift_page_hinkley", float_fmt="%.1f")
+    save_table(monitor, results_dir, "drift_page_hinkley", float_fmt="%.3f")
+    detected = monitor["n_change_points"] > 0
+    print(
+        f"\nPage-Hinkley: sinjal zhvendosjeje në {int(detected.sum())} nga "
+        f"{len(monitor)} kombinime fold-model (prag i kalibruar për secilin)."
+    )
 
     write_manifest(results_dir, "exp13_drift", cfg.raw)
     print("\nMesatarja mbi fold-et:")

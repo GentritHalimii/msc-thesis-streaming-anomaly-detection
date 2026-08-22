@@ -98,13 +98,64 @@ def separability(
     return out
 
 
+def page_hinkley_statistic(values: np.ndarray, delta: float = 0.005) -> np.ndarray:
+    """Running Page-Hinkley excursion, without resetting.
+
+    Accumulates how far the values drift above their running mean, minus a
+    tolerance `delta`, and reports the excess over the running minimum. This
+    is the quantity a change detector thresholds.
+    """
+    n = len(values)
+    out = np.empty(n, dtype=float)
+    mean = 0.0
+    cumulative = 0.0
+    minimum = 0.0
+    for i, x in enumerate(values, start=1):
+        mean += (x - mean) / i
+        cumulative += x - mean - delta
+        minimum = min(minimum, cumulative)
+        out[i - 1] = cumulative - minimum
+    return out
+
+
+def calibrate_page_hinkley(
+    reference: np.ndarray,
+    delta: float = 0.005,
+    quantile: float = 0.99,
+    n_permutations: int = 60,
+    seed: int = 42,
+) -> float:
+    """Threshold calibrated on data believed to contain no change point.
+
+    A fixed threshold is not transferable: the Page-Hinkley statistic on pure
+    noise grows roughly with the square root of the stream length, so a value
+    that is silent over one thousand samples fires constantly over fifty
+    thousand. Calibrating on the training window turns the threshold into an
+    explicit false-alarm budget instead of a magic number.
+
+    Calibrating on a single pass is not enough either — one reference
+    realisation can happen to produce an unusually small maximum, and the
+    resulting threshold then fires on perfectly ordinary data. Under the null
+    hypothesis of no change the reference is exchangeable, so its order can be
+    permuted: this samples the distribution of the maximum statistic and the
+    threshold is taken as a high quantile of that distribution.
+    """
+    values = np.asarray(reference, dtype=float)
+    rng = np.random.default_rng(seed)
+    maxima = [page_hinkley_statistic(values, delta).max()]
+    for _ in range(max(n_permutations - 1, 0)):
+        maxima.append(page_hinkley_statistic(rng.permutation(values), delta).max())
+    return float(np.quantile(maxima, quantile))
+
+
 def page_hinkley(values: np.ndarray, delta: float = 0.005, threshold: float = 50.0) -> list[int]:
     """Page-Hinkley change points on a stream of scalars.
 
     A cheap, single-pass detector: it accumulates how far the running values
     drift above their running mean and fires when that excess exceeds
-    `threshold`. Used here on the stream of anomaly scores to ask whether a
-    monitor with no access to labels could have noticed the shift on its own.
+    `threshold`, then restarts. Used here on the stream of anomaly scores to
+    ask whether a monitor with no access to labels could have noticed the
+    shift on its own. Use `calibrate_page_hinkley` to pick `threshold`.
     """
     changes: list[int] = []
     mean = 0.0
