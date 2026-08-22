@@ -138,7 +138,8 @@ def main(cfg=None):
             }
         )
     omnibus = pd.DataFrame(rows)
-    save_table(omnibus, results_dir, "significance_omnibus")
+    # %.4f would round a p-value of 2e-08 to zero on the way to disk.
+    save_table(omnibus, results_dir, "significance_omnibus", float_fmt="%.6g")
     print(omnibus.to_string(index=False))
 
     critical_difference_diagram(

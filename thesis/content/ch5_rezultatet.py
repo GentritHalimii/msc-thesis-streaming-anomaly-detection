@@ -775,7 +775,83 @@ _ANALIZA = [
       Forest-in, i cili tashmë ishte i ngadalshëm, rillogaritja periodike e kuantilit e
       rriti bishtin nga 109.6 në 166.5 milisekonda. Pra kostoja varet nga sa i lirë është
       modeli bazë."""),
-    h3("5.4.5", "Ndjeshmëria ndaj kontaminimit dhe ablacioni i autoenkoderit"),
+    h3("5.4.5", "Akordimi i hiperparametrave dhe qëndrueshmëria e renditjes"),
+    p("""Të gjitha rezultatet e mësipërme u prodhuan me hiperparametrat e parazgjedhur, të
+      marrë nga vlerat e rekomanduara në literaturën origjinale të secilit algoritëm. Kjo
+      është zgjedhja e zakonshme në krahasime të gjera, por ajo lë hapur një kundërshtim
+      të drejtë: ndoshta ndonjë detektor renditet keq thjesht sepse nuk u akordua. Prandaj
+      u krye një kërkim me njëzet e pesë prova për secilin nga dymbëdhjetë detektorët e
+      akordueshëm, mbi një ndarje të brendshme kohore të dritares së trajnimit, dhe pastaj
+      i gjithë protokolli me tetë folds u rikryesua nga fillimi me konfigurimet
+      fituese."""),
+    p("""Rezultati ka dy anë, dhe e dyta është më e rëndësishme se e para."""),
+    tab(
+        "tuning_effect",
+        "Efekti i akordimit të hiperparametrave mbi precizionin mesatar në blloqet e "
+        "testimit. Kolona e parafundit tregon përmirësimin e matur në validimin e "
+        "brendshëm, ku u bë përzgjedhja.",
+        rename={
+            "AP_default": "AP (parazgjedhje)",
+            "AP_i_akorduar": "AP (i akorduar)",
+            "delta_test": "Δ test",
+            "delta_inner": "Δ validim i brendshëm",
+            "folds_te_permiresuara": "Folds të përmirësuara",
+        },
+        round={"AP_default": 3, "AP_i_akorduar": 3, "delta_test": 3, "delta_inner": 3},
+        font_size=9.0,
+    ),
+    p("""Ana e parë është se akordimi ndihmon, dhe ndihmon në mënyrë të qëndrueshme.
+      Precizioni mesatar përmirësohet për tetë nga dymbëdhjetë detektorët, dhe mesatarja e
+      grumbulluar mbi detektorët e akorduar rritet në të tetë folds-at pa përjashtim
+      (testi i çiftuar i Wilcoxon-it, p = 0.0078). Përmirësimet më të mëdha janë dramatike:
+      vlerësuesi robust i Mahalanobis-it kalon nga 0.088 në 0.664, pra nga i fundit në të
+      dytin, dhe detektori linear i rindërtimit me PCA nga 0.146 në 0.460."""),
+    p("""Ana e dytë është se renditja nuk mbijeton. Korrelacioni i rangjeve para dhe pas
+      akordimit është vetëm 0.168 me p-vlerë 0.6 — pra praktikisht asnjë lidhje. Detektori
+      më i mirë i pambikëqyrur ndryshon nga Deep SVDD-ja në Mahalanobis, dhe Deep SVDD-ja
+      vetë bie nga 0.449 në 0.156. Me fjalë të tjera, pyetja "cili algoritëm është më i
+      miri" ka përgjigje të ndryshme varësisht se a janë akorduar modelet apo jo, edhe kur
+      akordimi bëhet plotësisht pa parë bashkësinë e testimit."""),
+    fig(
+        "tuning_effect",
+        "Precizioni mesatar para dhe pas akordimit. Rrethi gri tregon konfigurimin e "
+        "parazgjedhur, ai me ngjyrë atë të akorduar; gjatësia e segmentit është efekti i "
+        "akordimit.",
+        14.0,
+    ),
+    p("""Rasti i Deep SVDD-së meriton shpjegim, sepse është i vetmi degradim i madh.
+      Konfigurimi fitues rriti dimensionin e përfaqësimit nga dymbëdhjetë në njëzet e tre,
+      pra afër dimensionit hyrës prej njëzet e nëntë. Me kaq pak ngjeshje, rrjeti mund t'i
+      hartojë brenda hipersferës edhe pikat që duhet të mbeteshin jashtë; kompaktësia
+      arrihet duke humbur pikërisht ndjeshmërinë që e bënte modelin të dobishëm. Validimi
+      i brendshëm e preferoi këtë konfigurim me një diferencë të vogël, 0.028, dhe ajo
+      diferencë e vogël doli të ishte zhurmë e sllicës së brendshme."""),
+    p("""Ky është rasti kufitar i një lidhjeje që përndryshe qëndron. Korrelacioni mes
+      përmirësimit të matur në validimin e brendshëm dhe atij të realizuar në blloqet e
+      testimit është 0.72 me p-vlerë 0.008: përgjithësisht, ajo që ndihmon brenda dritares
+      së trajnimit ndihmon edhe përtej saj. Por korrelacioni nuk është një, dhe rasti ku ai
+      thyhet është pikërisht modeli që ishte kryesues."""),
+    fig(
+        "tuning_transfer",
+        "Përmirësimi i matur në validimin e brendshëm kundrejt atij të realizuar në "
+        "blloqet e testimit. Vija me pika tregon transferim të përsosur; Deep SVDD-ja "
+        "është përjashtimi i vetëm i madh.",
+        13.5,
+    ),
+    p("""Përfundimi për interpretimin e gjithë këtij kapitulli është i qartë dhe duhet
+      thënë shprehimisht: përgjigjja për pyetjen e dytë hulumtuese është e kushtëzuar nga
+      protokolli i hiperparametrave. Nën vlerat e parazgjedhura, Deep SVDD-ja ofron
+      balancën më të mirë; nën akordim me validim të brendshëm, Mahalanobis-i i akorduar
+      e tejkalon atë ndjeshëm. Të dyja janë përgjigje legjitime për pyetje pak të
+      ndryshme, dhe fakti se ato ndryshojnë është vetë një gjetje: renditjet e publikuara
+      mbi këtë dataset duhen lexuar gjithmonë bashkë me protokollin e akordimit që i
+      prodhoi."""),
+    note("""Një vërejtje mbi Mahalanobis-in e akorduar: parametri fitues e çoi fraksionin
+      e mbështetjes në 0.988, pra vlerësuesi robust u kthye praktikisht në vlerësuesin
+      klasik të kovariancës. Me kontaminim prej vetëm 0.17 për qind, robustësia kushton më
+      shumë informacion sesa kursen — një shembull i mirë se si një zgjedhje e
+      arsyeshme si parazgjedhje mund të jetë e gabuar për një regjim të veçantë."""),
+    h3("5.4.6", "Ndjeshmëria ndaj kontaminimit dhe ablacioni i autoenkoderit"),
     p("""Dy analiza ndihmëse kontrollojnë nëse përfundimet varen nga zgjedhje arbitrare.
       E para skanon hiperparametrin e kontaminimit në dy urdhra madhësie; renditja e
       modeleve ruhet, ndërsa vlerat absolute të F1-shit ndryshojnë siç pritet, me maksimum

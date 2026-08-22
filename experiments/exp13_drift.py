@@ -70,11 +70,12 @@ def main(cfg=None):
 
     drift = pd.DataFrame(drift_rows)
     save_table(drift, results_dir, "drift_per_fold", float_fmt="%.4f")
+    # KS p-values here run down to 1e-300; %.4f would flatten them all to zero.
     save_table(
         pd.concat(feature_rows, ignore_index=True),
         results_dir,
         "drift_per_feature",
-        float_fmt="%.4f",
+        float_fmt="%.6g",
     )
     print(drift.to_string(index=False))
 
