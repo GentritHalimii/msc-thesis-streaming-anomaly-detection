@@ -73,6 +73,14 @@ def _em_mv_one_subspace(
     score_train = -np.asarray(anomaly_train, dtype=float)
     score_uniform = -np.asarray(anomaly_uniform, dtype=float)
     thresholds = np.unique(np.quantile(score_train, np.linspace(0.0, 1.0, 512)))
+    # EM(t) is a supremum over all real thresholds, and the empty level set —
+    # any threshold above every observed score — always contributes exactly
+    # zero. Leaving that point out of the grid lets the supremum come back
+    # negative, which is not a valid excess mass. It happens in practice: a
+    # coarse histogram model calls sparse regions normal, so the level set at
+    # the largest observed score still encloses a large volume.
+    ceiling = float(max(score_train.max(), score_uniform.max())) + 1.0
+    thresholds = np.append(thresholds, ceiling)
     mass = np.array([(score_train >= u).mean() for u in thresholds])
     volume = np.array([(score_uniform >= u).mean() * box_volume for u in thresholds])
 

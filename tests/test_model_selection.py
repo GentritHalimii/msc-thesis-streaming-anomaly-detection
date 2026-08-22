@@ -56,10 +56,31 @@ def test_em_mv_prefer_a_real_detector_over_a_random_one(gaussian_blob):
     assert good["mv_auc"] < noise["mv_auc"], "MV must penalise diffuse level sets"
 
 
-def test_em_is_non_negative(gaussian_blob):
-    """EM(t) is a supremum that always admits the empty level set, so a
-    negative value means the score convention has been flipped."""
-    r = em_mv_scores(
-        _iforest_factory(100), gaussian_blob, n_subspaces=3, subspace_dim=4, n_mc=4000, seed=2
-    )
+def _coarse_histogram_scorer(X_sub):
+    """A deliberately crude density model: it calls sparse regions normal,
+    which is exactly the case that made EM come out negative before the empty
+    level set was added to the threshold grid."""
+    edges = [np.histogram_bin_edges(X_sub[:, j], bins=3) for j in range(X_sub.shape[1])]
+    densities = [np.histogram(X_sub[:, j], bins=e, density=True)[0] for j, e in enumerate(edges)]
+
+    def score(Z):
+        total = np.zeros(len(Z))
+        for j, (e, d) in enumerate(zip(edges, densities, strict=True)):
+            idx = np.clip(np.digitize(Z[:, j], e) - 1, 0, len(d) - 1)
+            total += -np.log(np.clip(d[idx], 1e-6, None))
+        return total
+
+    return score
+
+
+@pytest.mark.parametrize(
+    "factory",
+    [_iforest_factory(100), _coarse_histogram_scorer],
+    ids=["iforest", "coarse_histogram"],
+)
+def test_em_is_non_negative(gaussian_blob, factory):
+    """EM(t) is a supremum that always admits the empty level set, so it can
+    never be negative. A negative value means either the score convention is
+    flipped or the threshold grid never reaches past the largest score."""
+    r = em_mv_scores(factory, gaussian_blob, n_subspaces=3, subspace_dim=4, n_mc=4000, seed=2)
     assert r["em_auc"] >= 0.0

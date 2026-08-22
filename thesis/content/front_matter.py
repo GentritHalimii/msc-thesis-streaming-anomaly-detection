@@ -287,9 +287,10 @@ def render_prelims(doc, outline, figures, tables, page_map) -> None:
     page_break(doc)
 
     _center(doc, "PËRMBAJTJA", size=14, bold=True, space_after=12)
+    # The outline already carries the references entry in its correct place
+    # between chapters 6 and 8, so nothing is appended here.
     for level, text in outline:
         add_toc_entry(doc, text, level, page_map.get(text))
-    add_toc_entry(doc, "7\tREFERENCAT", 1, page_map.get("7\tREFERENCAT"))
     page_break(doc)
 
     _center(doc, "LISTA E FIGURAVE", size=14, bold=True, space_after=12)

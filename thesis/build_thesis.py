@@ -230,15 +230,17 @@ def build(output: Path, page_map: dict[str, str] | None = None):
 
     page_map = page_map or {}
     numbering = Numbering()
-    body_chapters = [
+    # The template puts references at chapter 7 and appendices at chapter 8, so
+    # the appendix is rendered after the reference list, not with the body.
+    main_chapters = [
         ch1_hyrje.BLOCKS,
         ch2_literatura.BLOCKS,
         ch3_problemi.BLOCKS,
         ch4_metodologjia.BLOCKS,
         ch5_rezultatet.BLOCKS,
         ch6_diskutime.BLOCKS,
-        ch8_shtojcat.BLOCKS,
     ]
+    body_chapters = [*main_chapters, ch8_shtojcat.BLOCKS]
     first_pass(body_chapters, numbering)
 
     # Figure and table captions have to be known before the lists that
@@ -250,7 +252,12 @@ def build(output: Path, page_map: dict[str, str] | None = None):
 
     doc = new_document()
     front_matter.render_cover(doc)
-    front_matter.render_prelims(doc, collect_outline(body_chapters), dry_fig, dry_tab, page_map)
+    outline = (
+        collect_outline(main_chapters)
+        + [(1, "7\tREFERENCAT")]
+        + collect_outline([ch8_shtojcat.BLOCKS])
+    )
+    front_matter.render_prelims(doc, outline, dry_fig, dry_tab, page_map)
 
     # Body restarts page numbering at Arabic 1, per the template.
     start_new_section(doc, "decimal", start=1)
@@ -273,12 +280,12 @@ def build(output: Path, page_map: dict[str, str] | None = None):
 
     counters = {"figure": next_fig, "table": next_tab, "equation": next_eq}
 
-    for i, blocks in enumerate(body_chapters):
+    for i, blocks in enumerate(main_chapters):
         if i > 0:
             page_break(doc)
         render_blocks(doc, blocks, numbering, counters)
 
-    # References, ordered by first appearance.
+    # Chapter 7: references, ordered by first appearance.
     page_break(doc)
     add_heading(doc, "REFERENCAT", 1, "7")
     ordered = sorted(numbering.citations.items(), key=lambda kv: kv[1])
@@ -288,6 +295,10 @@ def build(output: Path, page_map: dict[str, str] | None = None):
         )
         para.paragraph_format.left_indent = __import__("docx").shared.Cm(1.2)
         para.paragraph_format.first_line_indent = __import__("docx").shared.Cm(-1.2)
+
+    # Chapter 8: appendices, after the reference list as the template requires.
+    page_break(doc)
+    render_blocks(doc, ch8_shtojcat.BLOCKS, numbering, counters)
 
     doc.save(output)
     return output, numbering, fig_no["n"], tab_no["n"], eq_no["n"]
@@ -413,12 +424,16 @@ def _all_entries(_output: Path) -> tuple[list[str], str]:
         ch6_diskutime.BLOCKS,
         ch8_shtojcat.BLOCKS,
     ]
-    headings = [text for _, text in collect_outline(chapters)]
+    headings = (
+        [text for _, text in collect_outline(chapters[:6])]
+        + ["7\tREFERENCAT"]
+        + [text for _, text in collect_outline([chapters[6]])]
+    )
     figures, tables = _scan_captions(chapters)
     # Distinctive opening sentence of the body, used to find where Arabic page
     # numbering starts in the rendered PDF.
     anchor = next(b[1] for b in ch1_hyrje.BLOCKS if b[0] == "p")
-    return headings + figures + tables + ["7\tREFERENCAT"], anchor
+    return headings + figures + tables, anchor
 
 
 if __name__ == "__main__":

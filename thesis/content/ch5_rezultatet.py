@@ -851,7 +851,72 @@ _ANALIZA = [
       klasik të kovariancës. Me kontaminim prej vetëm 0.17 për qind, robustësia kushton më
       shumë informacion sesa kursen — një shembull i mirë se si një zgjedhje e
       arsyeshme si parazgjedhje mund të jetë e gabuar për një regjim të veçantë."""),
-    h3("5.4.6", "Ndjeshmëria ndaj kontaminimit dhe ablacioni i autoenkoderit"),
+    h3("5.4.6", "A mund të akordohet pa etiketa fare"),
+    p("""Akordimi i përshkruar më sipër përdor etiketa historike në sllicën e brendshme të
+      validimit. Ky është një supozim i deklaruar dhe i njëjtë me atë të referencës së
+      mbikëqyrur, por mbetet supozim. Pyetja e fundit e këtij kapitulli është çfarë do të
+      ndodhte pa të: a mund të zgjidhen hiperparametrat me kritere që nuk shohin asnjë
+      etiketë?"""),
+    p("""Për pesë detektorë u vlerësua një rrjetë e vogël dhe e deklaruar konfigurimesh me
+      tri kritere paralelisht: AP-në në validimin e brendshëm, e cila përdor etiketa, dhe
+      kriteret Excess-Mass e Mass-Volume, të cilat nuk përdorin asnjë. Krahasimi nuk bëhet
+      mbi vlerat — ato nuk janë në të njëjtën shkallë — por mbi zgjedhjen: a bien në të
+      njëjtin konfigurim."""),
+    tab(
+        "unsupervised_selection",
+        "Konfigurimi që do të zgjidhte secili kriter, dhe kostoja e zgjedhjes pa etiketa. "
+        "Humbja relative shprehet si pjesë e hapësirës mes konfigurimit më të mirë dhe atij "
+        "më të keq në rrjetë.",
+        columns=[
+            "Detektori",
+            "Konfigurime",
+            "Zgjedhja sipas AP",
+            "Zgjedhja sipas EM",
+            "EM përputhet",
+            "Humbja relative",
+            "rho(AP, EM)",
+        ],
+        font_size=8.0,
+    ),
+    fig(
+        "unsupervised_selection",
+        "Rangu i çdo konfigurimi sipas kriterit me etiketa kundrejt rangut sipas kriterit "
+        "Excess-Mass, brenda rrjetës së secilit detektor. Vija me pika tregon përputhje "
+        "të përsosur.",
+        13.5,
+    ),
+    p("""Përgjigjja është qartësisht negative. Kriteri Excess-Mass nuk zgjedh të njëjtin
+      konfigurim si kriteri me etiketa në asnjë nga pesë detektorët, dhe Mass-Volume
+      përputhet vetëm në dy. Kur zgjedhjet ndryshojnë, humbja mesatare është rreth
+      shtatëdhjetë e shtatë për qind e hapësirës mes konfigurimit më të mirë dhe atij më
+      të keq në rrjetë — pra zgjedhja pa etiketa bie shumë më afër fundit të rrjetës sesa
+      majës së saj. Më shqetësuese ende, korrelacioni mesatar mes renditjes sipas
+      Excess-Mass-it dhe asaj sipas AP-së është negativ, rreth −0.30: në këtë problem
+      kriteri nuk është thjesht i zhurmshëm, por shpesh anon në drejtimin e gabuar."""),
+    p("""Rasti i HBOS-it e ilustron mekanizmin qartë. Duke rritur numrin e koshave nga
+      dhjetë në dyqind, kriteri Excess-Mass përmirësohet vazhdimisht, sepse histogramat më
+      të imëta i përqendrojnë grupet e nivelit në vëllim më të vogël — pikërisht ajo që
+      kriteri shpërblen. Por AP-ja bie njëkohësisht nga 0.35 në 0.22, sepse koshat e imët e
+      bëjnë modelin të mbipërshtatet ndaj strukturës së hollë të transaksioneve normale dhe
+      të humbasë aftësinë përgjithësuese. Të dy treguesit janë të saktë për atë që matin;
+      thjesht ata nuk matin të njëjtën gjë."""),
+    p("""Ky rezultat duhet lexuar bashkë me një kufizim të vetë metodës. Vlerësimi i masës
+      Lebesgue kërkon nënhapësira me pak dimensione, dhe kjo do të thotë se hiperparametrat
+      që humbin kuptimin brenda një nënhapësire pesëdimensionale nuk mund të dallohen fare.
+      Detektori linear i rindërtimit u përjashtua shprehimisht nga kjo analizë pikërisht për
+      këtë arsye: numri i komponentëve të ruajtur kufizohet nga dimensioni i nënhapësirës,
+      prandaj çdo konfigurim mbi atë vlerë jep rezultat identik. Ky nuk është defekt
+      implementimi, por kufi i qenësishëm i përafrimit me nënhapësira të rastësishme, dhe ai
+      e ngushton fushën ku këto kritere janë të zbatueshme."""),
+    p("""Përfundimi praktik është se, të paktën në këtë problem dhe me këtë përafrim,
+      akordimi krejtësisht pa etiketa nuk është alternativë e besueshme. Kjo e forcon
+      justifikimin e rrugës së zgjedhur për akordimin kryesor — validim i brendshëm me
+      etiketa historike — dhe njëkohësisht e bën edhe më domethënëse gjetjen e mëparshme se
+      vetë akordimi e rirendit fushën. Nëse akordimi ka rëndësi kaq të madhe dhe nuk mund të
+      kryhet pa etiketa, atëherë disponueshmëria e etiketave historike është edhe më
+      kritike sesa e sugjeron vetëm hendeku i drejtpërdrejtë ndaj referencës së
+      mbikëqyrur."""),
+    h3("5.4.7", "Ndjeshmëria ndaj kontaminimit dhe ablacioni i autoenkoderit"),
     p("""Dy analiza ndihmëse kontrollojnë nëse përfundimet varen nga zgjedhje arbitrare.
       E para skanon hiperparametrin e kontaminimit në dy urdhra madhësie; renditja e
       modeleve ruhet, ndërsa vlerat absolute të F1-shit ndryshojnë siç pritet, me maksimum

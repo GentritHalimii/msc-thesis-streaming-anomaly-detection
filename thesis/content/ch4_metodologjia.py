@@ -341,6 +341,12 @@ _PRAGU = [
       rajonet e dendura. Me konventën e kundërt të këtij projekti, pikat uniforme
       mbushin çdo grup niveli dhe vëllimi i vlerësuar kolapson në të gjithë kutinë
       kufizuese; shenja prandaj kthehet brenda funksionit."""),
+    p("""Këto kritere nuk përdoren për akordimin kryesor, sepse kostoja e tyre — një
+      ripërshtatje e detektorit për çdo nënhapësirë të rastësishme — do ta bënte një kërkim
+      me njëzet e pesë prova mbi dymbëdhjetë detektorë të papërballueshëm. Ato përdoren në
+      një krahasim të fokusuar, mbi rrjeta të vogla e të deklaruara për pesë detektorë të
+      lirë për t'u ripërshtatur, me një pyetje të vetme: a do ta zgjidhnin ato të njëjtin
+      konfigurim si kriteri me etiketa. Rezultati paraqitet në nënkapitullin 5.4.6."""),
     h2("4.7", "Arkitektura e implementuar"),
     p("""Sistemi ndjek arkitekturën pesështresore të përcaktuar në projekt-propozim.
       Ndarja mes shtresave nuk është vetëm konceptuale: secila është një modul i veçantë
