@@ -8,14 +8,14 @@ import pytest
 
 from src.config import load_config
 from src.data.scale import load_scaler, transform
-from src.models.build import ALL_MODELS, artifacts_dir, load_model
+from src.models.build import ALL_MODELS, artifacts_dir, load_model, model_path
 
 
 @pytest.mark.parametrize("name", ALL_MODELS)
 def test_fraud_scores_exceed_normal_scores_on_test_window(split, name):
     cfg = load_config()
-    if not (artifacts_dir(cfg) / "scaler.joblib").exists():
-        pytest.skip("artifacts missing; run experiments.train_models first")
+    if not (artifacts_dir(cfg) / "scaler.joblib").exists() or not model_path(cfg, name).exists():
+        pytest.skip(f"artifact for {name} missing; run experiments.train_models first")
     scaler = load_scaler(artifacts_dir(cfg) / "scaler.joblib")
     scores = load_model(name, cfg).score(transform(scaler, split.test))
     y = split.test["Class"].to_numpy()

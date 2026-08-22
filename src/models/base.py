@@ -28,3 +28,16 @@ class AnomalyModel(ABC):
     @classmethod
     @abstractmethod
     def load(cls, path: Path | str) -> "AnomalyModel": ...
+
+
+def subsample_for_fit(X: np.ndarray, max_rows: int, seed: int) -> np.ndarray:
+    """Seeded row subsample for methods whose training cost is superlinear in n.
+
+    Returns rows in their original chronological order (the subsample is a
+    thinning of the stream, not a reordering of it).
+    """
+    if max_rows is None or len(X) <= max_rows:
+        return X
+    rng = np.random.default_rng(seed)
+    idx = np.sort(rng.choice(len(X), size=max_rows, replace=False))
+    return X[idx]
