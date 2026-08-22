@@ -6,7 +6,7 @@ from src.config import REPO_ROOT, load_config
 from src.evaluation.harness import score_test_window
 from src.evaluation.manifest import write_manifest
 from src.evaluation.metrics import threshold_free_metrics
-from src.evaluation.report import model_plot_kwargs, new_figure, save_figure
+from src.evaluation.report import AX, model_plot_kwargs, new_figure, save_figure
 
 
 def main(cfg=None):
@@ -21,9 +21,9 @@ def main(cfg=None):
         kw = model_plot_kwargs(name)
         kw["label"] += f" (AP={ap:.3f})"
         ax.plot(recall, precision, **kw)
-    ax.axhline(fraud_rate, color="#c3c2b7", linewidth=1, label=f"chance (AP={fraud_rate:.4f})")
-    ax.set_xlabel("recall")
-    ax.set_ylabel("precision")
+    ax.axhline(fraud_rate, color="#c3c2b7", linewidth=1, label=f"rastësia (AP={fraud_rate:.4f})")
+    ax.set_xlabel(AX["recall"])
+    ax.set_ylabel(AX["precision"])
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1.02)
     ax.legend(loc="upper right")
@@ -36,9 +36,9 @@ def main(cfg=None):
         kw = model_plot_kwargs(name)
         kw["label"] += f" (AUC={auc:.3f})"
         ax.plot(fpr, tpr, **kw)
-    ax.plot([0, 1], [0, 1], color="#c3c2b7", linewidth=1, label="chance")
-    ax.set_xlabel("false positive rate")
-    ax.set_ylabel("true positive rate")
+    ax.plot([0, 1], [0, 1], color="#c3c2b7", linewidth=1, label="rastësia")
+    ax.set_xlabel(AX["fpr"])
+    ax.set_ylabel(AX["tpr"])
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1.02)
     ax.legend(loc="lower right")

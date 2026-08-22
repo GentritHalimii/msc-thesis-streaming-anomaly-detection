@@ -18,6 +18,7 @@ from src.evaluation.harness import contamination_value, score_test_window
 from src.evaluation.manifest import write_manifest
 from src.evaluation.metrics import threshold_free_metrics, thresholded_metrics
 from src.evaluation.report import (
+    AX,
     MODEL_LABELS,
     model_plot_kwargs,
     new_figure,
@@ -121,8 +122,8 @@ def main(cfg=None):
             f" (AP={threshold_free_metrics(scored.y_test, scored.test_scores[name])['ap']:.3f})"
         )
         ax.plot(recall, precision, **kw)
-    ax.set_xlabel("recall")
-    ax.set_ylabel("precision")
+    ax.set_xlabel(AX["recall"])
+    ax.set_ylabel(AX["precision"])
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1.02)
     ax.legend(loc="upper right", fontsize=8)
