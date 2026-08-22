@@ -36,6 +36,9 @@ evaluate:
 stream:
 	$(RUN) python -m experiments.run_streaming
 
+stream-store:
+	$(RUN) python -m experiments.run_streaming --store
+
 latency-report:
 	$(RUN) python -m experiments.latency_report
 
