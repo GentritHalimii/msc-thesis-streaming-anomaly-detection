@@ -10,10 +10,20 @@ from src.models.base import AnomalyModel
 class IForestModel(AnomalyModel):
     name = "iforest"
 
-    def __init__(self, n_estimators: int = 200, max_samples: int = 256, seed: int = 42):
+    def __init__(
+        self,
+        n_estimators: int = 200,
+        max_samples: int = 256,
+        max_features: float = 1.0,
+        seed: int = 42,
+    ):
+        # max_features is exposed because the attribution analysis points at
+        # split selection as the weak point of this detector: restricting the
+        # columns each tree may cut on is the cheapest intervention available.
         self._model = IsolationForest(
             n_estimators=n_estimators,
             max_samples=max_samples,
+            max_features=max_features,
             random_state=seed,
             n_jobs=-1,
         )

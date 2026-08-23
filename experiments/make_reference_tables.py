@@ -12,7 +12,7 @@ import psutil
 
 from src.config import REPO_ROOT, load_config
 from src.evaluation.report import FAMILY_LABELS, MODEL_LABELS, save_table
-from src.models.build import ALL_MODELS, FAMILY_OF
+from src.models.build import ABLATION_MODELS, ALL_MODELS, FAMILY_OF
 
 # Short, human descriptions of what each detector treats as "abnormal" and
 # what its training cost is dominated by.
@@ -21,26 +21,25 @@ MECHANISM = {
         "Gjatësia mesatare e shtegut deri te izolimi në pemë me ndarje të rastësishme",
         "O(t·ψ·log ψ)",
     ),
+    "autoencoder": (
+        "Gabimi i rindërtimit nga një enkoder–dekoder jolinear i trajnuar mbi normalet",
+        "O(e·n·h)",
+    ),
     "ocsvm": ("Distanca nga hiperplani ndarës në hapësirën e kernelit RBF", "O(n²–n³)"),
-    "deep_svdd": ("Distanca në katror nga qendra e hipersferës në hapësirën e mësuar", "O(e·n·h)"),
-    "lof": ("Raporti i densitetit lokal ndaj densitetit të fqinjëve", "O(n log n)"),
-    "knn": ("Distanca mesatare deri te k fqinjët më të afërt normalë", "O(n log n)"),
-    "pca_recon": ("Gabimi i rindërtimit nga një nënhapësirë lineare me rang k", "O(n·d²)"),
-    "autoencoder": ("Gabimi i rindërtimit nga një enkoder–dekoder jolinear", "O(e·n·h)"),
-    "vae": ("Kufiri i poshtëm negativ i evidencës (rindërtim + divergjencë KL)", "O(e·n·h)"),
-    "gmm": ("Gjasa negative logaritmike nën një përzierje gausiane", "O(i·n·k·d²)"),
-    "mahalanobis": ("Distanca robuste e Mahalanobis-it (kovariancë MCD)", "O(n·d²)"),
-    "ecod": ("Bishti empirik i shpërndarjes kumulative për çdo dimension", "O(n·d)"),
-    "copod": ("Bashkimi kopula empirike i bishtave njëdimensionalë", "O(n·d)"),
-    "hbos": ("Prodhimi i densiteteve të histogramave njëdimensionale", "O(n·d)"),
-    "loda": ("Ansambël histogramash mbi projeksione të rastësishme", "O(n·d·k)"),
-    "logreg": ("Probabiliteti i klasës pozitive nga një model i mbikëqyrur", "O(i·n·d)"),
+    "logreg": (
+        "Probabiliteti i klasës pozitive nga një model i mbikëqyrur me etiketa historike",
+        "O(i·n·d)",
+    ),
+    "pca_recon": (
+        "Gabimi i rindërtimit nga një nënhapësirë lineare me rang k (ablacion)",
+        "O(n·d²)",
+    ),
 }
 
 
 def model_zoo_table(cfg) -> pd.DataFrame:
     rows = []
-    for name in ALL_MODELS:
+    for name in [*ALL_MODELS, *ABLATION_MODELS]:
         params = getattr(cfg.models, name, None)
         as_dict = dict(vars(params)) if params is not None else {}
         pretty = ", ".join(f"{k}={v}" for k, v in as_dict.items()) or "pa hiperparametra"

@@ -26,7 +26,7 @@ from src.evaluation.report import (
     save_figure,
     save_table,
 )
-from src.models.build import ALL_MODELS, FAMILY_OF
+from src.models.build import FAMILY_OF
 
 HEADLINE_BUDGET = 100
 
@@ -147,50 +147,6 @@ def figure_ap_ranking(summary: pd.DataFrame, cfg):
     save_figure(fig, REPO_ROOT / cfg.results_dir, "benchmark_ap_ranking")
 
 
-def figure_family_boxplot(per_fold: pd.DataFrame, cfg):
-    """Family-level spread: does the mechanism matter more than the algorithm?"""
-    from src.evaluation.report import FAMILY_COLORS, FAMILY_LABELS
-
-    fig, ax = new_figure(figsize=(6.4, 4.0))
-    fams = [f for f in FAMILY_COLORS if f in set(per_fold["family"])]
-    data = [per_fold.loc[per_fold["family"] == f, "ap"].to_numpy() for f in fams]
-    bp = ax.boxplot(
-        data,
-        patch_artist=True,
-        widths=0.55,
-        medianprops={"color": "#0b0b0b", "linewidth": 1.4},
-        flierprops={
-            "marker": "o",
-            "markersize": 3,
-            "markerfacecolor": "#898781",
-            "markeredgecolor": "none",
-        },
-    )
-    for patch, f in zip(bp["boxes"], fams, strict=True):
-        patch.set_facecolor(FAMILY_COLORS[f])
-        patch.set_alpha(0.35)
-        patch.set_edgecolor(FAMILY_COLORS[f])
-    ref = per_fold.loc[per_fold["model"] == "logreg", "ap"]
-    if len(ref):
-        ax.axhline(ref.mean(), color="#52514e", linestyle="-.", linewidth=1.5)
-        ax.text(0.55, ref.mean() * 1.06, "referenca e mbikëqyrur (LR)", fontsize=8, color="#52514e")
-    ax.set_xticks(range(1, len(fams) + 1), [FAMILY_LABELS[f] for f in fams], rotation=20)
-    ax.set_ylabel(AX["ap"])
-    ax.set_yscale("log")
-    save_figure(fig, REPO_ROOT / cfg.results_dir, "benchmark_family_box")
-
-
-_CROWDED_OFFSETS = {
-    "copod": 10,
-    "ecod": -13,
-    "ocsvm": -4,
-    "knn": 7,
-    "lof": 3,
-    "loda": 3,
-    "iforest": 3,
-}
-
-
 def figure_quality_cost(summary: pd.DataFrame, cfg):
     """The trade-off RQ2 actually asks about: detection quality against the
     cost of producing one score. Both axes matter on a stream, and the
@@ -209,16 +165,12 @@ def figure_quality_cost(summary: pd.DataFrame, cfg):
             zorder=3,
             marker="D" if name == "logreg" else "o",
         )
-        # The right-hand side is crowded (several detectors cost 20-70 us per
-        # transaction); fan those labels out vertically instead of letting
-        # them collide.
-        dy = _CROWDED_OFFSETS.get(name, 3) if row.score_us_per_tx > 15 else 3
         ax.annotate(
             MODEL_LABELS.get(name, name),
             (row.score_us_per_tx, row.ap_mean),
             fontsize=7.8,
             color="#52514e",
-            xytext=(7, dy),
+            xytext=(7, 3),
             textcoords="offset points",
         )
     ax.set_xscale("log")
@@ -254,7 +206,6 @@ def main(cfg=None):
 
     figure_ap_per_fold(per_fold, cfg)
     figure_ap_ranking(summary, cfg)
-    figure_family_boxplot(per_fold[per_fold["model"].isin(ALL_MODELS)], cfg)
     figure_quality_cost(summary, cfg)
 
     write_manifest(results_dir, "exp10_benchmark", cfg.raw)

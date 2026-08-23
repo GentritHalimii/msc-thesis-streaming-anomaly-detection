@@ -44,19 +44,6 @@ models:
     kernel: rbf
     nu: 0.05
     gamma: scale
-  deep_svdd:
-    hidden_dim: 32
-    rep_dim: 12
-    epochs: 30
-    batch_size: 512
-    lr: 0.001
-    weight_decay: 0.00001
-  lof:
-    n_neighbors: 20
-    fit_subsample: 20000
-  knn:
-    n_neighbors: 10
-    fit_subsample: 20000
   pca_recon:
     n_components: 12
   autoencoder:
@@ -65,27 +52,6 @@ models:
     epochs: 20
     batch_size: 512
     lr: 0.001
-  vae:
-    hidden_dim: 24
-    latent_dim: 8
-    epochs: 30
-    batch_size: 512
-    lr: 0.001
-    beta: 1.0
-  gmm:
-    n_components: 8
-    covariance_type: full
-  mahalanobis:
-    support_fraction: 0.9
-    fit_subsample: 30000
-  ecod: {}
-  copod: {}
-  hbos:
-    n_bins: 50
-    alpha: 0.1
-  loda:
-    n_bins: 20
-    n_random_cuts: 100
   logreg:                            # supervised upper-bound REFERENCE, not a competitor
     max_iter: 2000
     class_weight: balanced
@@ -105,9 +71,9 @@ tuning:
   em_mv_samples: 20000               # Monte-Carlo volume samples
 
 ensemble:
-  members: [iforest, autoencoder, ocsvm]   # unsupervised models only
-  # Greedy selection pool for the diversity-aware ensemble experiment
-  pool: [iforest, ocsvm, deep_svdd, lof, knn, pca_recon, autoencoder, vae, gmm, mahalanobis, ecod, copod, hbos, loda]
+  # The three unsupervised detectors of the proposal; the supervised reference
+  # is deliberately excluded, since mixing it in would break the framing.
+  members: [iforest, autoencoder, ocsvm]
 
 kafka:
   bootstrap_servers: localhost:19092   # 9092 left free for other local stacks

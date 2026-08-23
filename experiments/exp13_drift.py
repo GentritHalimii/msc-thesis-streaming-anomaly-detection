@@ -141,7 +141,7 @@ def main(cfg=None):
     rng = np.random.default_rng(cfg.seed)
     monitor_rows = []
     for i, fold_scores in enumerate(fs):
-        for name in ("iforest", "autoencoder", "ocsvm", "deep_svdd"):
+        for name in ("iforest", "autoencoder", "ocsvm"):
             if name not in fold_scores.models:
                 continue
             test_scores = fold_scores.test_scores(name)

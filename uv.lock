@@ -498,23 +498,6 @@ wheels = [
 ]
 
 [[package]]
-name = "pyod"
-version = "3.6.5"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "joblib" },
-    { name = "matplotlib" },
-    { name = "numba" },
-    { name = "numpy" },
-    { name = "scikit-learn" },
-    { name = "scipy" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/dd/82/6d6c2ac1fc6189bfda9a401042e2669625ae4cd01b4f0b9abd3929e20cd8/pyod-3.6.5.tar.gz", hash = "sha256:1080a25452abda883b784ebea9f2976e549f1818cf1be2fc454daaf47545e431", size = 355121, upload-time = "2026-08-17T04:10:03.477Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/21/a9/fed288d3f1da12a60158bce77ece8110ba6a1bcea0f381b9d3907c2b3d0b/pyod-3.6.5-py3-none-any.whl", hash = "sha256:59f259a58b145404d97f7ab7b094c5f4c64f821ab02ceb210cb3bd63b65be83e", size = 418757, upload-time = "2026-08-17T04:10:01.832Z" },
-]
-
-[[package]]
 name = "pyparsing"
 version = "3.3.2"
 source = { registry = "https://pypi.org/simple" }
@@ -766,7 +749,6 @@ dependencies = [
     { name = "pandas" },
     { name = "psutil" },
     { name = "psycopg", extra = ["binary"] },
-    { name = "pyod" },
     { name = "python-docx" },
     { name = "pyyaml" },
     { name = "scikit-learn" },
@@ -793,7 +775,6 @@ requires-dist = [
     { name = "pandas", specifier = ">=2.2" },
     { name = "psutil", specifier = ">=6.0" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.2" },
-    { name = "pyod", specifier = ">=2.0" },
     { name = "python-docx", specifier = ">=1.1" },
     { name = "pyyaml", specifier = ">=6.0" },
     { name = "scikit-learn", specifier = ">=1.5" },
