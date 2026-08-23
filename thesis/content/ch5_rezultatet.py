@@ -346,7 +346,6 @@ _PH2 = [
         14.5,
     ),
 ]
-
 _PARAPROCESIMI = [
     h2("5.6", "Paraprocesimi: variabli më i nënvlerësuar"),
     p("""Të gjitha rezultatet e mësipërme u prodhuan me skalim standard, i cili është zgjedhja e
@@ -564,6 +563,190 @@ _THELLIMI = [
       mes nivelit më të mirë dhe atij më të keq të zhurmës është nën 0.005 njësi. Ky është një
       rezultat negativ i vogël por i dobishëm, sepse denoising rekomandohet shpesh pa
       kualifikim."""),
+    h3("5.5.3", "One-Class SVM: kerneli, ν dhe çmimi i të dhënave"),
+    p("""Për One-Class SVM u studiuan tri boshte: zgjedhja e kernelit, sipërfaqja mbi nu dhe
+      gamma, dhe kurba e të mësuarit mbi madhësinë e nën-mostrës së trajnimit. Boshti i fundit
+      është i veçantë për këtë algoritëm, sepse kostoja e tij rritet afërsisht kuadratikisht me
+      numrin e mostrave dhe nën-mostrimi nuk është zgjedhje por domosdoshmëri."""),
+    tab(
+        "ocsvm_kernels",
+        "Krahasimi i kernelëve mbi tetë fold-e, me koston e trajnimit, koston e pikëzimit dhe "
+        "numrin mesatar të vektorëve mbështetës.",
+        rename={
+            "kernel": "Kerneli",
+            "ap_mean": "AP",
+            "ap_std": "s.d.",
+            "fit_s": "Fit (s)",
+            "us_per_tx": "µs/tx",
+            "support_vectors": "Vektorë mbështetës",
+        },
+        font_size=9.5,
+    ),
+    p("""Kerneli RBF është qartësisht më i miri me 0.1505, i ndjekur nga ai sigmoid me 0.0526 dhe
+      polinomial me 0.0317. Kerneli linear dështon plotësisht me 0.0009, pra praktikisht në
+      nivelin e rastësisë, dhe kjo është informative: një kufi linear rreth klasës legjitime nuk
+      e ndan atë nga mashtrimet, çka do të thotë se struktura e nevojshme është jolineare. Ky
+      rezultat përputhet me atë të Autoencoder-it kundrejt rindërtimit linear."""),
+    tab(
+        "ocsvm_surface",
+        "Average Precision mesatar mbi tetë fold-e për çdo kombinim të nu dhe gamma me kernel RBF.",
+        font_size=9.5,
+    ),
+    p("""Sipërfaqja nu-gamma ka maksimumin te nu 0.001 me gamma të llogaritur automatikisht, ku
+      arrihet 0.1634. Drejtimi është i qëndrueshëm: vlerat e vogla të nu janë më të mira, dhe
+      kjo pajtohet me kuptimin teorik të parametrit, i cili kufizon nga poshtë pjesën e pikëve
+      të trajnimit që lejohen jashtë kufirit. Meqë norma reale e mashtrimit është 0.17 për qind,
+      një nu prej 0.05, që është vlera e parazgjedhur e bibliotekës, e detyron modelin të
+      shpallë jashtë kufirit tridhjetë herë më shumë pika sesa duhet."""),
+    fig("ocsvm_surface", "Sipërfaqja nu-gamma për One-Class SVM me kernel RBF.", 14.0),
+    p("""Kurba e të mësuarit jep rezultatin operacionalisht më të rëndësishëm të këtij
+      nënkapitulli. Rritja e nën-mostrës nga një mijë në tetëdhjetë mijë transaksione e ngre
+      Average Precision vetëm nga 0.1508 në 0.1581, pra me 0.0073 njësi, ndërsa koha e trajnimit
+      rritet nga 0.006 sekonda në 50.6 sekonda dhe kostoja e pikëzimit nga 5.2 në 188.2
+      mikrosekonda për transaksion. Numri i vektorëve mbështetës rritet përkatësisht nga 102 në
+      4055, dhe meqë kostoja e pikëzimit është proporcionale me atë numër, kjo është shpjegimi i
+      plotë i rritjes së kostos."""),
+    tab(
+        "ocsvm_learning_curve",
+        "Kurba e të mësuarit e One-Class SVM-së: cilësia, kostoja dhe numri i vektorëve "
+        "mbështetës sipas madhësisë së nën-mostrës së trajnimit.",
+        rename={
+            "train_subsample": "Nën-mostra",
+            "ap_mean": "AP",
+            "ap_std": "s.d.",
+            "fit_s": "Fit (s)",
+            "us_per_tx": "µs/tx",
+            "support_vectors": "Vektorë mbështetës",
+        },
+        font_size=9.5,
+    ),
+    fig(
+        "ocsvm_learning_curve",
+        "Cilësia dhe kostoja e One-Class SVM-së sipas madhësisë së nën-mostrës së trajnimit. "
+        "Cilësia ngopet shumë përpara se kostoja të ndalojë së rrituri.",
+        14.5,
+    ),
+    p("""Pasoja praktike është e drejtpërdrejtë dhe në kundërshtim me intuitën se më shumë të
+      dhëna janë gjithmonë më mirë. Në këtë problem një mijë transaksione trajnimi japin
+      praktikisht të njëjtën cilësi si njëzet mijë, me kosto pikëzimi nëntë herë më të vogël dhe
+      kohë trajnimi njëqind e gjashtëdhjetë herë më të vogël. Kufizimi kuadratik i kernelit, i
+      cili në literaturë përshkruhet si pengesa kryesore e metodës, nuk është pengesë reale këtu
+      pikërisht sepse cilësia ngopet shumë më herët se kostoja."""),
+    note("""Kjo gjetje e ndryshon leximin e tabelës kryesore. Kostoja e pikëzimit prej 45.4
+      mikrosekondash për transaksion, e cila e rendit One-Class SVM-në si më të shtrenjtin, është
+      pasojë e një zgjedhjeje konfigurimi dhe jo e vetë algoritmit; me nën-mostër prej një mijë
+      pikash ajo bie nën gjashtë mikrosekonda pa humbje të matshme cilësie."""),
 ]
 
-BLOCKS = _HYRJE + _GJEOMETRIA + _PH2 + _THELLIMI + _PARAPROCESIMI
+_KAUZALITETI = [
+    h2("5.7", "Nga korrelacioni te shkaku: ndërhyrja mbi hyrjen"),
+    p("""Nënkapitujt e mëparshëm e treguan se Isolation Forest-i e shpërndan kapacitetin e vet
+      mbi kolona pa sinjal dhe se ai renditet i fundit. Këto janë dy vëzhgime, dhe bashkimi i
+      tyre në një shpjegim mbetet hipotezë derisa të ndërhyhet mbi mekanizmin e supozuar. Ky
+      nënkapitull e bën atë ndërhyrje."""),
+    p("""Dizajni është i thjeshtë. Në secilin fold, komponentët renditen sipas fuqisë së tyre
+      diskriminuese të matur vetëm mbi dritaren e trajnimit, dhe secili detektor ripërshtatet
+      duke parë vetëm k komponentët e parë. Nëse shpërndarja e ndarjeve mbi kolona pa sinjal
+      është vërtet mekanizmi i dobësisë, atëherë Isolation Forest-i duhet të fitojë më shumë se
+      të tjerët, dhe duhet të fitojë më shumë te k-të e vogla, ku kolonat pa sinjal janë hequr
+      plotësisht."""),
+    tab(
+        "feature_selection",
+        "Average Precision mesatar mbi tetë fold-e kur secili detektor sheh vetëm k komponentët "
+        "më informativë, sipas dy renditjeve të ndryshme.",
+        query="renditja == 'sinjali (me etiketa)'",
+        columns=["model", "k", "ap_mean", "ap_std", "vs_te_gjitha"],
+        rename={
+            "model": "Detektori",
+            "k": "k",
+            "ap_mean": "AP",
+            "ap_std": "s.d.",
+            "vs_te_gjitha": "Δ ndaj 29 kolonave",
+        },
+        font_size=8.5,
+    ),
+    p("""Parashikimi verifikohet plotësisht. Isolation Forest-i fiton 0.5301 njësi Average
+      Precision, nga 0.0913 në 0.6214, dhe e fiton këtë pikërisht te k barabartë me tre, ku
+      mbeten vetëm tri kolona. One-Class SVM-ja fiton 0.3603 njësi, gjithashtu te k barabartë me
+      tre, ndërsa Autoencoder-i fiton 0.3967 njësi por te k barabartë me dymbëdhjetë, çka
+      përputhet me faktin se ai ka nevojë për më shumë dimensione hyrëse për të ndërtuar një
+      rindërtim kuptimplotë."""),
+    fig(
+        "feature_selection",
+        "Efekti i kufizimit të hyrjes te k komponentët më informativë, për secilin detektor dhe "
+        "për të dyja renditjet.",
+        15.0,
+    ),
+    p("""Referenca e mbikëqyrur sillet krejt ndryshe dhe kjo është kontrolli që e bën argumentin
+      të vlefshëm. Ajo nuk fiton asgjë; përkundrazi, çdo kufizim e dëmton, nga 0.7341 me të
+      gjitha kolonat në 0.6103 me tri. Modeli i mbikëqyrur tashmë i peshon vetë kolonat sipas
+      dobisë së tyre, prandaj heqja e kolonave vetëm sa i heq informacion. Metodat gjeometrike,
+      të cilat nuk kanë asnjë mekanizëm të tillë peshimi, përfitojnë nga një peshim që u jepet
+      nga jashtë."""),
+    p("""Rendi i fitimeve, me Isolation Forest-in më lart se të dy të tjerët, është pikërisht ai
+      që parashikon shpjegimi i propozuar dhe nuk është ai që do të pritej nëse dobësia do të
+      vinte nga një shkak tjetër. Kjo e ngre shpjegimin nga korrelacion i vëzhguar në pohim të
+      mbështetur eksperimentalisht."""),
+    p("""Një kualifikim i rëndësishëm e shoqëron këtë rezultat dhe raportohet shprehimisht.
+      Renditja sipas fuqisë diskriminuese përdor etiketat historike, prandaj ajo përfaqëson
+      rastin më të mirë të mundshëm dhe jo një procedurë të vendosshme pa etiketa. Për këtë
+      arsye u testua edhe një renditje krejtësisht pa etiketa, ajo sipas kurtozës së tepërt, e
+      cila është heuristika klasike e ndjekjes së projeksioneve. Mbivendosja mes dy renditjeve
+      është zero te tre kolonat e para dhe vetëm tridhjetë e tre për qind te dymbëdhjetë të
+      parat."""),
+    tab(
+        "feature_selection_agreement",
+        "Mbivendosja mes renditjes me etiketa dhe asaj sipas kurtozës, sipas numrit të kolonave "
+        "të mbajtura.",
+        rename={"k": "k", "mbivendosja": "Mbivendosja"},
+        font_size=9.5,
+    ),
+    p("""Rezultatet me renditjen pa etiketa janë dukshëm më modeste. Autoencoder-i fiton 0.1224
+      njësi te gjashtëmbëdhjetë kolona, One-Class SVM-ja praktikisht asgjë, dhe Isolation
+      Forest-i humbet në çdo k. Përfundimi i dyfishtë është pra ky: mekanizmi është konfirmuar,
+      por përfitimi i tij nuk është i arritshëm pa etiketa me heuristikën e testuar. Kjo e
+      forcon më tej gjetjen e nënkapitullit 5.3 mbi vlerën e etiketave historike, sepse ato
+      dalin të dobishme jo vetëm për të trajnuar një klasifikues, por edhe për të përgatitur
+      hapësirën në të cilën punojnë metodat unsupervised."""),
+    h2("5.8", "Sa histori duhet mbajtur"),
+    p("""Kush vendos një sistem të tillë duhet të zgjedhë mes dy politikave: të mbajë të gjithë
+      historikun dhe ta lërë dritaren e trajnimit të zgjerohet, ose të mbajë një dritare
+      rrëshqitëse me gjatësi fikse. Zgjedhja nuk është e vetëkuptueshme, sepse e para përdor më
+      shumë të dhëna ndërsa e dyta qëndron më afër së tashmes."""),
+    tab(
+        "training_window_curve",
+        "Average Precision sipas gjatësisë së dritares rrëshqitëse, mbi tetë fold-e. Kolona e "
+        "fundit tregon në sa fold-e ishte e disponueshme ajo gjatësi.",
+        rename={
+            "model": "Detektori",
+            "madhesia": "Gjatësia e dritares",
+            "ap_mean": "AP",
+            "ap_std": "s.d.",
+            "n": "Fold-e",
+        },
+        font_size=9.0,
+    ),
+    fig(
+        "training_window",
+        "Kurba e të mësuarit mbi gjatësinë e dritares rrëshqitëse. Vijat me pika tregojnë "
+        "rezultatin me dritaren që zgjerohet mbi gjithë historikun.",
+        15.0,
+    ),
+    p("""Rezultati ndan detektorët në dy grupe. Për Autoencoder-in dhe për Isolation Forest-in
+      asnjë dritare rrëshqitëse nuk e tejkalon historikun e plotë, me diferencë përkatësisht
+      0.019 dhe 0.005 njësi në favor të historikut. Për One-Class SVM-në, përkundrazi, një
+      dritare prej pesëdhjetë mijë transaksionesh e tejkalon historikun e plotë me 0.049 njësi.
+      Referenca e mbikëqyrur përmirësohet në mënyrë monotone me sasinë e të dhënave, siç pritet
+      nga një model i mbikëqyrur."""),
+    p("""Mesatarisht mbi tri metodat unsupervised, kalimi nga dhjetë mijë në njëqind mijë
+      transaksione trajnimi e lëviz Average Precision vetëm nga 0.141 në 0.136, pra praktikisht
+      aspak. Gjatësia prej dyqind mijë përjashtohet nga kjo mesatare sepse ajo ekziston vetëm në
+      tri fold-et e fundit, dhe përfshirja e saj do të përzinte gjatësinë e dritares me
+      vështirësinë e fold-it."""),
+    p("""Pasoja praktike përputhet me atë të kurbës së të mësuarit të One-Class SVM-së: sasia e
+      të dhënave nuk është kufizuesi për metodat unsupervised mbi këtë dataset. Kjo është vetë
+      një gjetje, sepse mbledhja e më shumë historikut është zakonisht rekomandimi i parë kur
+      cilësia është e ulët. Këtu ajo nuk do të ndihmonte."""),
+]
+
+BLOCKS = _HYRJE + _GJEOMETRIA + _PH2 + _THELLIMI + _PARAPROCESIMI + _KAUZALITETI
