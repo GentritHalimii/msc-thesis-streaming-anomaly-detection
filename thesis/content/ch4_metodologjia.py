@@ -410,6 +410,15 @@ _PRAGU = [
             "gabimeve në nivel transaksioni.",
         ]
     ),
+    p("""Studimet e mësipërme e ndryshojnë nga një levë në një kohë, që efekti i secilës të jetë
+      i izoluar. Kjo lë hapur pyetjen nëse levat kombinohen. Prandaj shtohet një studim i fundit
+      me dizajn faktorial dy-nga-dy, ku secili detektor vlerësohet nën katër kombinime:
+      paraprocesim i parazgjedhur ose më i miri i tij, dhe hiperparametra të parazgjedhur ose më
+      të mirët e tij. Ky dizajn e ndan përfitimin total në tri pjesë, kontributin e
+      paraprocesimit, atë të hiperparametrave dhe ndërveprimin mes tyre, dhe e tregon nëse
+      renditja e algoritmeve ndryshon kur secili vlerësohet në kapacitetin e vet më të mirë.
+      Konfigurimet fituese merren nga studimet e mësipërme dhe jo nga blloqet e testimit, prandaj
+      ky rezultat raportohet si kufi i sipërm optimist dhe jo si vlerësim i paanshëm."""),
     p("""Studimi mbi kufizimin e hyrjes meriton koment të veçantë, sepse nuk është skanim por
       ndërhyrje. Analiza e interpretueshmërisë prodhon një pohim mekanicist mbi shkakun e
       renditjes; ai pohim mbetet korrelacion derisa të ndërhyhet mbi shkakun e supozuar. Duke i
