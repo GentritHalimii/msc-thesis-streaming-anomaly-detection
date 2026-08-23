@@ -126,7 +126,12 @@ def run_fold(
         score_s = time.perf_counter() - t0
         s_train = np.asarray(model.score(X_train_full), dtype=np.float64)
 
-        payload[f"test__{name}"] = s_test.astype(np.float32)
+        # float64, deliberately. Storing scores as float32 collapsed roughly
+        # 500 to 1000 of the ~21k test points per fold into artificial ties,
+        # which moves Average Precision by up to 0.02 units because AP is
+        # dominated by the head of the ranking. The storage saved is
+        # irrelevant next to a measurement artefact in the primary metric.
+        payload[f"test__{name}"] = s_test
         payload[f"trainq__{name}"] = np.quantile(s_train, QUANTILE_GRID).astype(np.float64)
         costs[name] = {
             "fit_time_s": round(fit_s, 3),

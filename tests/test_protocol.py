@@ -61,3 +61,28 @@ def test_saved_fold_roundtrip_and_threshold(tmp_path):
     assert ranks[0] == pytest.approx(0.0, abs=1e-6)
     assert ranks[2] == pytest.approx(1.0, abs=1e-6)
     assert 0.4 < ranks[1] < 0.6
+
+
+def test_fold_scores_are_stored_at_full_precision():
+    """float32 storage collapsed roughly 500 to 1000 of the ~21k test scores
+    per fold into ties and moved Average Precision by up to 0.02 units. AP is
+    dominated by the head of the ranking, so the primary metric must not
+    depend on how the scores happen to be serialised."""
+    import pandas as pd
+
+    from src.config import load_config
+    from src.data.load import FEATURE_COLUMNS
+    from src.evaluation.protocol import Fold, run_fold
+
+    rng = np.random.default_rng(0)
+    n = 4000
+    frame = pd.DataFrame(
+        rng.normal(size=(n, len(FEATURE_COLUMNS) - 1)),
+        columns=[c for c in FEATURE_COLUMNS if c != "Amount"],
+    ).assign(
+        Time=np.arange(n, dtype=float),
+        Amount=rng.gamma(2.0, 30.0, n),
+        Class=(rng.random(n) < 0.02).astype(int),
+    )
+    payload = run_fold(load_config(), Fold(index=0, train_end=3000, test_end=n), frame, ["iforest"])
+    assert payload["test__iforest"].dtype == np.float64, "scores must keep full precision"
