@@ -109,7 +109,15 @@ def main(cfg=None):
 
     per_fold = pd.DataFrame(rows)
     save_table(per_fold, results_dir, "best_effort_per_fold", float_fmt="%.5f")
+    summarise(results_dir, per_fold, cfg)
 
+
+def summarise(results_dir, per_fold, cfg):
+    """Tables, figure and verdict from the per-fold scores.
+
+    Kept separate from the fitting loop so the summary can be rebuilt in
+    seconds when only its logic changes, instead of refitting for an hour.
+    """
     summary = (
         per_fold.groupby(["model", "hiperparametrat", "paraprocesimi"])["ap"]
         .agg(ap_mean="mean", ap_std="std")
@@ -144,7 +152,17 @@ def main(cfg=None):
                 "të dyja": both - b,
                 "shuma e efekteve": (only_prep - b) + (only_hp - b),
                 "ndërveprimi": (both - b) - ((only_prep - b) + (only_hp - b)),
-                "AP përfundimtar": both,
+                # The best cell, not the "both" cell. For two of the three
+                # detectors the interaction is negative enough that applying
+                # both interventions lands below applying only the better one,
+                # so calling "both" the final result would misreport them.
+                "qeliza më e mirë": max(
+                    (b, "bazë"),
+                    (only_prep, "vetëm paraprocesim"),
+                    (only_hp, "vetëm akordim"),
+                    (both, "të dyja"),
+                )[1],
+                "AP më i mirë i arritshëm": max(b, only_prep, only_hp, both),
             }
         )
     interaction = pd.DataFrame(interaction_rows)
@@ -182,11 +200,19 @@ def main(cfg=None):
     save_figure(fig, REPO_ROOT / cfg.results_dir, "best_effort")
 
     unsup = interaction[interaction["Detektori"] != MODEL_LABELS["logreg"]]
-    best_row = unsup.loc[unsup["AP përfundimtar"].idxmax()]
+    best_row = unsup.loc[unsup["AP më i mirë i arritshëm"].idxmax()]
+    per_detector = "; ".join(
+        f"{r['Detektori']} {r['AP më i mirë i arritshëm']:.4f} ({r['qeliza më e mirë']})"
+        for _, r in unsup.sort_values("AP më i mirë i arritshëm", ascending=False).iterrows()
+    )
     verdict = (
-        f"Me paraprocesimin dhe hiperparametrat e zgjedhur për secilin detektor, më i miri "
-        f"unsupervised është {best_row['Detektori']} me AP {best_row['AP përfundimtar']:.4f}, "
-        f"kundrejt {best_row['bazë']:.4f} në konfigurimin bazë. "
+        f"Kur secili detektor vlerësohet në qelizën e vet më të mirë të dizajnit dy-nga-dy, "
+        f"renditja bëhet: {per_detector}. Më i miri është pra {best_row['Detektori']} me AP "
+        f"{best_row['AP më i mirë i arritshëm']:.4f} kundrejt {best_row['bazë']:.4f} në "
+        f"konfigurimin bazë, pra renditja e konfigurimeve të parazgjedhura nuk mbijeton. "
+        f"Vlen të theksohet se për dy nga tre detektorët qeliza më e mirë nuk është ajo ku "
+        f"zbatohen të dyja ndërhyrjet, sepse ndërveprimi mes tyre është mjaft negativ sa "
+        f"kombinimi të bjerë nën ndërhyrjen e vetme më të mirë. "
         + "; ".join(
             f"{r['Detektori']}: paraprocesim {r['vetëm paraprocesim']:+.3f}, akordim "
             f"{r['vetëm akordim']:+.3f}, të dyja {r['të dyja']:+.3f}, ndërveprim "
@@ -201,5 +227,21 @@ def main(cfg=None):
     write_manifest(results_dir, "exp28_best_effort", cfg.raw)
 
 
+def main_from_saved(cfg=None):
+    cfg = cfg or load_config()
+    results_dir = REPO_ROOT / cfg.results_dir
+    per_fold = pd.read_csv(results_dir / "best_effort_per_fold.csv")
+    summarise(results_dir, per_fold, cfg)
+
+
 if __name__ == "__main__":
-    main()
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--from-saved",
+        action="store_true",
+        help="rebuild the tables and verdict from best_effort_per_fold.csv, without refitting",
+    )
+    args = parser.parse_args()
+    main_from_saved() if args.from_saved else main()
