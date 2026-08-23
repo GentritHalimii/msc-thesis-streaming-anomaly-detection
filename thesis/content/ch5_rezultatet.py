@@ -749,4 +749,365 @@ _KAUZALITETI = [
       cilësia është e ulët. Këtu ajo nuk do të ndihmonte."""),
 ]
 
-BLOCKS = _HYRJE + _GJEOMETRIA + _PH2 + _THELLIMI + _PARAPROCESIMI + _KAUZALITETI
+_PH3 = [
+    h2("5.4", "PH3: a ndihmon kombinimi i detektorëve"),
+    p("""Pyetja e tretë hulumtuese testohet me pesë rregulla kombinimi mbi tri pikët e
+      detektorëve unsupervised, plus një procedurë lakmitare që i shton anëtarët një nga një
+      për sa kohë rezultati përmirësohet. Referenca e mbikëqyrur përjashtohet nga çdo ansambël,
+      sepse përfshirja e saj do ta shndërronte kombinimin unsupervised në një model me
+      etiketa."""),
+    tab(
+        "ensemble_summary",
+        "Variantet e ansamblit kundrejt modelit më të mirë individual, mbi tetë fold-e. Vlerat "
+        "negative në kolonën e katërt do të thonë se ansambli mbetet nën anëtarin më të mirë.",
+        rename={
+            "pool": "Bashkësia",
+            "combiner": "Kombinuesi",
+            "ap_mean": "AP",
+            "ap_std": "s.d.",
+            "vs_best_single": "Δ ndaj më të mirit",
+            "fold_wins_vs_best_single": "Fitore",
+            "n_folds": "Fold-e",
+        },
+        font_size=9.5,
+    ),
+    p("""Rezultati është negativ dhe i qartë. Asnjë variant nuk e tejkalon Autoencoder-in, i cili
+      arrin 0.1929. Varianti më i mirë, ai lakmitar me mesatarizim rangjesh, arrin 0.1886 dhe
+      fiton vetëm në tre nga tetë fold-e. Kombinimi me votim shumice është më i keqi me 0.0895,
+      pra më pak se gjysma e anëtarit më të mirë, çka pritet meqë votimi e humb informacionin e
+      renditjes dhe e redukton çdo pikë në një vendim binar."""),
+    fig(
+        "ensemble_vs_single",
+        "Variantet e ansamblit kundrejt anëtarit më të mirë individual. Vija horizontale tregon "
+        "Average Precision të Autoencoder-it.",
+        14.5,
+    ),
+    p("""Meqë një rezultat negativ mund të jetë pasojë e akordimit të dobët, i njëjti eksperiment
+      u përsërit me hiperparametrat e akorduar. Përfundimi nuk ndryshon: anëtari më i mirë arrin
+      0.3351 ndërsa ansambli më i mirë 0.3342. Hipoteza H3 refuzohet pra nën të dy regjimet e
+      hiperparametrave, e cila është një bazë dukshëm më e fortë sesa një refuzim i vetëm."""),
+    p("""Shpjegimi matet drejtpërdrejt dhe jepet në nënkapitullin 5.14: detektorët nuk gabojnë në
+      mënyra të pavarura. Teoria e ansambleve për zbulim të jashtëzakonshmërive e kërkon
+      pikërisht atë pavarësi si kusht, prandaj mungesa e saj e shpjegon plotësisht
+      rezultatin."""),
+    fig(
+        "ensemble_rank_correlation",
+        "Korrelacioni i renditjeve mes çifteve të detektorëve. Vlerat e larta do të thonë se dy "
+        "detektorët i renditin transaksionet njësoj dhe se kombinimi i tyre shton pak.",
+        13.5,
+    ),
+]
+
+_ANALIZAT = [
+    h2("5.9", "Sa e ndryshon akordimi renditjen"),
+    p("""Të gjitha krahasimet e mësipërme u bënë nën hiperparametrat e parazgjedhur. Kjo është
+      zgjedhja e vetme e paanshme kur burimet nuk mjaftojnë për akordim të njëjtë të të gjithëve,
+      por ajo lë hapur pyetjen nëse renditja do të ishte tjetër me secilin në kapacitetin e vet
+      më të mirë. Prandaj i njëjti protokoll u përsërit plotësisht me hiperparametrat e nxjerrë
+      nga kërkimi mbi ndarjen e brendshme kohore."""),
+    tab(
+        "tuning_effect",
+        "Efekti i akordimit mbi Average Precision në blloqet e testimit, mbi tetë fold-e.",
+        rename={
+            "Detektori": "Detektori",
+            "AP_default": "AP i parazgjedhur",
+            "AP_i_akorduar": "AP i akorduar",
+            "delta_test": "Δ test",
+            "delta_inner": "Δ i brendshëm",
+            "folds_te_permiresuara": "Fold-e të përmirësuara",
+        },
+        font_size=9.5,
+    ),
+    p("""Akordimi ndihmon në përgjithësi dhe në mënyrë të qëndrueshme: mbi bashkësinë e
+      detektorëve, konfigurimi i akorduar e tejkalon atë të parazgjedhur në të tetë fold-et me
+      p-vlerë 0.0078, dhe përfitimi mesatar është 0.0713 njësi Average Precision. Por shpërndarja
+      e atij përfitimi është shumë e pabarabartë."""),
+    p("""Autoencoder-i fiton 0.1421 njësi, nga 0.1929 në 0.3351, me përmirësim në shtatë nga tetë
+      fold-e. Isolation Forest-i fiton 0.0763 njësi, nga 0.0913 në 0.1676, me përmirësim në të
+      tetë fold-et. One-Class SVM-ja, përkundrazi, humbet 0.0045 njësi dhe përmirësohet vetëm në
+      dy fold-e, edhe pse akordimi i saj kishte dhënë përfitim në validimin e brendshëm."""),
+    p("""Pasoja për renditjen është konkrete. Nën konfigurimin e parazgjedhur renditja është
+      Autoencoder, One-Class SVM, Isolation Forest. Nën konfigurimin e akorduar ajo bëhet
+      Autoencoder, Isolation Forest, One-Class SVM. Udhëheqësi mbetet i njëjti, por dy vendet e
+      fundit ndërrohen, dhe korrelacioni i rangjeve para dhe pas akordimit është vetëm 0.50."""),
+    fig(
+        "tuning_effect",
+        "Average Precision para dhe pas akordimit, për secilin detektor mbi tetë fold-e.",
+        14.0,
+    ),
+    p("""Vlen të theksohet se konfigurimet e zgjedhura nga kërkimi përputhen me ato që gjetën
+      studimet e thelluara, të cilat janë procedura krejtësisht të pavarura. Kërkimi zgjodhi për
+      Isolation Forest-in një nën-mostër prej 16384 dhe një fraksion kolonash prej 0.37, pra
+      pikërisht dy levat që sipërfaqja dhe ndërhyrja e nënkapitullit 5.5.1 i identifikuan si
+      vendimtare. Për Autoencoder-in ai zgjodhi një rrjet me gjerësi 64 dhe dimension latent 20,
+      pra në të njëjtin drejtim si gjetja se arkitekturat më të gjera janë më të mira. Kjo
+      konvergjencë mes dy rrugëve të pavarura e forcon të dyja."""),
+    fig(
+        "tuning_transfer",
+        "Përmirësimi i matur në validimin e brendshëm kundrejt atij të matur në blloqet e "
+        "testimit.",
+        13.5,
+    ),
+    note("""Rezultati i One-Class SVM-së është kujtues i dobishëm se akordimi mbi një dritare
+      validimi nuk garanton përmirësim mbi një dritare të mëvonshme. Dritarja e brendshme e
+      validimit është vetëm një periudhë, dhe konfigurimi më i mirë për të nuk është
+      domosdoshmërisht më i mirë për periudhat që vijnë."""),
+    h2("5.10", "Sa peshojnë vendimet e protokollit"),
+    p("""Dy zgjedhje protokolli u krahasuan drejtpërdrejt mbi të njëjtat të dhëna dhe të njëjtat
+      modele, sepse të dyja janë të përhapura në literaturë dhe të dyja shpesh raportohen pa
+      koment."""),
+    p("""Krahasimi i parë është mes një prerjeje të vetme kronologjike 70/30 dhe protokollit me
+      tetë fold-e. Renditja e detektorëve është identike në të dyja, me korrelacion rangjesh
+      1.00 dhe pa asnjë ndryshim pozicioni. Kjo do të thotë se prerja e vetme nuk e mashtron
+      dikë për renditjen. Ajo çka ajo fsheh është pasiguria: shpërhapja tipike nëpër fold-e është
+      144 për qind e vlerës mesatare, dhe një numër i vetëm nuk e komunikon fare atë. Të tre
+      detektorët japin vlerësim më të ulët nga prerja e vetme sesa mesatarja mbi fold-et, sepse
+      dritarja e vetme e testimit është një periudhë e vështirë."""),
+    tab(
+        "protocol_comparison",
+        "Prerja e vetme kronologjike kundrejt protokollit me tetë fold-e.",
+        rename={
+            "Detektori": "Detektori",
+            "AP_ndarje_e_vetme": "AP (prerje e vetme)",
+            "AP_8_folde": "AP (8 fold-e)",
+            "sd_nder_folde": "s.d. nëpër fold-e",
+            "diferenca": "Diferenca",
+            "rangu_ndarje_e_vetme": "Rangu (prerje)",
+            "rangu_8_folde": "Rangu (8 fold-e)",
+            "ndryshim_rangu": "Δ rangu",
+            "brenda_1sd": "Brenda 1 s.d.",
+        },
+        font_size=8.5,
+    ),
+    fig(
+        "protocol_comparison",
+        "Vlerësimi nga prerja e vetme kundrejt shpërndarjes nëpër tetë fold-e, për secilin "
+        "detektor.",
+        14.0,
+    ),
+    p("""Krahasimi i dytë është shumë më i rëndësishëm. Kur e njëjta ndarje 70/30 bëhet e
+      rastësishme dhe e stratifikuar në vend se kronologjike, Average Precision e metodave
+      unsupervised fryhet mesatarisht 3.01 herë. Fryrja arrin 4.49 herë për Isolation Forest-in,
+      2.38 për Autoencoder-in dhe 2.16 për One-Class SVM-në."""),
+    tab(
+        "protocol_inflation",
+        "Fryrja e Average Precision kur ndarja kronologjike zëvendësohet me një ndarje të "
+        "rastësishme të stratifikuar.",
+        rename={
+            "Detektori": "Detektori",
+            "AP_kronologjik": "AP kronologjik",
+            "AP_i_perzier": "AP i përzier",
+            "fryrja": "Fryrja",
+        },
+        font_size=9.5,
+    ),
+    p("""Referenca e mbikëqyrur sillet përsëri ndryshe dhe kjo e mbyll argumentin. Për të, ndarja
+      e rastësishme nuk sjell fryrje por një rënie të lehtë, me raport 0.92. Fryrja pra nuk është
+      veti e dataset-it dhe as e metrikës, por pasojë e drejtpërdrejtë e mënyrës si metodat
+      gjeometrike përfitojnë kur transaksione nga e njëjta periudhë ndodhen njëkohësisht në
+      trajnim dhe në test."""),
+    p("""Krahasimi i madhësive e bën pikën shqetësuese. Fryrja prej 3.01 herë është dukshëm më e
+      madhe se e gjithë hapësira mes algoritmit më të dobët dhe atij më të mirë nën protokollin
+      korrekt. Me fjalë të tjera, zgjedhja e protokollit ndikon në numrin e raportuar më shumë se
+      zgjedhja e algoritmit, dhe një studim që përdor ndarje të rastësishme mund të raportojë
+      rezultate më të mira me algoritmin më të dobët sesa një studim korrekt me algoritmin më të
+      mirë."""),
+    h2("5.11", "Zhvendosja: cila popullatë lëviz"),
+    p("""Degradimi me kalimin e kohës është vëzhguar tashmë në rezultatet për fold. Pyetja e
+      dobishme nuk është nëse ai ekziston, por cila popullatë lëviz, sepse dy përgjigjet çojnë
+      në veprime të kundërta: nëse lëviz popullata normale, ritrajnimi ndihmon; nëse lëviz ajo e
+      mashtrimeve, ritrajnimi mbi të dhëna të reja normale nuk ndryshon asgjë."""),
+    tab(
+        "drift_per_fold",
+        "Dekompozimi i zhvendosjes për fold, i ndarë sipas popullatës.",
+        columns=[
+            "fold",
+            "psi_normals_mean",
+            "psi_normals_max",
+            "psi_normals_over_moderate",
+            "psi_frauds_mean",
+            "psi_frauds_max",
+            "psi_frauds_over_moderate",
+            "ks_normals_median",
+            "ks_frauds_median",
+        ],
+        rename={
+            "fold": "Fold",
+            "psi_normals_mean": "PSI legjit. (mes.)",
+            "psi_normals_max": "PSI legjit. (maks.)",
+            "psi_normals_over_moderate": "Veçori mbi prag (legjit.)",
+            "psi_frauds_mean": "PSI mashtr. (mes.)",
+            "psi_frauds_max": "PSI mashtr. (maks.)",
+            "psi_frauds_over_moderate": "Veçori mbi prag (mashtr.)",
+            "ks_normals_median": "KS legjit.",
+            "ks_frauds_median": "KS mashtr.",
+        },
+        font_size=8.0,
+    ),
+    p("""Përgjigjja është e njëanshme. Indeksi PSI për transaksionet legjitime është mesatarisht
+      0.141, pra në kufirin e poshtëm të asaj që konsiderohet zhvendosje e moderuar, ndërsa për
+      mashtrimet ai është 3.222, pra një rend madhësie më i lartë. Mesatarisht dhjetë nga njëzet
+      e nëntë veçori e kalojnë pragun e moderuar te popullata legjitime, kundrejt njëzet e nëntë
+      nga njëzet e nëntë te ajo e mashtrimeve, pra te mashtrimet zhvendosen të gjitha."""),
+    fig(
+        "drift_psi_decomposition",
+        "Indeksi PSI për popullatën legjitime dhe atë të mashtrimeve, për çdo fold.",
+        14.5,
+    ),
+    p("""Përfundimi është se përkufizimi i normalitetit, mbi të cilin janë trajnuar të tre
+      detektorët, mbetet i qëndrueshëm; ajo që ndryshon është sjellja e vetë mashtruesve.
+      Rekomandimi i zakonshëm i ritrajnimit periodik nuk e adreson pra shkakun, dhe kjo
+      parashikim është i testueshëm: studimi i politikës së dritares në nënkapitullin 5.8 e
+      konfirmoi, sepse mbajtja e gjithë historikut nuk e dëmtoi asnjë detektor."""),
+    fig(
+        "drift_separability",
+        "Aftësia ndarëse e matur pa model, në dritaren e trajnimit kundrejt asaj të testimit.",
+        14.0,
+    ),
+    p("""Monitorimi me Page-Hinkley, me prag të kalibruar veç e veç për çdo fold dhe model përmes
+      permutacioneve, jep sinjal zhvendosjeje në njëmbëdhjetë nga njëzet e katër kombinime
+      fold-model. Zhvendosja është pra e pranishme por jo e vazhdueshme, çka përputhet me faktin
+      se ajo vjen nga popullata e mashtrimeve dhe jo nga një trend i qëndrueshëm i normalitetit."""),
+    tab(
+        "drift_page_hinkley",
+        "Zbulimi i pikave të ndryshimit me Page-Hinkley mbi rrjedhën e pikëve të anomalisë, me "
+        "prag të kalibruar me permutacione.",
+        font_size=8.0,
+    ),
+    h2("5.13", "Pragu adaptiv me dritare rrëshqitëse"),
+    p("""Një prag i fiksuar nga kuantili i pikëve të trajnimit e ka një dobësi praktike që del
+      vetëm në rrjedhë: kur shpërndarja e pikëve zhvendoset, numri i alarmeve zhvendoset bashkë
+      me të, dhe ekipi hetimor merr një ngarkesë të paparashikueshme pikërisht në momentin kur
+      diçka ka ndryshuar. Procedura alternative e mban pragun te një kuantil i llogaritur mbi një
+      dritare rrëshqitëse të pikëve të fundit, pa parë asnjë etiketë."""),
+    tab(
+        "adaptive_threshold_summary",
+        "Pragu statik kundrejt atij adaptiv me dritare rrëshqitëse, mesatarisht mbi tetë fold-e.",
+        rename={
+            "model": "Detektori",
+            "regjimi": "Regjimi",
+            "alert_rate": "Norma e alarmeve",
+            "alert_rate_cv": "CV e ngarkesës",
+            "worst_slice_rate": "Piku",
+            "precision": "Precision",
+            "recall": "Recall",
+            "f1": "F1",
+            "alerts_per_block": "Alarme/bllok",
+        },
+        font_size=9.0,
+    ),
+    p("""Objektivi kryesor arrihet: koeficienti i variacionit të normës së alarmeve bie nga 0.84
+      në 0.62, dhe piku i ngarkesës nga 1.8 në 1.7 për qind të transaksioneve. Ngarkesa hetimore
+      bëhet pra dukshëm më e parashikueshme."""),
+    p("""Efekti mbi cilësinë ndan detektorët në dy grupe dhe raportohet i ndarë, sepse mesatarja e
+      përbashkët do ta fshihte gjetjen. Për të tre detektorët unsupervised F1 rritet, nga 0.1236
+      në 0.1662, me përmirësim në të tre pa përjashtim. Për referencën e mbikëqyrur, përkundrazi,
+      F1 bie nga 0.7196 në 0.5346."""),
+    p("""Shkaku i rënies së referencës lexohet drejtpërdrejt te numri i alarmeve, i cili rritet nga
+      31 në 51 për bllok, ndërsa precision-i bie nga 0.756 në 0.443. Pragu statik i nxjerrë nga
+      kuantili i trajnimit është tashmë i kalibruar mirë për një model që prodhon probabilitete,
+      prandaj zëvendësimi i tij me një kuantil mbi dritare rrëshqitëse vetëm sa e detyron modelin
+      të alarmojë më shumë se ç'duhet. Rekomandimi është pra i kushtëzuar: pragu adaptiv i
+      përket shtresës unsupervised, jo një modeli të kalibruar."""),
+    fig(
+        "adaptive_alert_rate",
+        "Norma e alarmeve me kalimin e kohës nën pragun statik dhe atë adaptiv.",
+        14.5,
+    ),
+    fig(
+        "adaptive_tradeoff",
+        "Kompromisi mes qëndrueshmërisë së ngarkesës dhe cilësisë së zbulimit, për secilin "
+        "detektor nën të dy regjimet.",
+        14.0,
+    ),
+    h2("5.14", "Cilat mashtrime nuk kapen"),
+    p("""Metrikat e grumbulluara e fshehin identitetin e transaksioneve. Ky nënkapitull e heq atë
+      fshehje: në buxhetin prej njëqind alarmesh për bllok, secili mashtrim ndiqet individualisht
+      nëpër të tetë fold-et dhe regjistrohet nga sa detektorë arrihet."""),
+    tab(
+        "error_analysis_coverage",
+        "Mbulimi i mashtrimeve sipas numrit të detektorëve që i arrijnë brenda buxhetit prej "
+        "njëqind alarmesh.",
+        rename={
+            "n_detektore": "Detektorë që e kapin",
+            "mashtrime": "Mashtrime",
+            "shuma_mesatare": "Shuma mesatare",
+            "norma_z_mediane": "‖z‖ mediane",
+            "pjesa": "Pjesa",
+        },
+        font_size=9.5,
+    ),
+    p("""Nga 251 mashtrime nëpër të tetë blloqet e testimit, 93 ose 37 për qind nuk arrihen nga
+      asnjë detektor, ndërsa 66 ose 26 për qind arrihen njëkohësisht nga të tre. Vetëm 28 ose 11
+      për qind arrihen nga saktësisht një detektor. Kjo shpërndarje, me kulme në të dyja skajet
+      dhe me pak mashtrime të kapura nga vetëm një, është pikërisht struktura që e bën ansamblin
+      të padobishëm: detektorët nuk sjellin informacion plotësues."""),
+    fig(
+        "error_analysis",
+        "Mbulimi i mashtrimeve nga detektorët unsupervised brenda buxhetit, dhe pozicioni "
+        "gjeometrik i mashtrimeve të paarritshme.",
+        15.0,
+    ),
+    p("""Mashtrimet e paarritshme kanë një veti të përbashkët të qartë: ato ndodhen dukshëm më
+      afër popullatës legjitime, me normë mediane 9.7 kundrejt 21.6 të atyre që kapen nga të
+      paktën një detektor. Kjo është konfirmim i drejtpërdrejtë, në nivel transaksioni, i kufirit
+      gjeometrik të matur në nënkapitullin 5.1."""),
+    p("""Gjetja më e rëndësishme e këtij nënkapitulli është krahasimi me referencën e mbikëqyrur.
+      Ajo i kap 59 për qind të mashtrimeve që asnjë detektor unsupervised nuk i arrin, brenda të
+      njëjtit buxhet prej njëqind alarmesh. Informacioni që i dallon ato transaksione ekziston pra
+      në të dhëna; ai thjesht nuk është i formës që një detektor distancash mund ta shohë, sepse
+      qëndron në një drejtim diskriminues të cilin vetëm mbikëqyrja e gjen."""),
+    tab(
+        "error_analysis_dark_set",
+        "Krahasimi mes mashtrimeve që kapen nga të paktën një detektor dhe atyre që nuk kapen "
+        "nga asnjë.",
+        rename={
+            "grupi": "Grupi",
+            "n": "n",
+            "shuma_mediane": "Shuma mediane",
+            "norma_z_mediane": "‖z‖ mediane",
+            "kapur_nga_LR": "Kapur nga referenca",
+        },
+        font_size=9.5,
+    ),
+    p("""Një hollësi e fundit e kundërshton një shpjegim të lehtë. Mashtrimet e paarritshme nuk
+      janë transaksione të vogla që humbin në zhurmë; shuma e tyre mediane është 17.39 kundrejt
+      9.36 të atyre që kapen. Pra ato nuk janë as të parëndësishme financiarisht dhe as të
+      dallueshme gjeometrikisht, dhe kjo është përkufizimi i pjesës më të vështirë të
+      problemit."""),
+    h2("5.15", "A mund të zgjidhet një konfigurim pa etiketa"),
+    p("""I gjithë akordimi i mësipërm përdor etiketa historike mbi një dritare të brendshme
+      validimi. Nëse etiketat nuk ekzistojnë fare, mbetet pyetja nëse një kriter i pastër pa
+      etiketa mund të zërë vendin e tyre. Dy kritere të tilla u testuan, Excess-Mass dhe
+      Mass-Volume, të vlerësuara mbi nënhapësira të rastësishme me dimension të ulët."""),
+    tab(
+        "unsupervised_selection",
+        "Konfigurimi i zgjedhur nga kriteret pa etiketa kundrejt atij të zgjedhur me etiketa, "
+        "për secilin detektor.",
+        font_size=8.0,
+    ),
+    p("""Rezultati është kryesisht negativ dhe raportohet si i tillë. Kriteri Excess-Mass zgjedh
+      të njëjtin konfigurim si kriteri me etiketa në zero nga tre detektorë, dhe Mass-Volume në
+      një nga tre. Kur zgjedhjet ndryshojnë, humbja mesatare është 89 për qind e hapësirës mes
+      konfigurimit më të mirë dhe atij më të keq në rrjetë, pra zgjedhja pa etiketa është më afër
+      asaj më të keqes sesa asaj më të mirës."""),
+    p("""Të dy kriteret raportohen sepse ato nuk bien dakord me njëri-tjetrin: korrelacioni mesatar
+      i renditjes me atë me etiketa është -0.55 për Excess-Mass dhe +0.30 për Mass-Volume.
+      Raportimi vetëm i njërit prej tyre do ta bënte përfundimin çështje zgjedhjeje e jo
+      matjeje."""),
+    fig(
+        "unsupervised_selection",
+        "Renditja sipas kriterit pa etiketa kundrejt renditjes me etiketa, brenda rrjetës së "
+        "secilit detektor.",
+        14.0,
+    ),
+    p("""Një kufizim i vetë metodës duhet deklaruar bashkë me rezultatin. Vlerësimi i masës
+      Lebesgue kërkon nënhapësira me dimension të ulët, dhe brenda një nënhapësire
+      pesëdimensionale çdo hiperparametër që vepron mbi një dimension më të lartë humb kuptimin.
+      Për këtë arsye rindërtimi me komponentë kryesorë u përjashtua plotësisht, ndërsa për
+      Autoencoder-in u testuan vetëm dimensione latente nën atë të nënhapësirës. Kjo është një
+      kufizim real i përzgjedhjes pa etiketa mbi nënhapësira dhe jo një hollësi
+      implementimi."""),
+]
+
+BLOCKS = _HYRJE + _GJEOMETRIA + _PH2 + _PH3 + _THELLIMI + _PARAPROCESIMI + _KAUZALITETI + _ANALIZAT
