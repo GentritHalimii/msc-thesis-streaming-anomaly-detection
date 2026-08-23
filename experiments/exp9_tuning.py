@@ -24,7 +24,7 @@ import optuna
 import pandas as pd
 
 from src.config import REPO_ROOT, load_config
-from src.data.load import load_transactions
+from src.data.load import FEATURE_COLUMNS, load_transactions
 from src.data.scale import fit_scaler, transform
 from src.data.split import chronological_split
 from src.evaluation.manifest import write_manifest
@@ -72,7 +72,12 @@ def search_space(trial: optuna.Trial, name: str) -> dict:
         hidden_dim = trial.suggest_categorical("hidden_dim", [8, 16, 24, 32, 48, 64])
         return {
             "hidden_dim": hidden_dim,
-            "latent_dim": trial.suggest_int("latent_dim", 2, max(3, hidden_dim - 4)),
+            # Also capped below the input width: a latent layer wider than the
+            # input is not the model family this study defines, whatever it
+            # scores. The first search returned latent_dim=34 for 29 inputs.
+            "latent_dim": trial.suggest_int(
+                "latent_dim", 2, max(3, min(hidden_dim - 4, len(FEATURE_COLUMNS) - 1))
+            ),
             "depth": trial.suggest_int("depth", 1, 3),
             "epochs": trial.suggest_int("epochs", 10, 60, step=10),
             "lr": trial.suggest_float("lr", 1e-4, 5e-3, log=True),
