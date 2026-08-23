@@ -95,161 +95,145 @@ ABSTRAKT = [
     "rrjedha të vazhdueshme të dhënash, ku etiketat e verifikuara mbërrijnë "
     "me vonesë ditësh ose javësh dhe ku vendimi duhet marrë brenda "
     "milisekondash. Ky punim dizajnon, implementon dhe vlerëson "
-    "eksperimentalisht një sistem të plotë end-to-end për zbulimin e "
-    "anomalive mbi një rrjedhë të simuluar transaksionesh financiare, duke "
-    "integruar Apache Kafka në modalitetin KRaft me katërmbëdhjetë detektorë "
-    "të pambikëqyrur nga gjashtë familje algoritmike dhe me një referencë të "
-    "mbikëqyrur me Regresion Logjistik.",
-    "Kontributi metodologjik qendror është protokolli i vlerësimit. Në vend "
-    "të një ndarjeje të vetme kronologjike 70/30, sistemi vlerësohet me tetë "
-    "pika kohore prerjeje sipas skemës rolling-origin, ku çdo fold rikthen "
-    "nga fillimi të gjithë disiplinën kundër rrjedhjes së informacionit: "
-    "skalimin e vet, modelet e veta dhe pragjet e veta të nxjerra vetëm nga "
-    "shpërndarja e pikëve në dritaren e trajnimit. Rezultati metodologjik "
-    "është më i nuancuar nga sa pritej: renditja e detektorëve mbetet "
-    "kryesisht e njëjtë mes një ndarjeje të vetme dhe tetë folds-ave "
-    "(korrelacion i rangjeve 0.95), por shpërhapja e vlerësimeve nëpër folds "
-    "është rreth 117 për qind e vlerës mesatare, pra e njëjtë në madhësi me "
-    "efektin që matet — një pasiguri që një ndarje e vetme nuk mund ta "
-    "zbulojë. Ndarja e rastësishme, ndërkohë, e fryn precizionin mesatar të "
-    "metodave të pambikëqyrura mesatarisht 2.7 herë, ndërsa referencën e "
-    "mbikëqyrur nuk e ndihmon fare.",
-    "Rezultatet empirike tregojnë se, me hiperparametra të parazgjedhur, Deep "
-    "SVDD ofron balancën më të mirë "
-    "ndërmjet cilësisë së zbulimit dhe kostos operacionale midis metodave të "
-    "pambikëqyrura, ndërsa Isolation Forest — një nga dy algoritmet qendrore "
-    "të propozimit fillestar — renditet i parafundit nga pesëmbëdhjetë. "
-    "Pas akordimit të hiperparametrave mbi një ndarje të brendshme kohore, "
-    "cilësia përmirësohet në mënyrë të qëndrueshme, por renditja ndryshon "
-    "thelbësisht: korrelacioni i rangjeve para dhe pas akordimit është vetëm "
-    "0.17 dhe kryesimi kalon te një vlerësues i akorduar i distancës së "
-    "Mahalanobis-it, pra përgjigjja për pyetjen se cili algoritëm është më i "
-    "miri është e kushtëzuar nga protokolli i akordimit dhe jo veti e vetë "
-    "algoritmit. "
-    "Analiza e interpretueshmërisë e shpjegon këtë mekanikisht: përputhja e "
-    "vëmendjes së modelit me sinjalin realisht diskriminues parashikon "
-    "renditjen e cilësisë së zbulimit. Referenca e mbikëqyrur mbetet "
-    "dukshëm më lart, gjë që kuantifikon vlerën e etiketave. Qasja ensemble "
-    "nuk e tejkalon modelin më të mirë individual në asnjë variant të "
-    "testuar, dhe punimi e raporton këtë si gjetje negative të vlefshme, së "
-    "bashku me shpjegimin e saj: anëtarët janë të korreluar dhe u mungon "
-    "diversiteti i nevojshëm.",
-    "Nga ana operacionale, sistemi arrin vonesë fund-më-fund dukshëm nën "
-    "objektivin prej një sekonde në të gjitha ritmet e testuara të mbërritjes "
-    "sintetike, dhe pragu adaptiv me dritare rrëshqitëse, i propozuar këtu, "
-    "përmirëson njëkohësisht stabilitetin e ngarkesës hetimore dhe cilësinë e "
-    "zbulimit. Analiza e zhvendosjes tregon se degradimi nuk vjen nga "
-    "vjetërimi i modelit të normalitetit, por nga ndryshimi i vetë popullatës "
-    "së mashtrimeve — një dallim me pasoja të drejtpërdrejta praktike, sepse "
-    "i pari zgjidhet me ritrajnim ndërsa i dyti jo.",
+    "eksperimentalisht një sistem end-to-end për zbulimin e anomalive mbi një "
+    "rrjedhë të simuluar transaksionesh financiare, duke integruar Apache "
+    "Kafka në modalitetin KRaft me tri algoritmet unsupervised të "
+    "projekt-propozimit, Isolation Forest, Autoencoder dhe One-Class SVM, si "
+    "dhe me një referencë të mbikëqyrur me Regresion Logjistik.",
+    "Studimi zgjedh thellësinë në vend të gjerësisë. Në vend që të shtohen "
+    "algoritme të tjera, secili prej tri detektorëve i nënshtrohet një studimi "
+    "të veçantë të ndërtuar rreth mekanizmit të tij, dhe i gjithë vlerësimi "
+    "kryhet me protokoll rolling-origin në tetë pika kohore prerjeje, ku çdo "
+    "fold rindërton nga fillimi skalimin, modelet dhe pragjet. Përpara çdo "
+    "modelimi matet kufiri i sipërm gjeometrik i vetë problemit me një "
+    "detektor pa parametra.",
+    "Ai kufi rezulton vendimtar për interpretimin. Mashtrimet ndodhen "
+    "mesatarisht 7.9 herë më larg klasës legjitime sesa një transaksion tipik "
+    "legjitim, por vetëm distanca jep Average Precision 0.30, sepse bishti i "
+    "vetë klasës legjitime e mbush të njëjtin rajon; mashtrimi median kërkon "
+    "shqyrtimin e rreth 530 alarmeve. Në nivel transaksioni, 37 për qind e "
+    "mashtrimeve nuk arrihen nga asnjë detektor unsupervised brenda një "
+    "buxheti prej njëqind alarmesh, ndërsa referenca e mbikëqyrur i kap 59 për "
+    "qind të tyre, çka tregon se informacioni ekziston në të dhëna por nuk "
+    "është i formës që një detektor distancash e sheh.",
+    "Dy gjetje metodologjike e ndryshojnë mënyrën si duhen lexuar renditjet e "
+    "publikuara. Zgjedhja e paraprocesimit ka ndikim më të madh se zgjedhja e "
+    "algoritmit: transformimi kuantil e ngre One-Class SVM-në me 0.218 njësi "
+    "AP në të tetë fold-et, ndërsa referencën e mbikëqyrur nuk e prek fare. "
+    "Ndarja e rastësishme e të dhënave, praktikë e zakonshme në literaturë, e "
+    "fryn Average Precision e metodave unsupervised rreth 2.7 herë. Përgjigjja "
+    "për pyetjen se cili algoritëm është më i miri është pra e kushtëzuar nga "
+    "protokolli, jo veti e pandryshueshme e algoritmit.",
+    "Nga ana operacionale sistemi arrin vonesë end-to-end dukshëm nën "
+    "objektivin prej një sekonde në të gjitha ritmet e testuara, dhe pragu "
+    "adaptiv me dritare rrëshqitëse, i propozuar këtu, përmirëson njëkohësisht "
+    "stabilitetin e ngarkesës hetimore dhe cilësinë e zbulimit. Qasja ensemble "
+    "nuk e tejkalon modelin më të mirë individual, dhe analiza e gabimeve në "
+    "nivel transaksioni e shpjegon pse. Analiza e zhvendosjes tregon se "
+    "degradimi nuk vjen nga vjetërimi i modelit të normalitetit, por nga "
+    "ndryshimi i vetë popullatës së mashtrimeve, dallim me pasoja praktike të "
+    "kundërta.",
 ]
 
 ABSTRACT_EN = [
     "Credit-card fraud detection increasingly happens on continuous data "
     "streams, where verified labels arrive days or weeks late and the "
     "decision itself must be made in milliseconds. This thesis designs, "
-    "implements and experimentally evaluates a complete end-to-end anomaly "
-    "detection system over a simulated stream of financial transactions, "
-    "integrating Apache Kafka in KRaft mode with fourteen unsupervised "
-    "detectors drawn from six algorithmic families and a supervised Logistic "
-    "Regression reference.",
-    "The central methodological contribution is the evaluation protocol. "
-    "Instead of a single chronological 70/30 split, the system is evaluated "
-    "at eight successive cut points under a rolling-origin scheme in which "
-    "every fold re-establishes the full anti-leakage discipline from scratch: "
-    "its own scaler, its own models and its own thresholds derived solely "
-    "from the training-score distribution. The methodological finding is more "
-    "nuanced than expected: the ranking of detectors is largely preserved "
-    "between a single split and eight folds (rank correlation 0.95), but the "
-    "spread of estimates across folds is about 117 per cent of the mean "
-    "value — as large as the effect being measured — an uncertainty a single "
-    "split cannot reveal. A shuffled split, meanwhile, inflates the average "
-    "precision of the unsupervised methods by a factor of 2.7 on average "
-    "while giving the supervised reference no help at all.",
-    "Empirically, with default hyperparameters Deep SVDD offers the best "
-    "trade-off between detection "
-    "quality and operational cost among the unsupervised methods, while "
-    "Isolation Forest — one of the two algorithms at the centre of the "
-    "original proposal — ranks fourteenth of fifteen. After tuning on an "
-    "inner temporal split, quality improves consistently but the ranking "
-    "changes fundamentally: the rank correlation before and after tuning is "
-    "only 0.17 and the lead passes to a tuned Mahalanobis distance estimator, "
-    "so which algorithm is best is conditional on the tuning protocol rather "
-    "than a property of the algorithm. An interpretability "
-    "analysis explains this mechanically: how well a model's attention aligns "
-    "with the genuinely discriminative signal predicts its detection ranking. "
-    "The supervised reference remains far ahead, quantifying the value of "
-    "labels. No ensemble variant outperforms the best single model, and this "
-    "negative result is reported together with its explanation: the members "
-    "are correlated and lack the diversity that averaging requires.",
-    "Operationally, the system achieves end-to-end latency far below the "
-    "one-second target at every synthetic arrival rate tested, and the "
-    "sliding-window adaptive threshold proposed here improves both the "
-    "stability of the investigation workload and detection quality. Drift "
-    "analysis shows that degradation does not come from a stale model of "
-    "normality but from a change in the fraud population itself — a "
-    "distinction with direct practical consequences, since the former is "
-    "fixed by retraining and the latter is not.",
+    "implements and experimentally evaluates an end-to-end anomaly detection "
+    "system over a simulated stream of financial transactions, integrating "
+    "Apache Kafka in KRaft mode with the three unsupervised algorithms named "
+    "in the research proposal, Isolation Forest, Autoencoder and One-Class "
+    "SVM, together with a supervised Logistic Regression reference.",
+    "The study buys depth rather than breadth. Instead of adding further "
+    "algorithms, each of the three detectors receives a dedicated study built "
+    "around its own mechanism, and the whole evaluation runs under a "
+    "rolling-origin protocol at eight successive cut points in which every "
+    "fold rebuilds the scaler, the models and the thresholds from scratch. "
+    "Before any model is fitted, the geometric ceiling of the problem itself "
+    "is measured with a parameter-free detector.",
+    "That ceiling turns out to govern the interpretation. Frauds sit on "
+    "average 7.9 times farther from the legitimate class than a typical "
+    "legitimate transaction, yet distance alone yields an Average Precision "
+    "of 0.30, because the tail of the legitimate class fills the same region; "
+    "the median fraud costs roughly 530 alerts to reach. At the transaction "
+    "level, 37 per cent of frauds are found by no unsupervised detector "
+    "within a budget of one hundred alerts, while the supervised reference "
+    "recovers 59 per cent of them, showing that the information is present in "
+    "the data but not in a form a distance-based detector can see.",
+    "Two methodological findings change how published rankings should be "
+    "read. The preprocessing choice matters more than the choice of "
+    "algorithm: a quantile transform lifts One-Class SVM by 0.218 AP in all "
+    "eight folds, while leaving the supervised reference untouched. A "
+    "shuffled split, common in the literature, inflates the Average Precision "
+    "of the unsupervised methods by roughly a factor of 2.7. Which algorithm "
+    "is best is therefore conditional on the protocol rather than a fixed "
+    "property of the algorithm.",
+    "Operationally the system stays far below the one-second latency target "
+    "at every arrival rate tested, and the sliding-window adaptive threshold "
+    "proposed here improves both the stability of the investigation workload "
+    "and detection quality. No ensemble variant beats the best single model, "
+    "and the per-transaction error analysis explains why. Drift analysis "
+    "shows that degradation comes not from a stale model of normality but "
+    "from a change in the fraud population itself, a distinction with "
+    "opposite practical consequences.",
 ]
 
 MIRENJOHJE = [
-    "Falënderoj mentorin tim, Dr. sc. Mehmet Shala, për udhëzimet e sakta dhe "
-    "për lirinë që më dha ta ndjek këtë temë në thellësi, veçanërisht atëherë "
-    "kur rezultatet e para nuk përkonin me pritshmëritë e mia fillestare.",
-    "Falënderoj stafin akademik të Programit për Shkenca Kompjuterike dhe "
-    "Inxhinieri në UBT, në veçanti për lëndët Advanced Machine Learning dhe "
-    "Deep Learning, të cilat formuan mënyrën si e kuptoj sot vlerësimin "
-    "eksperimental: jo si një hap final verifikimi, por si pjesa më e "
-    "rëndësishme e vetë kërkimit.",
-    "Falënderoj grupin Machine Learning të Université Libre de Bruxelles për "
-    "publikimin e dataset-it që bëri të mundur këtë studim, si dhe "
-    "komunitetin e softuerit të lirë, pa punën e të cilit një infrastrukturë "
-    "e tillë nuk do të ishte e arritshme brenda kornizës së një punimi "
-    "diplome.",
-    "Së fundi, falënderoj familjen time për durimin gjatë muajve kur kjo punë "
-    "zuri pjesën më të madhe të kohës sime.",
+    "Falënderime i shkojnë mentorit, Dr. sc. Mehmet Shala, për udhëzimet e "
+    "sakta dhe për lirinë e dhënë që kjo temë të ndiqej në thellësi, "
+    "veçanërisht atëherë kur rezultatet e para nuk përkonin me pritshmëritë "
+    "fillestare.",
+    "Falënderime i shkojnë gjithashtu stafit akademik të Programit për "
+    "Shkenca Kompjuterike dhe Inxhinieri në UBT, në veçanti për lëndët "
+    "Advanced Machine Learning dhe Deep Learning, të cilat e formuan mënyrën "
+    "si kuptohet sot vlerësimi eksperimental: jo si hap final verifikimi, por "
+    "si pjesa më e rëndësishme e vetë kërkimit.",
+    "Një falënderim i veçantë i takon grupit Machine Learning të Université "
+    "Libre de Bruxelles për publikimin e dataset-it që e bëri të mundur këtë "
+    "studim, si dhe komunitetit të softuerit të lirë, pa punën e të cilit një "
+    "infrastrukturë e tillë nuk do të ishte e arritshme brenda kornizës së "
+    "një punimi diplome.",
+    "Së fundi, falënderime i shkojnë familjes për durimin gjatë muajve kur "
+    "kjo punë zuri pjesën më të madhe të kohës.",
 ]
 
 FJALORI = [
     (
         "AP",
-        "Average Precision (Precizioni Mesatar) — sipërfaqja nën kurbën "
-        "precision–recall; metrika kryesore e këtij punimi",
+        "Average Precision, sipërfaqja nën kurbën precision-recall; metrika "
+        "kryesore e këtij punimi",
     ),
-    ("ADWIN", "Adaptive Windowing — algoritëm për zbulimin e zhvendosjes së konceptit"),
-    ("AE", "Autoencoder — rrjet nervor që mëson të rindërtojë hyrjen e vet"),
-    ("AUC", "Area Under the Curve — sipërfaqja nën kurbë"),
-    ("CD", "Critical Difference — diferenca kritike në testin post-hoc të Nemenyi-t"),
-    ("COPOD", "Copula-Based Outlier Detection"),
-    ("CV", "Coefficient of Variation — koeficienti i variacionit"),
-    ("Deep SVDD", "Deep Support Vector Data Description"),
-    ("ECOD", "Empirical Cumulative Distribution Functions Outlier Detection"),
-    ("EM", "Excess-Mass — kriter i pambikëqyrur për vlerësimin e funksioneve të pikëzimit"),
-    ("FN", "False Negative — mashtrim i pazbuluar"),
-    ("FP", "False Positive — alarm i rremë"),
-    ("GMM", "Gaussian Mixture Model — model përzierjeje gausiane"),
-    ("HBOS", "Histogram-Based Outlier Score"),
+    ("AE", "Autoencoder, rrjet nervor që mëson të rindërtojë hyrjen e vet"),
+    ("AUC", "Area Under the Curve, sipërfaqja nën kurbë"),
+    ("CD", "Critical Difference, diferenca kritike në testin post-hoc të Nemenyi-t"),
+    ("CV", "Coefficient of Variation, koeficienti i variacionit"),
+    ("EM", "Excess-Mass, kriter i pambikëqyrur për vlerësimin e funksioneve të pikëzimit"),
+    ("FN", "False Negative, mashtrim i pazbuluar"),
+    ("FP", "False Positive, alarm i rremë"),
+    ("ID", "Intrinsic Dimension, dimensioni i brendshëm i një bashkësie të dhënash"),
     ("IF", "Isolation Forest"),
-    ("KRaft", "Kafka Raft — modaliteti i Apache Kafka-s pa ZooKeeper"),
-    ("KS", "Kolmogorov–Smirnov — test dy-mostror i barazisë së shpërndarjeve"),
-    ("kNN", "k-Nearest Neighbours — k fqinjët më të afërt"),
-    ("LODA", "Lightweight On-line Detector of Anomalies"),
-    ("LOF", "Local Outlier Factor"),
-    ("LR", "Logistic Regression — Regresioni Logjistik"),
-    ("MCD", "Minimum Covariance Determinant — vlerësues robust i kovariancës"),
-    ("MV", "Mass-Volume — kriter i pambikëqyrur, plotësues i EM-së"),
-    ("OCSVM", "One-Class SVM — makinë me vektorë mbështetës njëklasëshe"),
+    ("KRaft", "Kafka Raft, modaliteti i Apache Kafka-s pa ZooKeeper"),
+    ("KS", "Kolmogorov-Smirnov, test dy-mostror i barazisë së shpërndarjeve"),
+    ("LR", "Logistic Regression, Regresioni Logjistik"),
+    ("MV", "Mass-Volume, kriter i pambikëqyrur, plotësues i EM-së"),
+    ("OCSVM", "One-Class SVM, makinë me vektorë mbështetës njëklasëshe"),
     ("p50 / p95 / p99", "Percentili i 50-të, 95-të dhe 99-të i një shpërndarjeje"),
-    ("PCA", "Principal Component Analysis — analiza e komponentëve kryesorë"),
-    ("PR", "Precision–Recall"),
-    ("PSI", "Population Stability Index — indeksi i stabilitetit të popullatës"),
-    ("RQ", "Research Question — pyetje hulumtuese"),
+    ("PCA", "Principal Component Analysis, analiza e komponentëve kryesorë"),
+    ("PR", "Precision-Recall"),
+    ("PSI", "Population Stability Index, indeksi i stabilitetit të popullatës"),
+    ("RBF", "Radial Basis Function, kerneli gausian i përdorur nga One-Class SVM"),
     ("ROC", "Receiver Operating Characteristic"),
-    ("RSS", "Resident Set Size — memoria rezidente e procesit"),
+    ("RSS", "Resident Set Size, memoria rezidente e procesit"),
     ("SHAP", "SHapley Additive exPlanations"),
-    ("TP", "True Positive — mashtrim i zbuluar saktë"),
-    ("VAE", "Variational Autoencoder — autoenkoder variacional"),
+    ("TP", "True Positive, mashtrim i zbuluar saktë"),
+    ("TPE", "Tree-structured Parzen Estimator, mostruesi i përdorur nga Optuna"),
+    ("TwoNN", "Vlerësues i dimensionit të brendshëm i bazuar në dy fqinjët më të afërt"),
     ("ULB", "Université Libre de Bruxelles"),
+    (
+        "unsupervised",
+        "Mësim pa etiketa gjatë trajnimit; termi ruhet në anglisht sepse "
+        "përdoret ashtu edhe në titullin e temës",
+    ),
 ]
 
 

@@ -41,10 +41,10 @@ evaluate:                  ## every table and figure, from saved scores only
 	$(RUN) python -m experiments.exp0_eda
 	$(RUN) python -m experiments.make_diagrams
 	$(RUN) python -m experiments.make_reference_tables
+	$(RUN) python -m experiments.exp20_data_geometry
 	$(RUN) python -m experiments.exp1_main_table
 	$(RUN) python -m experiments.exp2_contamination_sweep
 	$(RUN) python -m experiments.exp3_curves
-	$(RUN) python -m experiments.exp5_ae_ablation
 	$(RUN) python -m experiments.exp6_shuffled_split
 	$(RUN) python -m experiments.exp10_benchmark
 	$(RUN) python -m experiments.exp11_significance
@@ -54,6 +54,14 @@ evaluate:                  ## every table and figure, from saved scores only
 	$(RUN) python -m experiments.exp15_explainability
 	$(RUN) python -m experiments.exp16_adaptive_threshold
 	$(RUN) python -m experiments.exp17_protocol_comparison
+	$(RUN) python -m experiments.exp21_scaling
+	$(RUN) python -m experiments.exp22_iforest_deep
+	$(RUN) python -m experiments.exp23_autoencoder_deep
+	$(RUN) python -m experiments.exp24_ocsvm_deep
+	$(RUN) python -m experiments.exp25_feature_selection
+	$(RUN) python -m experiments.exp26_training_window
+	$(RUN) python -m experiments.exp27_error_analysis
+	$(RUN) python -m experiments.exp28_best_effort
 	$(RUN) python -m experiments.exp19_unsupervised_selection
 	$(RUN) python -m experiments.make_rq_summary
 
