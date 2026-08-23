@@ -45,6 +45,25 @@ _HYRJE = [
       klasike dhe atyre të thella, sepse dy metoda nga epoka të ndryshme mund të ndajnë të
       njëjtin mekanizëm dhe të kenë të njëjtat dobësi. Rishikimi i Pang-ut dhe bashkautorëve
       mbi metodat e thella ndjek një logjikë të ngjashme organizimi [@pang2021]."""),
+    p("""Peizazhi i plotë i mekanizmave është dukshëm më i gjerë se tri familjet e këtij
+      studimi. Metodat e bazuara në densitet, ku përfaqësuesi më i cituar është Local Outlier
+      Factor, e vlerësojnë densitetin lokal rreth një pike dhe e shpallin atë anomali kur
+      densiteti i saj është dukshëm më i ulët se ai i fqinjëve [@breunig2000]. Metodat e
+      bazuara në distancë e reduktojnë vendimin te largësia nga fqinji i k-të [@ramaswamy2000].
+      Metodat statistikore me histograme ose me kopula e supozojnë pavarësinë e veçorive dhe e
+      fitojnë shpejtësinë prej saj [@goldstein2012], [@li2020copod], [@li2022ecod]. Projeksionet
+      e rastësishme me histograme një-dimensionale ndjekin një logjikë të ngjashme por me
+      ansambël [@pevny2016]. Vlerësimi robust i kovariancës me përcaktor minimal e modelon
+      normalitetin si një eliprsoid të vetëm [@rousseeuw1999]. Bashkësia e këtyre metodave është
+      e disponueshme në biblioteka të unifikuara si PyOD [@zhao2019pyod], çka e bën testimin e
+      dhjetëra detektorëve teknikisht të lehtë."""),
+    p("""Pikërisht kjo lehtësi teknike përbën një rrezik metodologjik. Krahasimi i dhjetëra
+      detektorëve mbi një dataset të vetëm e shumëfishon numrin e testeve statistikore, e
+      dobëson korrigjimin për krahasime të shumëfishta deri në pikën ku asnjë dallim nuk mbetet
+      i zbulueshëm, dhe e zëvendëson kuptimin e mekanizmit me renditjen e emrave. Ky punim
+      ndjek rrugën e kundërt: tri familje, të zgjedhura sepse mekanizmat e tyre janë të
+      ndryshëm, dhe secila e studiuar në thellësi. Arsyetimi i plotë i kësaj zgjedhjeje jepet
+      në nënkapitullin 2.13."""),
     p("""Tri algoritmet e këtij studimi u përkasin tri mekanizmave të ndryshëm, gjë që nuk
       është rastësi e propozimit por përparësi metodologjike. Isolation Forest vendos duke
       matur sa lehtë izolohet një pikë. Autoencoder-i vendos duke matur sa keq rindërtohet
@@ -418,6 +437,15 @@ _METODOLOGJIA = [
             "publikohen rrallë.",
         ]
     ),
+    p("""Nga këto boshllëqe rrjedh edhe arsyetimi i fushëveprimit. Zgjedhja e tri familjeve në
+      vend të një bashkësie të gjerë detektorësh nuk është kufizim i imponuar por kusht i
+      domosdoshëm që katër nga pesë boshllëqet e mësipërme të mund të adresohen fare. Studimi
+      mekanicist i një algoritmi kërkon hapjen e strukturës së tij të brendshme, ndërtimin e
+      probave specifike për të dhe një ndërhyrje eksperimentale që e teston shpjegimin; kjo
+      punë nuk shkallëzohet në dhjetëra metoda. Ekziston edhe një arsye statistikore. Diferenca
+      kritike e testit post-hoc rritet me numrin e metodave të krahasuara, prandaj mbi një numër
+      të fiksuar fold-esh një bashkësi e gjerë detektorësh e bën testin të paaftë të refuzojë
+      çfarëdo hipoteze. Kapitulli 5 e demonstron këtë numerikisht."""),
     p("""Ky punim i adreson të pesta. Ai shton gjithashtu një kontribut praktik që nuk buron
       nga një boshllëk i literaturës por nga një problem i vërejtur gjatë implementimit:
       paqëndrueshmëria e ngarkesës hetimore kur pragu mbahet fiks mbi një rrjedhë që
