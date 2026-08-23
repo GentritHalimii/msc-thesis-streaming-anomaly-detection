@@ -1153,6 +1153,67 @@ _ANALIZAT = [
       Autoencoder-in u testuan vetëm dimensione latente nën atë të nënhapësirës. Kjo është një
       kufizim real i përzgjedhjes pa etiketa mbi nënhapësira dhe jo një hollësi
       implementimi."""),
+    h2("5.16", "Secili detektor në kapacitetin e vet më të mirë"),
+    p("""Të gjitha rezultatet e mësipërme e ndryshojnë një levë në një kohë. Kjo është e
+      nevojshme për të izoluar efektet, por lë hapur pyetjen përfundimtare: sa arrin secili
+      detektor kur asgjë nuk i lihet në vlerën e parazgjedhur. Dizajni faktorial dy-nga-dy i
+      përgjigjet, duke kryqëzuar hiperparametrat e parazgjedhur me ata të akorduar dhe
+      skalimin standard me paraprocesimin që studimi i nënkapitullit 5.6 zgjodhi për secilin."""),
+    tab(
+        "best_effort",
+        "Average Precision mesatar mbi tetë fold-e për secilën nga katër qelizat e dizajnit "
+        "dy-nga-dy.",
+        font_size=9.0,
+    ),
+    p("""Rezultati e përmbys renditjen e raportuar nën konfigurimet e parazgjedhura. Në qelizën e
+      vet më të mirë, One-Class SVM arrin 0.3684 me transformim kuantil dhe hiperparametra të
+      parazgjedhur, Autoencoder-i arrin 0.3350 me akordim dhe skalim standard, dhe Isolation
+      Forest-i arrin 0.3195 me të dyja ndërhyrjet bashkë. Detektori që ishte i fundit nën
+      parazgjedhje dhe ai që ishte i pari përfundojnë brenda 0.05 njësive nga njëri-tjetri."""),
+    fig(
+        "best_effort",
+        "Average Precision për secilin detektor nën të katër qelizat e dizajnit dy-nga-dy.",
+        15.0,
+    ),
+    p("""Krahasimi i hapësirave është gjetja kryesore. Nën konfigurimet e parazgjedhura hapësira
+      mes detektorit më të mirë dhe atij më të keq është 0.1016 njësi, pra një raport prej 2.1
+      herë. Kur secili vlerësohet në qelizën e vet më të mirë, ajo hapësirë bie në 0.0489 njësi,
+      pra një raport prej vetëm 1.15 herë. Pjesa më e madhe e asaj që duket si dallim mes
+      algoritmeve rezulton pra të jetë dallim në se sa mirë vlerat e parazgjedhura të
+      bibliotekave i përshtaten këtyre të dhënave."""),
+    tab(
+        "best_effort_interaction",
+        "Dekompozimi i përfitimit në kontributin e paraprocesimit, atë të hiperparametrave dhe "
+        "ndërveprimin mes tyre, bashkë me qelizën më të mirë për secilin detektor.",
+        rename={
+            "Detektori": "Detektori",
+            "bazë": "Bazë",
+            "vetëm paraprocesim": "Vetëm paraprocesim",
+            "vetëm akordim": "Vetëm akordim",
+            "të dyja": "Të dyja",
+            "shuma e efekteve": "Shuma e efekteve",
+            "ndërveprimi": "Ndërveprimi",
+            "qeliza më e mirë": "Qeliza më e mirë",
+            "AP më i mirë i arritshëm": "AP më i mirë",
+        },
+        font_size=8.0,
+    ),
+    p("""Dekompozimi i përfitimit tregon se dy ndërhyrjet nuk mblidhen. Për Autoencoder-in
+      ndërveprimi është -0.2085 dhe për One-Class SVM-në -0.1559, pra për të dy kombinimi i të
+      dyjave bie nën ndërhyrjen e vetme më të mirë. Për Isolation Forest-in ndërveprimi është
+      pozitiv, +0.0874, dhe vetëm për të kombinimi është zgjedhja e duhur."""),
+    p("""Shpjegimi është se dy ndërhyrjet e adresojnë pjesërisht të njëjtin problem. Akordimi i
+      hiperparametrave e përshtat modelin me shkallën dhe formën e hapësirës ekzistuese, ndërsa
+      paraprocesimi e ndryshon atë hapësirë; kur të dyja bëhen njëkohësisht, hiperparametrat e
+      zgjedhur për hapësirën e vjetër nuk i përshtaten asaj të re. Isolation Forest-i është
+      përjashtim sepse levat e tij më të fuqishme, madhësia e nën-mostrës dhe fraksioni i
+      kolonave, nuk varen nga shkalla e veçorive."""),
+    note("""Ky nënkapitull duhet lexuar si kufi i sipërm optimist dhe jo si vlerësim i
+      paanshëm. Paraprocesimi dhe hiperparametrat e përdorur këtu u zgjodhën nga studime që i
+      panë të njëjtat blloqe testimi, prandaj vlerat e raportuara përmbajnë një përzgjedhje pas
+      faktit. Vlerësimi i paanshëm mbetet ai i nënkapitullit 5.3, dhe qëllimi i këtij
+      nënkapitulli është të tregojë sa e ndryshon renditjen kalimi nga vlerat e parazgjedhura,
+      jo të japë një numër të ri për krahasim me literaturën."""),
 ]
 
 BLOCKS = _HYRJE + _GJEOMETRIA + _PH2 + _PH3 + _THELLIMI + _PARAPROCESIMI + _KAUZALITETI + _ANALIZAT
