@@ -139,14 +139,32 @@ def main(cfg=None):
             f"{MODEL_LABELS.get(name, name)}: dritarja rrëshqitëse më e mirë është "
             f"{int(best_sliding.loc[name, 'madhesia']):,} ({delta:+.3f} ndaj historikut të plotë)"
         )
-    saturation = curve[curve["model"] != "logreg"].groupby("madhesia")["ap_mean"].mean()
+    # Only window sizes that every fold could supply are comparable: the
+    # largest windows exist only in the later folds, which are not the same
+    # problem, so averaging across a mixed set of folds would compare window
+    # size with fold difficulty.
+    complete = curve.groupby("madhesia")["n"].min()
+    complete_sizes = complete[complete == complete.max()].index
+    dropped = sorted(set(curve["madhesia"]) - set(complete_sizes))
+    saturation = (
+        curve[(curve["model"] != "logreg") & (curve["madhesia"].isin(complete_sizes))]
+        .groupby("madhesia")["ap_mean"]
+        .mean()
+    )
     verdict = (
         "Historiku më i gjatë ndihmon, por me kthim në rënie. "
         + "; ".join(parts)
         + f". Mesatarisht mbi detektorët unsupervised, kalimi nga "
         f"{int(saturation.index[0]):,} në {int(saturation.index[-1]):,} transaksione "
         f"trajnimi e ndryshon AP-në nga {saturation.iloc[0]:.3f} në "
-        f"{saturation.iloc[-1]:.3f}. "
+        f"{saturation.iloc[-1]:.3f}"
+        + (
+            f", ku janë përfshirë vetëm madhësitë që i disponojnë të tetë fold-et; "
+            f"madhësitë {', '.join(f'{int(d):,}' for d in dropped)} ekzistojnë vetëm në "
+            f"fold-et e vona dhe prandaj janë lënë jashtë kësaj mesatareje. "
+            if len(dropped)
+            else ". "
+        )
         + (
             "Meqë asnjë dritare rrëshqitëse nuk e tejkalon qartë historikun e plotë, "
             "të dhënat e vjetra nuk duket se dëmtojnë; kjo përputhet me gjetjen se "
