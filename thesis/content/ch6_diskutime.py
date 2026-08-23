@@ -48,9 +48,9 @@ _SINTEZA = [
             "analiza e gabimeve në nivel transaksioni e shpjegon pse.",
             "Degradimi me kalimin e kohës vjen nga ndryshimi i popullatës së mashtrimeve dhe jo nga "
             "vjetërsimi i modelit të normalitetit.",
-            "Pragu adaptiv me dritare rrëshqitëse përmirëson njëkohësisht qëndrueshmërinë e "
-            "ngarkesës hetimore dhe cilësinë e zbulimit, me kosto llogaritëse pothuajse zero për "
-            "modelet e shpejta.",
+            "Pragu adaptiv me dritare rrëshqitëse e stabilizon ngarkesën hetimore dhe "
+            "njëkohësisht e përmirëson cilësinë e zbulimit për të tre detektorët unsupervised, "
+            "ndërsa për referencën e mbikëqyrur e përkeqëson atë; asimetria ka shpjegim të matur.",
         ]
     ),
     h2("6.2", "Interpretimi"),
@@ -175,9 +175,11 @@ _SINTEZA = [
             "Etiketat historike, edhe të vonuara, kanë vlerë të madhe. Hendeku i matur dhe analiza "
             "e mashtrimeve të paarritshme sugjerojnë që metodat unsupervised duhen përdorur si "
             "shtresë plotësuese për periudhën pa etiketa, jo si zëvendësim i përhershëm.",
-            "Pragu duhet të jetë adaptiv. Një prag i fiksuar në trajnim e bën ngarkesën hetimore të "
-            "paparashikueshme pikërisht kur të dhënat ndryshojnë; procedura e propozuar këtu e "
-            "stabilizon atë dhe përmirëson edhe cilësinë.",
+            "Pragu duhet të jetë adaptiv për detektorët unsupervised, por jo për një model të "
+            "kalibruar. Një prag i fiksuar në trajnim e bën ngarkesën hetimore të "
+            "paparashikueshme pikërisht kur të dhënat ndryshojnë, dhe procedura e propozuar këtu "
+            "e stabilizon atë duke përmirësuar edhe cilësinë; e njëjta procedurë e dëmton një "
+            "model që tashmë prodhon probabilitete të kalibruara.",
             "Monitorimi i zhvendosjes duhet të dallojë popullatat. Nëse zhvendoset popullata "
             "normale, ritrajnimi ndihmon; nëse zhvendoset ajo e mashtrimeve, nevojiten veçori të "
             "reja ose etiketa, dhe ritrajnimi është humbje kohe.",
