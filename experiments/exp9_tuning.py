@@ -48,8 +48,11 @@ def search_space(trial: optuna.Trial, name: str) -> dict:
     if name == "iforest":
         return {
             "n_estimators": trial.suggest_int("n_estimators", 50, 500, step=50),
+            # The surface study found the optimum at 16384, well outside the
+            # usual grid, so the range has to reach it or the search cannot
+            # find what is already known to be there.
             "max_samples": trial.suggest_categorical(
-                "max_samples", [64, 128, 256, 512, 1024, 4096]
+                "max_samples", [64, 128, 256, 512, 1024, 4096, 8192, 16384, 32768]
             ),
             "max_features": trial.suggest_float("max_features", 0.2, 1.0),
         }
@@ -62,9 +65,15 @@ def search_space(trial: optuna.Trial, name: str) -> dict:
             "kernel": trial.suggest_categorical("kernel", ["rbf", "poly", "sigmoid"]),
         }
     if name == "autoencoder":
+        # latent_dim is drawn below hidden_dim so that every sampled network
+        # actually has a bottleneck; the architecture study showed the width
+        # of that bottleneck is the single largest lever, and depth is the
+        # second, so both are searched.
+        hidden_dim = trial.suggest_categorical("hidden_dim", [8, 16, 24, 32, 48, 64])
         return {
-            "hidden_dim": trial.suggest_categorical("hidden_dim", [8, 16, 24, 32, 48, 64]),
-            "latent_dim": trial.suggest_int("latent_dim", 2, 20),
+            "hidden_dim": hidden_dim,
+            "latent_dim": trial.suggest_int("latent_dim", 2, max(3, hidden_dim - 4)),
+            "depth": trial.suggest_int("depth", 1, 3),
             "epochs": trial.suggest_int("epochs", 10, 60, step=10),
             "lr": trial.suggest_float("lr", 1e-4, 5e-3, log=True),
             "weight_decay": trial.suggest_float("weight_decay", 1e-8, 1e-3, log=True),
