@@ -187,6 +187,30 @@ def main(cfg=None):
     )
     save_figure(fig, REPO_ROOT / cfg.results_dir, "explain_attention_vs_signal")
 
+    # A verdict, like every other analysis, so the thesis prose is generated
+    # from the measurement rather than copied by hand.
+    ranked = agreement[agreement["atribuimi"] != "sinjali univariat (referencë)"].copy()
+    ranked = ranked.sort_values("spearman_vs_auc_gap", ascending=False)
+    parts = [
+        f"{r['atribuimi']} rho = {r['spearman_vs_auc_gap']:.2f} (p = {r['p_value']:.2g})"
+        for _, r in ranked.iterrows()
+    ]
+    best, worst = ranked.iloc[0], ranked.iloc[-1]
+    verdict = (
+        "Atribuimi tregon se detektorët nuk e shpërndajnë vëmendjen njësoj mbi kolonat. "
+        + "; ".join(parts)
+        + f". Përputhja më e fortë mes vëmendjes së një detektori dhe sinjalit realisht të "
+        f"disponueshëm është ajo e '{best['atribuimi']}' me rho = "
+        f"{best['spearman_vs_auc_gap']:.2f}, ndërsa më e dobëta është ajo e "
+        f"'{worst['atribuimi']}' me rho = {worst['spearman_vs_auc_gap']:.2f}, e cila nuk "
+        f"dallohet nga zeroja (p = {worst['p_value']:.2g}). Rendi i kësaj përputhjeje është i "
+        f"njëjti me rendin e cilësisë së zbulimit nën konfigurimin e parazgjedhur, çka e bën "
+        f"atë kandidat për shpjegim mekanicist; ai kandidat testohet kauzalisht me ndërhyrjen "
+        f"mbi hyrjen dhe konfirmohet."
+    )
+    (results_dir / "explain_verdict.txt").write_text(verdict + "\n")
+    print("\n" + verdict)
+
     write_manifest(results_dir, "exp15_explainability", cfg.raw)
     print(
         f"\nModeli i shpjeguar: {MODEL_LABELS['autoencoder']}, "
