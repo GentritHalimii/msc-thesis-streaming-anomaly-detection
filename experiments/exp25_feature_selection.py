@@ -82,7 +82,10 @@ def main(cfg=None):
             for k in K_VALUES:
                 cols = np.sort(order[:k])
                 for name in ALL_MODELS:
-                    model = build_model(name, cfg)
+                    # The autoencoder fixes its input width at construction
+                    # time, so a reduced column set has to be declared.
+                    overrides = {"n_features": k} if name == "autoencoder" else None
+                    model = build_model(name, cfg, overrides)
                     if name == "logreg":
                         model.fit(X_train_full[:, cols], y_train)
                     else:
