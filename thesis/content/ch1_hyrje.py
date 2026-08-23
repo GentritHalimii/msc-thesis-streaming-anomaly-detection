@@ -149,7 +149,9 @@ BLOCKS = [
             "Dekompozimi i degradimit në zhvendosje kovariatësh kundrejt zhvendosjeje koncepti, me "
             "pasoja praktike të ndryshme, sepse e para zgjidhet me ritrajnim ndërsa e dyta jo.",
             "Pragu adaptiv me dritare rrëshqitëse për shtresën e alarmeve, i cili stabilizon "
-            "ngarkesën hetimore dhe njëkohësisht përmirëson cilësinë e zbulimit.",
+            "ngarkesën hetimore dhe njëkohësisht përmirëson cilësinë e zbulimit për të tre "
+            "detektorët unsupervised, ndërsa për referencën e mbikëqyrur e përkeqëson atë; "
+            "asimetria shpjegohet dhe raportohet.",
         ]
     ),
     h2("1.8", "Ajo që ky punim nuk e trajton"),
