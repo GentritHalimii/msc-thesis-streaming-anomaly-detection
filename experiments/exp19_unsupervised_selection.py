@@ -38,24 +38,24 @@ from src.models.build import build_model
 
 warnings.filterwarnings("ignore")
 
-# Small, explicit grids. The criteria are expensive (each candidate is refitted
-# once per random subspace), so breadth is traded for a clear comparison over
-# detectors that are cheap enough to refit many times.
-# Detectors whose hyperparameters keep their meaning inside a low-dimensional
-# subspace. PCA reconstruction is deliberately excluded: its only
-# hyperparameter is the number of retained components, which gets clamped to
-# the subspace dimension, so every candidate above that dimension collapses to
-# an identical criterion value. That is a real limitation of the subspace
-# approximation, reported rather than worked around.
-# The criteria refit the detector once per random subspace, so only detectors
-# that are cheap to refit can be studied this way. PCA reconstruction is
-# excluded for a different reason: its only hyperparameter is the number of
-# retained components, which gets clamped to the subspace dimension, so every
-# candidate above that dimension collapses to an identical criterion value.
+# Small, explicit grids. The criteria are expensive, since each candidate is
+# refitted once per random subspace, so breadth is traded for a comparison
+# that can actually be read.
+#
+# Two constraints follow from the subspace approximation itself. PCA
+# reconstruction is excluded entirely: its only hyperparameter is the number
+# of retained components, which gets clamped to the subspace dimension, so
+# every candidate above that dimension collapses to an identical criterion
+# value. The autoencoder is kept, but only with latent widths below the
+# subspace dimension, for exactly the same reason: inside a five-dimensional
+# subspace a latent layer of width eight is not a bottleneck at all, and the
+# criterion would be scoring the same model several times under different
+# names. This is a real limitation of label-free selection over random
+# subspaces, reported rather than worked around.
 GRIDS = {
     "iforest": [{"n_estimators": n, "max_samples": m} for n in (50, 200) for m in (64, 256, 1024)],
     "ocsvm": [{"nu": nu} for nu in (0.005, 0.01, 0.05, 0.1, 0.2)],
-    "autoencoder": [{"latent_dim": ld, "epochs": 10} for ld in (2, 4, 8, 12, 16)],
+    "autoencoder": [{"latent_dim": ld, "epochs": 10} for ld in (2, 3, 4)],
 }
 FIT_SUBSAMPLE = 25000
 
@@ -88,7 +88,13 @@ def main(cfg=None):
             ap = inner_validation_ap(y_val, model.score(X_val))
 
             def fit_score(X_sub, _name=name, _params=params):
-                sub_model = build_model(_name, cfg, _params)
+                # The criteria refit inside a random subspace, so any model
+                # whose input width is fixed at construction has to be told
+                # the width of that subspace rather than of the full space.
+                overrides = dict(_params)
+                if _name == "autoencoder":
+                    overrides["n_features"] = X_sub.shape[1]
+                sub_model = build_model(_name, cfg, overrides)
                 sub_model.fit(X_sub)
                 return sub_model.score
 
@@ -157,7 +163,10 @@ def main(cfg=None):
         f"{len(summary)}. Kur zgjedhjet ndryshojnë, humbja mesatare është "
         f"{mean_loss:.0%} e hapësirës mes konfigurimit më të mirë dhe atij më të keq në "
         f"rrjetë. Korrelacioni mesatar mes renditjes së EM-së dhe asaj me etiketa është "
-        f"{summary['rho(AP, EM)'].mean():.2f}."
+        f"{summary['rho(AP, EM)'].mean():.2f}, ndërsa ai i Mass-Volume-së është "
+        f"{summary['rho(AP, −MV)'].mean():.2f}; të dy kriteret raportohen sepse ato nuk "
+        f"bien dakord me njëri-tjetrin, dhe raportimi vetëm i njërit do ta bënte "
+        f"përfundimin çështje zgjedhjeje."
     )
     (results_dir / "unsupervised_selection_verdict.txt").write_text(verdict + "\n")
     print("\n" + verdict)
