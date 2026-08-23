@@ -175,6 +175,35 @@ def main(cfg=None):
         f"{len(monitor)} kombinime fold-model (prag i kalibruar për secilin)."
     )
 
+    # A verdict file, like every other analysis in this study, so the thesis
+    # text can be regenerated from the measurements instead of transcribed.
+    per_feature = pd.read_csv(results_dir / "drift_per_feature.csv")
+    psi_n = float(drift["psi_normals_mean"].mean())
+    psi_f = float(drift["psi_frauds_mean"].mean())
+    n_features = per_feature["feature"].nunique()
+    over_n = float(drift["psi_normals_over_moderate"].mean())
+    over_f = float(drift["psi_frauds_over_moderate"].mean())
+    verdict = (
+        f"Zhvendosja nuk prek të dyja popullatat njësoj. Indeksi PSI për transaksionet "
+        f"legjitime është mesatarisht {psi_n:.3f}, pra nën pragun e zakonshëm prej 0.1 deri "
+        f"0.25 që tregon zhvendosje të moderuar, ndërsa për mashtrimet ai është {psi_f:.3f}, "
+        f"pra një rend madhësie më i lartë. Mesatarisht {over_n:.0f} nga {n_features} veçori "
+        f"e kalojnë pragun e moderuar te popullata legjitime kundrejt {over_f:.0f} nga "
+        f"{n_features} te ajo e mashtrimeve. Kjo do të thotë se ajo që ndryshon me kohën nuk "
+        f"është përkufizimi i normalitetit, mbi të cilin janë trajnuar modelet, por sjellja e "
+        f"vetë mashtruesve. Pasoja praktike është e drejtpërdrejtë: ritrajnimi mbi të dhëna "
+        f"më të freskëta normale nuk e zgjidh problemin, sepse modeli i normalitetit nuk "
+        f"është vjetëruar. Aftësia ndarëse e matur pa model e mbështet të njëjtin lexim, "
+        f"sepse ajo bie nga {drift['train_ap_distance'].mean():.3f} në dritaren e trajnimit "
+        f"në {drift['test_ap_distance'].mean():.3f} në atë të testimit. "
+        f"Monitorimi me Page-Hinkley, me prag të kalibruar veç e veç për çdo fold dhe model "
+        f"me permutacione, jep sinjal zhvendosjeje në {int(detected.sum())} nga "
+        f"{len(monitor)} kombinime fold-model, pra zhvendosja është e pranishme por jo e "
+        f"vazhdueshme."
+    )
+    (results_dir / "drift_verdict.txt").write_text(verdict + "\n")
+    print("\n" + verdict)
+
     write_manifest(results_dir, "exp13_drift", cfg.raw)
     print("\nMesatarja mbi fold-et:")
     print(f"  PSI normalet  = {drift['psi_normals_mean'].mean():.4f}")
