@@ -51,12 +51,16 @@ def intrinsic_dimension_twonn(
     r1, r2 = distances[:, 1], distances[:, 2]
     keep = r1 > 0
     mu = np.sort(r2[keep] / r1[keep])
-    mu = mu[: int(len(mu) * (1.0 - discard))]
+
+    # The empirical CDF has to be built over the *whole* sample and truncated
+    # afterwards. Truncating first and renormalising puts the last retained
+    # point at F = 1, where -log(1 - F) diverges, and that single point drags
+    # the through-origin fit upwards.
     n = len(mu)
     empirical = np.arange(1, n + 1) / n
-    x = np.log(mu)
-    y = -np.log(np.maximum(1.0 - empirical, 1e-12))
-    # line through the origin: slope is the dimension estimate
+    keep_upto = int(n * (1.0 - discard))
+    x = np.log(mu[:keep_upto])
+    y = -np.log(1.0 - empirical[:keep_upto])
     return float(np.dot(x, y) / np.dot(x, x))
 
 
@@ -98,7 +102,6 @@ def fraud_hardness(
     Normals are subsampled for tractability and then re-weighted, so the
     precision figures estimate the full population rather than the sample.
     """
-    rng = np.random.default_rng(seed)
     reference = _subsample(X_normal, max_reference, seed)
     nn = NearestNeighbors(n_neighbors=k, n_jobs=-1).fit(reference)
 
@@ -129,7 +132,6 @@ def fraud_hardness(
         f"frauds_within_top_{budget}": int((fraud_ranks <= budget).sum())
         for budget in (100, 500, 1000, 5000)
     }
-    del rng
     return {
         "k": k,
         "median_knn_distance_normal": float(np.median(d_normal)),
