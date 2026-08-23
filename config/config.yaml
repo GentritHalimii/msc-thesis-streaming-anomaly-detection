@@ -60,11 +60,15 @@ models:
 # ranked either on an inner validation slice of the TRAINING window, or by a
 # fully unsupervised criterion (Excess-Mass / Mass-Volume).
 tuning:
-  n_trials: 25
+  # 60 trials, not the 25 an all-families study could afford. Narrowing the
+  # comparison to the three algorithms of the proposal buys depth everywhere,
+  # and the search is where that shows: the autoencoder space alone has eight
+  # dimensions, and 25 TPE trials barely leave the prior.
+  n_trials: 60
   inner_val_fraction: 0.25           # last 25% of the training window
-  # Candidates are fitted on a seeded subsample so a 25-trial search stays
-  # affordable for the deep models; the winning configuration is then refitted
-  # on the full window before it is evaluated anywhere.
+  # Candidates are fitted on a seeded subsample so the search stays affordable
+  # for the deep models; the winning configuration is then refitted on the
+  # full window before it is evaluated anywhere.
   fit_subsample: 60000
   em_subspaces: 8                    # random feature subspaces for EM/MV
   em_subspace_dim: 5
