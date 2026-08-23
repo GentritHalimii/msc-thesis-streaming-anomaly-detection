@@ -247,19 +247,33 @@ def main(cfg=None):
     )
     save_figure(fig, REPO_ROOT / cfg.results_dir, "iforest_capacity")
 
+    default_ap = float(grid.loc[200, 256])
+    best_ap = float(grid.loc[best[0], best[1]])
+    # Which axis of the surface actually moves the result?
+    by_samples = grid.mean(axis=0)
+    by_trees = grid.mean(axis=1)
+    span_samples = float(by_samples.max() - by_samples.min())
+    span_trees = float(by_trees.max() - by_trees.min())
+    rot_delta = float(
+        rot_summary.loc["i rrotulluar", "mean"] - rot_summary.loc["origjinal", "mean"]
+    )
     verdict = (
-        f"Sipërfaqja e hiperparametrave është e sheshtë: konfigurimi më i mirë "
-        f"(n_estimators={best[0]}, max_samples={best[1]}) jep AP "
-        f"{grid.loc[best[0], best[1]]:.4f}, ndërsa ai i parazgjedhur jep "
-        f"{grid.loc[200, 256]:.4f}, pra akordimi nuk e shpjegon renditjen e fundit. "
-        f"Ndarjet shpërndahen praktikisht në mënyrë uniforme mbi kolonat: pesë veçoritë "
-        f"më informative marrin {100 * share_top5:.1f}% të ndarjeve kundrejt "
-        f"{100 * uniform_share:.1f}% që pritet nga rastësia e plotë, dhe korrelacioni mes "
-        f"përdorimit të një kolone dhe fuqisë së saj diskriminuese është ρ = "
-        f"{rho_usage:.2f} (p = {p_usage:.2g}). Rrotullimi i rastësishëm i hapësirës e "
-        f"ndryshon AP-në nga {rot_summary.loc['origjinal', 'mean']:.4f} në "
-        f"{rot_summary.loc['i rrotulluar', 'mean']:.4f}, çka tregon sa varet detektori "
-        f"nga përputhja e boshteve me komponentët kryesorë."
+        f"Sipërfaqja e hiperparametrave nuk është e sheshtë. Konfigurimi i parazgjedhur "
+        f"(200 pemë, nën-mostër 256) jep AP {default_ap:.4f}, ndërsa më i miri "
+        f"({best[0]} pemë, nën-mostër {best[1]}) jep {best_ap:.4f}, pra një përmirësim "
+        f"relativ prej {100 * (best_ap / default_ap - 1):.0f} për qind. Boshti që lëviz "
+        f"rezultatin është madhësia e nën-mostrës, me hapësirë {span_samples:.4f} njësi AP, "
+        f"ndërsa numri i pemëve lëviz vetëm {span_trees:.4f}; rekomandimi klasik i një "
+        f"nën-mostre prej 256 rezulton pra i papërshtatshëm për këtë dataset. "
+        f"Ndarjet shpërndahen praktikisht në mënyrë uniforme mbi kolonat: pesë veçoritë më "
+        f"informative marrin {100 * share_top5:.1f} për qind të ndarjeve kundrejt "
+        f"{100 * uniform_share:.1f} për qind që pritet nga rastësia e plotë, dhe "
+        f"korrelacioni mes përdorimit të një kolone dhe fuqisë së saj diskriminuese është "
+        f"rho = {rho_usage:.2f} (p = {p_usage:.2g}). Rrotullimi i rastësishëm i hapësirës e "
+        f"ndryshon AP-në me {rot_delta:+.4f} njësi, nga "
+        f"{rot_summary.loc['origjinal', 'mean']:.4f} në "
+        f"{rot_summary.loc['i rrotulluar', 'mean']:.4f}, çka tregon sa varet detektori nga "
+        f"përputhja e boshteve me komponentët kryesorë."
     )
     (results_dir / "iforest_verdict.txt").write_text(verdict + "\n")
     print("\n" + verdict)
