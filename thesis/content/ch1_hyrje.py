@@ -128,7 +128,7 @@ BLOCKS = [
         ]
     ),
     h2("1.7", "Kontributet"),
-    p("""Punimi jep gjashtë kontribute, tri prej të cilave dolën gjatë punës dhe jo nga plani
+    p("""Punimi jep shtatë kontribute, katër prej të cilave dolën gjatë punës dhe jo nga plani
       fillestar."""),
     bullets(
         [
@@ -138,6 +138,10 @@ BLOCKS = [
             "Kuantifikimi i kostos së ndershmërisë metodologjike: krahasimi i drejtpërdrejtë midis "
             "protokollit kronologjik dhe atij me ndarje të rastësishme, mbi të njëjtat të dhëna "
             "dhe të njëjtat modele.",
+            "Matja e paraprocesimit si variabël eksperimentale me të njëjtin rreptësi si "
+            "algoritmi. Rezultati është se zgjedhja e transformimit i tejkalon dallimet mes vetë "
+            "tri algoritmeve, dhe se referenca e mbikëqyrur nuk preket prej saj; asimetria mes "
+            "të dyjave e shpjegon mekanizmin.",
             "Përcaktimi i kufirit të sipërm gjeometrik të problemit me një detektor pa model, i "
             "cili tregon se sa nga rezultati modest u atribuohet të dhënave dhe sa algoritmeve.",
             "Një shpjegim mekanicist i renditjes së algoritmeve përmes atribuimit të veçorive, i "
