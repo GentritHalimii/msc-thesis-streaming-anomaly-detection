@@ -67,10 +67,10 @@ evaluate:                  ## every table and figure, from saved scores only
 
 # --- streaming pipeline (needs docker) -------------------------------------
 stream:
-	$(RUN) python -m experiments.run_streaming --models deep_svdd autoencoder iforest ocsvm lof logreg
+	$(RUN) python -m experiments.run_streaming --models iforest autoencoder ocsvm logreg
 
 stream-adaptive:
-	$(RUN) python -m experiments.run_streaming --models deep_svdd autoencoder iforest --rates 200 --adaptive
+	$(RUN) python -m experiments.run_streaming --models iforest autoencoder ocsvm --rates 200 --adaptive
 
 stream-store:
 	$(RUN) python -m experiments.run_streaming --store

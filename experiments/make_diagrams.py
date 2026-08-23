@@ -40,7 +40,7 @@ def architecture(cfg):
         ),
         (
             "Shtresa 4 — Motori i inferencës",
-            "14 detektorë të pambikëqyrur · referenca LR · ansamble · prag statik/adaptiv",
+            "3 detektorë unsupervised · referenca LR · ansamble · prag statik/adaptiv",
         ),
         (
             "Shtresa 5 — Dalja",

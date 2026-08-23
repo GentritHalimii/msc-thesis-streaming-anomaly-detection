@@ -204,7 +204,7 @@ def main(cfg=None):
         f"{int(wil['wins_a'].iloc[0])}/{len(paired)} fold-e, p = "
         f"{wil['p_value'].iloc[0]:.4f}). Megjithatë {stability}: korrelacioni i rangjeve "
         f"para dhe pas akordimit është rho = {rho_rank:.3f} (p = {p_rank:.2g}), dhe "
-        f"detektori më i mirë i pambikëqyrur ndryshon nga "
+        f"detektori më i mirë unsupervised ndryshon nga "
         f"{MODEL_LABELS.get(winner_before, winner_before)} (AP "
         f"{default_ap[tuned_only].mean().max():.3f}) në "
         f"{MODEL_LABELS.get(winner_after, winner_after)} (AP "
