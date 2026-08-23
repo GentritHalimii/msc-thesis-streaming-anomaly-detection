@@ -21,8 +21,12 @@ BLOCKS = [
             "e pikëve mbi të cilat mbështetet çdo analizë e mëvonshme.",
             "make tune dhe make protocol-tuned, kryejnë kërkimin e hiperparametrave mbi ndarjen e "
             "brendshme kohore dhe pastaj ri-ekzekutojnë të gjithë protokollin me to.",
-            "make evaluate, gjeneron të gjitha tabelat dhe figurat, përfshirë studimet e thelluara "
-            "për secilin algoritëm.",
+            "make evaluate, gjeneron tabelat dhe figurat që lexohen nga matricat e ruajtura të "
+            "pikëve, pra pa ripërshtatur asnjë model; ky hap zgjat minuta.",
+            "make deep-studies, ekzekuton studimet e thelluara për secilin algoritëm, "
+            "karakterizimin gjeometrik, studimin e paraprocesimit, ndërhyrjen mbi hyrjen dhe "
+            "dizajnin faktorial; këto ripërshtatin modelet nga fillimi dhe zgjatin orë, prandaj "
+            "mbahen të ndara nga hapi i mësipërm.",
             "docker compose -f docker/docker-compose.yml up -d, ngre Kafka-n në modalitetin KRaft, "
             "PostgreSQL-in dhe Grafana-n.",
             "make test-integration, verifikon barazinë e pikëve mes regjimit offline dhe atij në "
