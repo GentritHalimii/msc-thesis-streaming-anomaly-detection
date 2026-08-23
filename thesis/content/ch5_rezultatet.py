@@ -974,6 +974,51 @@ _ANALIZAT = [
         "prag të kalibruar me permutacione.",
         font_size=8.0,
     ),
+    h2("5.12", "Ku e drejtojnë vëmendjen detektorët"),
+    p("""Nënkapitulli 5.5.1 e mati shpërndarjen e ndarjeve brenda Isolation Forest-it. Ky
+      nënkapitull e zgjeron atë pyetje te të tre detektorët, duke përdorur atribuim të
+      jashtëm që nuk varet nga struktura e brendshme e modelit dhe që prandaj është i
+      krahasueshëm mes tyre. Për secilin detektor matet sa përputhet vëmendja e tij me sinjalin
+      realisht të disponueshëm në secilën kolonë, i cili vlerësohet nga fuqia diskriminuese
+      njëvariablëshe mbi dritaren e trajnimit."""),
+    tab(
+        "explain_signal_agreement",
+        "Përputhja mes atribuimit të secilit detektor dhe sinjalit të disponueshëm për kolonë, "
+        "e matur me korrelacion rangjesh.",
+        rename={
+            "atribuimi": "Atribuimi",
+            "spearman_vs_auc_gap": "Spearman rho",
+            "p_value": "p",
+            "top3": "Tri kolonat kryesore",
+        },
+        font_size=9.5,
+    ),
+    p("""Renditja e përputhjes është e qartë dhe statistikisht e mbështetur. Gabimi i rindërtimit
+      i Autoencoder-it përputhet me sinjalin me rho 0.75 dhe p-vlerë 2.7 herë dhjetë në fuqinë
+      minus gjashtë. One-Class SVM-ja, e matur me permutim, arrin 0.50 me p-vlerë 0.0063.
+      Isolation Forest-i nuk përputhet fare: 0.02 me SHAP dhe -0.03 me permutim, të dyja
+      plotësisht të padallueshme nga zeroja."""),
+    p("""Rendi i kësaj përputhjeje, me Autoencoder-in i pari, One-Class SVM-në të dytën dhe
+      Isolation Forest-in të fundit, është saktësisht i njëjti me rendin e cilësisë së zbulimit
+      nën konfigurimin e parazgjedhur. Kjo përkim nuk është provë në vetvete, sepse dy renditje
+      mbi tre elemente mund të përputhen rastësisht; ajo është hipotezë mekaniciste, dhe pikërisht
+      për këtë arsye u ndërtua ndërhyrja e nënkapitullit 5.7, e cila e testoi dhe e
+      konfirmoi."""),
+    fig(
+        "explain_attention_vs_signal",
+        "Vëmendja e secilit detektor kundrejt sinjalit të disponueshëm, kolonë për kolonë.",
+        14.5,
+    ),
+    p("""Kolonat kryesore e ilustrojnë të njëjtën gjë në mënyrë të drejtpërdrejtë. Sinjali
+      njëvariablësh i referencës i rendit V14, V4 dhe V12 si tri kolonat më informative.
+      Autoencoder-i i zgjedh V14, V17 dhe V12, pra dy nga tri të njëjtat. Isolation Forest-i i
+      zgjedh V25, V4 dhe V15, ku V25 është një nga kolonat me sinjal më të dobët."""),
+    fig(
+        "explain_ae_reconstruction",
+        "Gabimi i rindërtimit për veçori, i ndarë sipas klasës. Kolonat ku mashtrimet "
+        "rindërtohen dukshëm më keq janë ato mbi të cilat mbështetet detektori.",
+        14.5,
+    ),
     h2("5.13", "Pragu adaptiv me dritare rrëshqitëse"),
     p("""Një prag i fiksuar nga kuantili i pikëve të trajnimit e ka një dobësi praktike që del
       vetëm në rrjedhë: kur shpërndarja e pikëve zhvendoset, numri i alarmeve zhvendoset bashkë
