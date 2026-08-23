@@ -42,6 +42,9 @@ _SINTEZA = [
             "njësi, çka e përjashton përputhjen e boshteve si shpjegim.",
             "Referenca e mbikëqyrur mbetet dukshëm përpara, duke fituar në të tetë fold-et kundrejt "
             "secilit prej tre detektorëve.",
+            "Akordimi i hiperparametrave e ndryshon renditjen mes dy detektorëve të fundit. "
+            "Nën vlerat e parazgjedhura One-Class SVM qëndron para Isolation Forest-it; kur të "
+            "tre akordohen njësoj, radha e tyre përmbyset, ndërsa udhëheqësi mbetet i njëjti.",
             "Në buxhet prej njëqind alarmesh, 37 për qind e mashtrimeve nuk arrihen nga asnjë "
             "detektor unsupervised, ndërsa referenca e mbikëqyrur i kap 59 për qind të tyre.",
             "Qasja ensemble nuk e përmirëson zbulimin në asnjë nga variantet e testuara, dhe "
@@ -82,12 +85,17 @@ _SINTEZA = [
       diskriminuese e dataset-it mori 3.5 për qind të ndarjeve, ndërsa pjesa e pritur nga
       rastësia e plotë është 3.4 për qind, dhe korrelacioni mes përdorimit të një kolone dhe
       fuqisë së saj diskriminuese është praktikisht zero."""),
-    p("""Dy shpjegime alternative u testuan dhe u përjashtuan. I pari është se problemi mund të
-      ishte thjesht akordimi; sipërfaqja e hiperparametrave tregoi se akordimi ndihmon
-      ndjeshëm, nga 0.091 në 0.152, por jo mjaftueshëm për ta ngritur detektorin mbi të tjerët.
-      I dyti është se ndarjet paralele me boshtet mund të mos përshtaten me një hapësirë
+    p("""Dy shpjegime alternative u testuan. I pari është se problemi mund të ishte thjesht
+      akordimi, dhe ky shpjegim rezultoi pjesërisht i saktë. Sipërfaqja e hiperparametrave e
+      ngriti detektorin nga 0.091 në 0.152, dhe kërkimi i plotë e ngriti më tej në 0.168, çka
+      mjafton për ta kaluar One-Class SVM-në e akorduar. Vendi i fundit nën konfigurimin e
+      parazgjedhur nuk është pra vendi i tij i pashmangshëm, dhe një pjesë e dobësisë së
+      raportuar zakonisht për këtë algoritëm i takon vlerave të parazgjedhura të bibliotekave e
+      jo vetë algoritmit. Megjithatë edhe pas akordimit ai mbetet nën Autoencoder-in, prandaj
+      akordimi nuk e shpjegon të gjithë hendekun."""),
+    p("""I dyti është se ndarjet paralele me boshtet mund të mos përshtaten me një hapësirë
       komponentësh kryesorë; ripërshtatja mbi një kopje të rrotulluar rastësisht e ndryshoi
-      rezultatin vetëm me 0.007 njësi, çka e përjashton këtë shpjegim."""),
+      rezultatin vetëm me 0.007 njësi, çka e përjashton këtë shpjegim plotësisht."""),
     p("""Ndërhyrja eksperimentale e mbylli çështjen. Kur secilit detektor i jepen vetëm
       komponentët informativë, Isolation Forest-i është ai që fiton më shumë, siç do të pritej
       nëse dobësia e tij është shpërndarja e kapacitetit mbi kolona pa sinjal. Kjo e shndërron
