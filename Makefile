@@ -2,8 +2,8 @@ UV ?= uv
 RUN := $(UV) run
 
 .PHONY: setup lint format test test-integration train protocol protocol-tuned \
-        evaluate tune stream stream-store stream-adaptive latency-report \
-        thesis all clean
+        evaluate deep-studies tune stream stream-store stream-adaptive \
+        latency-report thesis all clean
 
 setup:
 	$(UV) sync
@@ -26,7 +26,7 @@ test-integration:
 train:                     ## fit every detector on the single 70/30 split
 	$(RUN) python -m experiments.train_models
 
-protocol:                  ## the expensive step: 8 rolling-origin folds x 15 detectors
+protocol:                  ## the expensive step: 8 rolling-origin folds x 4 models
 	$(RUN) python -m experiments.run_protocol
 
 tune:                      ## Optuna search on an inner temporal split of the training window
@@ -37,11 +37,10 @@ protocol-tuned:            ## re-run the protocol with the tuned hyperparameters
 	$(RUN) python -m experiments.exp18_tuning_effect
 	$(RUN) python -m experiments.exp12_ensembles --tuned
 
-evaluate:                  ## every table and figure, from saved scores only
+evaluate:                  ## every table and figure that reads the saved fold scores
 	$(RUN) python -m experiments.exp0_eda
 	$(RUN) python -m experiments.make_diagrams
 	$(RUN) python -m experiments.make_reference_tables
-	$(RUN) python -m experiments.exp20_data_geometry
 	$(RUN) python -m experiments.exp1_main_table
 	$(RUN) python -m experiments.exp2_contamination_sweep
 	$(RUN) python -m experiments.exp3_curves
@@ -51,19 +50,25 @@ evaluate:                  ## every table and figure, from saved scores only
 	$(RUN) python -m experiments.exp12_ensembles
 	$(RUN) python -m experiments.exp13_drift
 	$(RUN) python -m experiments.exp14_alert_budget
-	$(RUN) python -m experiments.exp15_explainability
 	$(RUN) python -m experiments.exp16_adaptive_threshold
 	$(RUN) python -m experiments.exp17_protocol_comparison
+	$(RUN) python -m experiments.exp19_unsupervised_selection
+	$(RUN) python -m experiments.exp27_error_analysis
+	$(RUN) python -m experiments.make_rq_summary
+
+# The deep studies refit models from scratch and do not read results/folds,
+# so they are independent of `protocol` and are kept out of `evaluate`: they
+# cost hours, while `evaluate` costs minutes.
+deep-studies:              ## per-algorithm studies; each one refits, hours not minutes
+	$(RUN) python -m experiments.exp20_data_geometry
+	$(RUN) python -m experiments.exp15_explainability
 	$(RUN) python -m experiments.exp21_scaling
 	$(RUN) python -m experiments.exp22_iforest_deep
 	$(RUN) python -m experiments.exp23_autoencoder_deep
 	$(RUN) python -m experiments.exp24_ocsvm_deep
 	$(RUN) python -m experiments.exp25_feature_selection
 	$(RUN) python -m experiments.exp26_training_window
-	$(RUN) python -m experiments.exp27_error_analysis
 	$(RUN) python -m experiments.exp28_best_effort
-	$(RUN) python -m experiments.exp19_unsupervised_selection
-	$(RUN) python -m experiments.make_rq_summary
 
 # --- streaming pipeline (needs docker) -------------------------------------
 stream:
@@ -82,7 +87,7 @@ latency-report:
 thesis:                    ## build the Albanian thesis document from results/
 	$(RUN) python thesis/build_thesis.py
 
-all: setup test train protocol evaluate thesis
+all: setup test train protocol evaluate deep-studies thesis
 
 clean:
 	rm -rf results/*.csv results/*.tex results/*.json results/*.txt \
