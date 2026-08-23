@@ -138,7 +138,7 @@ BLOCKS = [
             "Kuantifikimi i kostos së ndershmërisë metodologjike: krahasimi i drejtpërdrejtë midis "
             "protokollit kronologjik dhe atij me ndarje të rastësishme, mbi të njëjtat të dhëna "
             "dhe të njëjtat modele.",
-            "Matja e paraprocesimit si variabël eksperimentale me të njëjtin rreptësi si "
+            "Matja e paraprocesimit si variabël eksperimentale me të njëjtën rreptësi si "
             "algoritmi. Rezultati është se zgjedhja e transformimit i tejkalon dallimet mes vetë "
             "tri algoritmeve, dhe se referenca e mbikëqyrur nuk preket prej saj; asimetria mes "
             "të dyjave e shpjegon mekanizmin.",
