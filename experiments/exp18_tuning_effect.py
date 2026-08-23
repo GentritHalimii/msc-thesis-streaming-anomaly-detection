@@ -203,12 +203,21 @@ def main(cfg=None):
         f"qëndrueshëm nëpër fold-e (Wilcoxon i çiftuar, "
         f"{int(wil['wins_a'].iloc[0])}/{len(paired)} fold-e, p = "
         f"{wil['p_value'].iloc[0]:.4f}). Megjithatë {stability}: korrelacioni i rangjeve "
-        f"para dhe pas akordimit është rho = {rho_rank:.3f} (p = {p_rank:.2g}), dhe "
-        f"detektori më i mirë unsupervised ndryshon nga "
-        f"{MODEL_LABELS.get(winner_before, winner_before)} (AP "
-        f"{default_ap[tuned_only].mean().max():.3f}) në "
-        f"{MODEL_LABELS.get(winner_after, winner_after)} (AP "
-        f"{tuned_ap[tuned_only].mean().max():.3f}). Përmirësimi i matur në validimin e "
+        f"para dhe pas akordimit është rho = {rho_rank:.3f} (p = {p_rank:.2g}). "
+        + (
+            f"Detektori më i mirë unsupervised mbetet "
+            f"{MODEL_LABELS.get(winner_after, winner_after)}, i cili ngjitet nga AP "
+            f"{default_ap[tuned_only].mean().max():.3f} në "
+            f"{tuned_ap[tuned_only].mean().max():.3f}, por renditja mes dy të tjerëve "
+            f"përmbyset. "
+            if winner_before == winner_after
+            else f"Detektori më i mirë unsupervised ndryshon nga "
+            f"{MODEL_LABELS.get(winner_before, winner_before)} (AP "
+            f"{default_ap[tuned_only].mean().max():.3f}) në "
+            f"{MODEL_LABELS.get(winner_after, winner_after)} (AP "
+            f"{tuned_ap[tuned_only].mean().max():.3f}). "
+        )
+        + f"Përmirësimi i matur në validimin e "
         f"brendshëm e parashikon atë të testit vetëm pjesërisht (rho = "
         f"{rho_transfer:.2f}, p = {p_transfer:.2g})."
     )
