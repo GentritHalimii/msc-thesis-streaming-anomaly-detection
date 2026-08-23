@@ -196,7 +196,8 @@ _PH2 = [
         15.0,
     ),
     p("""Fold-i 1 është vlerë ekstreme sistematike, ku performanca e çdo detektori hidhet lart.
-      Ai përmban tetëdhjetë e tetë mashtrime, katër herë mbi mesataren e blloqeve të tjera, dhe
+      Ai përmban tetëdhjetë e tetë mashtrime, gati katër herë mbi mesataren prej njëzet e tre të
+      blloqeve të tjera, dhe
       analiza e zhvendosjes tregon se mashtrimet e atij blloku janë edhe dukshëm më ekstreme në
       hapësirën e veçorive. Një studim që do të kishte zgjedhur rastësisht atë periudhë si
       bashkësi testimi do të raportonte rezultate shumë më optimiste pa asnjë ndryshim në
@@ -294,8 +295,8 @@ _PH2 = [
     h3("5.3.4", "Vlerësimi në buxhet alarmesh"),
     p("""Average Precision përmbledh të gjithë renditjen, por asnjë ekip nuk e shqyrton atë të
       tërën. Tabela më poshtë tregon çfarë ndodh kur investigohen vetëm njëqind alarmet më të
-      larta për bllok testimi, buxhet realist meqë blloqet përmbajnë mesatarisht rreth njëzet e
-      katër mashtrime."""),
+      larta për bllok testimi, buxhet realist meqë blloqet përmbajnë mesatarisht tridhjetë e një
+      mashtrime."""),
     tab(
         "budget_summary",
         "Cilësia e zbulimit dhe rikuperimi monetar në buxhet prej njëqind alarmesh për bllok "
