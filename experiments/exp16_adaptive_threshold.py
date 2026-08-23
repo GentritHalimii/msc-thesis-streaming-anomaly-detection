@@ -20,6 +20,7 @@ from src.evaluation.metrics import thresholded_metrics
 from src.evaluation.protocol import load_folds
 from src.evaluation.report import AX, MODEL_LABELS, new_figure, save_figure, save_table
 from src.evaluation.thresholds import adaptive_quantile_thresholds
+from src.models.build import ALL_MODELS
 
 MODELS = ["iforest", "autoencoder", "ocsvm", "logreg"]
 SUBBLOCKS = 10  # alert-rate stability is measured across these equal slices
@@ -173,6 +174,30 @@ def main(cfg=None):
         f"dhe pikun e alarmeve nga {100 * stat['alert_rate_max_slice'].max():.1f}% "
         f"në {100 * adap['alert_rate_max_slice'].max():.1f}% të transaksioneve; "
         f"F1 mesatar {stat['f1'].mean():.4f} -> {adap['f1'].mean():.4f}."
+    )
+
+    # The pooled F1 above mixes the three unsupervised detectors with the
+    # supervised reference, and the two move in opposite directions. Averaging
+    # them hides the result instead of summarising it.
+    unsup = [m for m in ALL_MODELS if m != "logreg"]
+    su, au = stat[stat["model"].isin(unsup)], adap[adap["model"].isin(unsup)]
+    gained = sum(
+        adap[adap["model"] == m]["f1"].mean() > stat[stat["model"] == m]["f1"].mean() for m in unsup
+    )
+    ref_s = stat[stat["model"] == "logreg"]
+    ref_a = adap[adap["model"] == "logreg"]
+    verdict += (
+        f" Kjo mesatare e fsheh gjetjen, sepse dy grupet lëvizin në drejtime të kundërta. "
+        f"Për të tre detektorët unsupervised F1 rritet nga {su['f1'].mean():.4f} në "
+        f"{au['f1'].mean():.4f}, me përmirësim në {gained} nga {len(unsup)} prej tyre, "
+        f"ndërsa për referencën e mbikëqyrur ai bie nga {ref_s['f1'].mean():.4f} në "
+        f"{ref_a['f1'].mean():.4f}. Shkaku i rënies së referencës është i lexueshëm te "
+        f"numri i alarmeve: ai rritet nga {ref_s['n_alerts'].mean():.0f} në "
+        f"{ref_a['n_alerts'].mean():.0f} për bllok, dhe precision-i bie nga "
+        f"{ref_s['precision'].mean():.3f} në {ref_a['precision'].mean():.3f}. Pragu statik "
+        f"i nxjerrë nga kuantili i trajnimit është tashmë i kalibruar mirë për një model që "
+        f"prodhon probabilitete, prandaj zëvendësimi i tij me një kuantil mbi dritare "
+        f"rrëshqitëse vetëm sa e detyron modelin të alarmojë më shumë se ç'duhet."
     )
     (results_dir / "adaptive_threshold_verdict.txt").write_text(verdict + "\n")
     print("\n" + verdict)
