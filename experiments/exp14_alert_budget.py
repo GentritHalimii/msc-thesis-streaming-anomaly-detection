@@ -17,7 +17,6 @@ from src.evaluation.protocol import load_folds
 from src.evaluation.report import (
     AX,
     MODEL_LABELS,
-    family_legend_handles,
     model_color,
     model_linestyle,
     new_figure,
@@ -86,6 +85,7 @@ def main(cfg=None):
                 grp[metric],
                 color=model_color(name),
                 linestyle=model_linestyle(name),
+                label=MODEL_LABELS.get(name, name),
                 linewidth=2.0 if name == "logreg" else 1.4,
                 marker="o",
                 markersize=3,
@@ -97,12 +97,7 @@ def main(cfg=None):
         ax.set_ylabel(ylab)
         if metric == "savings_ratio":
             ax.axhline(0.0, color="#c3c2b7", lw=1)
-        ax.legend(
-            handles=family_legend_handles(),
-            loc="center left",
-            bbox_to_anchor=(1.01, 0.5),
-            fontsize=8.5,
-        )
+        ax.legend(loc="center left", bbox_to_anchor=(1.01, 0.5), fontsize=8.5)
         save_figure(fig, REPO_ROOT / cfg.results_dir, fname)
 
     # How many euros does the whole exercise actually save per block?

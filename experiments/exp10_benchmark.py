@@ -20,7 +20,6 @@ from src.evaluation.protocol import load_folds
 from src.evaluation.report import (
     AX,
     MODEL_LABELS,
-    family_legend_handles,
     model_color,
     new_figure,
     save_figure,
@@ -114,13 +113,12 @@ def figure_ap_per_fold(per_fold: pd.DataFrame, cfg):
             marker="o",
             markersize=3.5,
             alpha=0.95 if name == "logreg" else 0.8,
+            label=MODEL_LABELS.get(name, name),
         )
     ax.set_xlabel(AX["fold"])
     ax.set_ylabel(AX["ap"])
     ax.set_yscale("log")
-    ax.legend(
-        handles=family_legend_handles(), loc="center left", bbox_to_anchor=(1.01, 0.5), fontsize=8.5
-    )
+    ax.legend(loc="center left", bbox_to_anchor=(1.01, 0.5), fontsize=8.5)
     save_figure(fig, REPO_ROOT / cfg.results_dir, "benchmark_ap_per_fold")
 
 
@@ -179,7 +177,7 @@ def figure_quality_cost(summary: pd.DataFrame, cfg):
     ax.set_xlim(0.03, 200)
     best = summary.loc[summary["model"] != "logreg"].nlargest(1, "ap_mean").iloc[0]
     ax.annotate(
-        "kompromisi më i mirë i pambikëqyrur",
+        "kompromisi më i mirë unsupervised",
         xy=(best.score_us_per_tx, best.ap_mean),
         xytext=(0.30, 0.62),
         textcoords="axes fraction",

@@ -164,7 +164,7 @@ def main(cfg=None):
     ]
     if inflation is not None:
         verdict_lines.append(
-            f"Ndarja e përzier e fryn AP-në e metodave të pambikëqyrura mesatarisht "
+            f"Ndarja e përzier e fryn AP-në e metodave unsupervised mesatarisht "
             f"{inflation['fryrja'].mean():.2f} herë (deri në "
             f"{inflation['fryrja'].max():.2f} herë)."
         )

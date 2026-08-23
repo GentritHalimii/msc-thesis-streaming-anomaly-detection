@@ -79,7 +79,7 @@ def main(cfg=None):
     print(table.to_string(index=False))
     top_budget = b100[~b100["model"].str.startswith("LR")].iloc[0]
     print(
-        f"\n(kontroll: në buxhet 100 alarme, më i miri i pambikëqyrur është "
+        f"\n(kontroll: në buxhet 100 alarme, më i miri unsupervised është "
         f"{top_budget['model']} me recall {top_budget['recall_at_k']:.3f})"
     )
     write_manifest(results_dir, "make_rq_summary", cfg.raw)
