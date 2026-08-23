@@ -22,43 +22,44 @@ import pandas as pd
 
 from src.models.build import FAMILY_OF
 
-# Validated categorical slots (light surface), used in their documented order.
-FAMILY_COLORS = {
-    "isolation": "#2a78d6",
-    "boundary": "#1baf7a",
-    "proximity": "#eda100",
-    "reconstruction": "#008300",
-    "density": "#4a3aa7",
-    "statistical": "#e34948",
-}
-REFERENCE_COLOR = "#52514e"
-ENSEMBLE_COLORS = {
-    "ensemble_avg": "#e87ba4",
+# Validated categorical slots, used in their documented order. With four
+# series in the main comparison there is no need to fall back on family-level
+# colouring: one hue per detector is both readable and colour-vision safe.
+MODEL_COLORS = {
+    "iforest": "#2a78d6",
+    "autoencoder": "#1baf7a",
+    "ocsvm": "#4a3aa7",
+    "pca_recon": "#008300",
+    "logreg": "#52514e",
+    "ensemble_avg": "#e34948",
     "ensemble_vote": "#eb6834",
     "ensemble_rank": "#e87ba4",
-    "ensemble_greedy": "#eb6834",
+    "ensemble_greedy": "#eda100",
     "ensemble_max": "#d55181",
 }
+FAMILY_COLORS = {
+    "isolation": "#2a78d6",
+    "reconstruction": "#1baf7a",
+    "boundary": "#4a3aa7",
+}
+REFERENCE_COLOR = "#52514e"
 
-# Line style separates members inside a family.
-_STYLE_CYCLE = ["-", "--", ":", "-."]
+# The supervised reference is dash-dotted and the linear ablation dotted, so
+# neither can be mistaken for one of the three detectors under comparison.
+MODEL_LINESTYLES = {
+    "iforest": "-",
+    "autoencoder": "-",
+    "ocsvm": "-",
+    "pca_recon": ":",
+    "logreg": "-.",
+}
 
 MODEL_LABELS = {
     "iforest": "Isolation Forest",
-    "ocsvm": "One-Class SVM",
-    "deep_svdd": "Deep SVDD",
-    "lof": "LOF",
-    "knn": "kNN",
-    "pca_recon": "PCA (rindërtim)",
     "autoencoder": "Autoencoder",
-    "vae": "VAE",
-    "gmm": "GMM",
-    "mahalanobis": "Mahalanobis",
-    "ecod": "ECOD",
-    "copod": "COPOD",
-    "hbos": "HBOS",
-    "loda": "LODA",
-    "logreg": "LR (referencë)",  # kept short: it appears in narrow table columns
+    "ocsvm": "One-Class SVM",
+    "pca_recon": "PCA lineare (ablacion)",
+    "logreg": "LR (referencë)",
     "ensemble_avg": "Ansambël (mesatare z)",
     "ensemble_vote": "Ansambël (votim)",
     "ensemble_rank": "Ansambël (rang)",
@@ -68,18 +69,17 @@ MODEL_LABELS = {
 
 FAMILY_LABELS = {
     "isolation": "Izolim",
-    "boundary": "Kufi vendimi",
-    "proximity": "Afërsi",
     "reconstruction": "Rindërtim",
-    "density": "Densitet",
-    "statistical": "Statistikore",
+    "boundary": "Kufi vendimi",
 }
 
-# Albanian axis vocabulary, kept in one place so every figure agrees.
+# Albanian axis vocabulary, kept in one place so every figure agrees. Terms
+# that are standard in English inside Albanian technical writing (recall,
+# unsupervised, streaming) are left untranslated on purpose.
 AX = {
-    "ap": "Precizioni mesatar (AP)",
-    "precision": "Preciziteti",
-    "recall": "Ndjeshmëria (recall)",
+    "ap": "Average Precision (AP)",
+    "precision": "Precision",
+    "recall": "Recall",
     "fpr": "Norma e alarmeve false (FPR)",
     "tpr": "Norma e zbulimit (TPR)",
     "f1": "F1",
@@ -87,10 +87,13 @@ AX = {
     "contamination": "Kontaminimi (prag nga shpërndarja e trajnimit)",
     "budget": "Buxheti i alarmeve (k)",
     "rate": "Ritmi i replay-it (mesazhe/s)",
-    "latency_ms": "Vonesa fund-më-fund (ms)",
+    "latency_ms": "Vonesa end-to-end (ms)",
     "savings": "Raporti i kursimeve neto",
-    "amount_recall": "Ndjeshmëria e vlerës monetare",
+    "amount_recall": "Recall i vlerës monetare",
     "rank": "Rangu mesatar",
+    "train_size": "Madhësia e dritares së trajnimit (transaksione)",
+    "epochs": "Epoka",
+    "latent": "Dimensioni latent",
 }
 
 STYLE = {
@@ -126,22 +129,13 @@ def new_figure(**kwargs):
 
 
 def model_color(name: str) -> str:
-    if name in ENSEMBLE_COLORS:
-        return ENSEMBLE_COLORS[name]
-    if name == "logreg":
-        return REFERENCE_COLOR
+    if name in MODEL_COLORS:
+        return MODEL_COLORS[name]
     return FAMILY_COLORS[FAMILY_OF[name]]
 
 
 def model_linestyle(name: str) -> str:
-    if name == "logreg":
-        return "-."
-    if name in ENSEMBLE_COLORS:
-        return "-"
-    from src.models.build import FAMILIES
-
-    members = FAMILIES[FAMILY_OF[name]]
-    return _STYLE_CYCLE[members.index(name) % len(_STYLE_CYCLE)]
+    return MODEL_LINESTYLES.get(name, "-")
 
 
 def model_plot_kwargs(name: str, with_label: bool = True) -> dict:

@@ -30,8 +30,8 @@ PRE_REGISTERED_PAIRS = [
     ("autoencoder", "ocsvm"),  # RQ2, remaining pair
     ("iforest", "ocsvm"),  # RQ2, remaining pair
     ("autoencoder", "logreg"),  # size of the gap to the supervised reference
-    ("autoencoder", "pca_recon"),  # does the non-linear encoder earn its cost?
-    ("iforest", "ecod"),  # does a tuned method beat a parameter-free one?
+    ("iforest", "logreg"),  # same gap, for the second primary detector
+    ("ocsvm", "logreg"),  # same gap, for the additional component
 ]
 
 
@@ -120,7 +120,7 @@ def main(cfg=None):
 
     rows = []
     for label, cols in [
-        ("të gjithë (14 të pambikëqyrur)", unsup),
+        ("tre detektorët unsupervised", unsup),
         ("katër modelet e propozimit", ["iforest", "autoencoder", "ocsvm", "logreg"]),
     ]:
         sub = ap_wide[cols]

@@ -47,14 +47,15 @@ warnings.filterwarnings("ignore")
 # the subspace dimension, so every candidate above that dimension collapses to
 # an identical criterion value. That is a real limitation of the subspace
 # approximation, reported rather than worked around.
+# The criteria refit the detector once per random subspace, so only detectors
+# that are cheap to refit can be studied this way. PCA reconstruction is
+# excluded for a different reason: its only hyperparameter is the number of
+# retained components, which gets clamped to the subspace dimension, so every
+# candidate above that dimension collapses to an identical criterion value.
 GRIDS = {
     "iforest": [{"n_estimators": n, "max_samples": m} for n in (50, 200) for m in (64, 256, 1024)],
-    "hbos": [{"n_bins": b} for b in (10, 25, 50, 100, 200)],
-    "loda": [{"n_bins": b, "n_random_cuts": c} for b in (10, 40, 90) for c in (40, 150)],
-    "knn": [{"n_neighbors": k} for k in (1, 5, 10, 25, 50)],
-    "gmm": [
-        {"n_components": k, "covariance_type": t} for k in (2, 5, 10) for t in ("full", "diag")
-    ],
+    "ocsvm": [{"nu": nu} for nu in (0.005, 0.01, 0.05, 0.1, 0.2)],
+    "autoencoder": [{"latent_dim": ld, "epochs": 10} for ld in (2, 4, 8, 12, 16)],
 }
 FIT_SUBSAMPLE = 25000
 

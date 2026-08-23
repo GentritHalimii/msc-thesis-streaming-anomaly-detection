@@ -21,7 +21,7 @@ from src.evaluation.protocol import load_folds
 from src.evaluation.report import AX, MODEL_LABELS, new_figure, save_figure, save_table
 from src.evaluation.thresholds import adaptive_quantile_thresholds
 
-MODELS = ["iforest", "autoencoder", "ocsvm", "pca_recon", "ecod"]
+MODELS = ["iforest", "autoencoder", "ocsvm", "logreg"]
 SUBBLOCKS = 10  # alert-rate stability is measured across these equal slices
 
 

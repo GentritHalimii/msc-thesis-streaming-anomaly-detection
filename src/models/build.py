@@ -1,8 +1,18 @@
 """Model registry: construct, locate and load every detector from config.
 
-The zoo is organised by the mechanism each detector uses to decide what
-"abnormal" means, because that taxonomy — not the individual algorithm — is
-what the comparison in this thesis is really about.
+The study is deliberately narrow. The proposal names Isolation Forest and the
+Autoencoder as the primary detectors, One-Class SVM as an additional
+component, and Logistic Regression as a supervised baseline, and the
+comparison here keeps exactly to that set. Depth is bought elsewhere: in the
+evaluation protocol, in the hyperparameter surfaces, in the preprocessing and
+feature studies, and in the per-transaction error analysis.
+
+One extra estimator is registered but is not a competitor. A linear
+reconstruction detector built on a PCA subspace is the natural floor of the
+reconstruction family, and since V1..V28 are themselves principal components
+it answers a sharp question about the Autoencoder: does the non-linear
+encoder recover anything the linear projection had not already exposed. It is
+used only inside the Autoencoder ablation and never enters the main table.
 """
 
 import inspect
@@ -12,57 +22,39 @@ from types import SimpleNamespace
 from src.config import REPO_ROOT
 from src.models.autoencoder import AutoencoderModel
 from src.models.base import AnomalyModel
-from src.models.deep_svdd import DeepSVDDModel
-from src.models.density import GMMDensity, RobustMahalanobis
 from src.models.ensemble import EnsembleModel
 from src.models.iforest import IForestModel
 from src.models.logreg import LogRegReference
 from src.models.ocsvm import OCSVMModel
-from src.models.proximity import KNNDistance, LOFNovelty
-from src.models.pyod_models import COPODModel, ECODModel, HBOSModel, LODAModel
 from src.models.reconstruction import PCAReconstruction
-from src.models.vae import VAEModel
 
-# Detector family -> members. Drives both the results tables and the
-# taxonomy discussion in the thesis.
+# The three unsupervised detectors named in the proposal, grouped by the
+# mechanism each uses to decide what "abnormal" means.
 FAMILIES = {
     "isolation": ["iforest"],
-    "boundary": ["ocsvm", "deep_svdd"],
-    "proximity": ["lof", "knn"],
-    "reconstruction": ["pca_recon", "autoencoder", "vae"],
-    "density": ["gmm", "mahalanobis"],
-    "statistical": ["ecod", "copod", "hbos", "loda"],
+    "reconstruction": ["autoencoder"],
+    "boundary": ["ocsvm"],
 }
 UNSUPERVISED = [m for members in FAMILIES.values() for m in members]
 REFERENCE = "logreg"
 ALL_MODELS = [*UNSUPERVISED, REFERENCE]
+
+# Registered, but not part of the comparison: the linear floor used inside the
+# Autoencoder ablation.
+ABLATION_MODELS = ["pca_recon"]
+
 ENSEMBLES = ["ensemble_avg", "ensemble_vote"]
-
 FAMILY_OF = {m: fam for fam, members in FAMILIES.items() for m in members}
+FAMILY_OF["pca_recon"] = "reconstruction"
 
-# The four detectors carried through the original proposal; reported as the
-# headline comparison so the thesis answers its stated research question
-# before widening the field.
-CORE_MODELS = ["iforest", "autoencoder", "ocsvm", "logreg"]
-
-_TORCH_MODELS = {"autoencoder", "vae", "deep_svdd"}
+_TORCH_MODELS = {"autoencoder"}
 
 _CLASSES = {
     "iforest": IForestModel,
-    "ocsvm": OCSVMModel,
-    "deep_svdd": DeepSVDDModel,
-    "lof": LOFNovelty,
-    "knn": KNNDistance,
-    "pca_recon": PCAReconstruction,
     "autoencoder": AutoencoderModel,
-    "vae": VAEModel,
-    "gmm": GMMDensity,
-    "mahalanobis": RobustMahalanobis,
-    "ecod": ECODModel,
-    "copod": COPODModel,
-    "hbos": HBOSModel,
-    "loda": LODAModel,
+    "ocsvm": OCSVMModel,
     "logreg": LogRegReference,
+    "pca_recon": PCAReconstruction,
     "ensemble_avg": EnsembleModel,
     "ensemble_vote": EnsembleModel,
 }
@@ -76,7 +68,7 @@ def _hp(cfg: SimpleNamespace, name: str) -> dict:
 
 def build_model(name: str, cfg: SimpleNamespace, overrides: dict | None = None) -> AnomalyModel:
     """Construct an unfitted detector. `overrides` wins over config, which is
-    how the hyperparameter search injects candidate settings.
+    how the hyperparameter searches inject candidate settings.
 
     Parameters are filtered against the constructor signature so that a global
     setting such as `seed` can be offered to every detector without breaking

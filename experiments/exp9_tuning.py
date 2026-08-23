@@ -38,81 +38,46 @@ warnings.filterwarnings("ignore")
 
 
 def search_space(trial: optuna.Trial, name: str) -> dict:
-    """Ranges chosen around the published defaults, wide enough to matter."""
+    """Ranges chosen around the published defaults, wide enough to matter.
+
+    The grids are broader than a typical study because with only three
+    detectors the search can afford to explore each one properly; the shape of
+    the response surface is itself a result, reported in the per-detector
+    studies.
+    """
     if name == "iforest":
         return {
-            "n_estimators": trial.suggest_int("n_estimators", 50, 400, step=50),
-            "max_samples": trial.suggest_categorical("max_samples", [64, 128, 256, 512, 1024]),
+            "n_estimators": trial.suggest_int("n_estimators", 50, 500, step=50),
+            "max_samples": trial.suggest_categorical(
+                "max_samples", [64, 128, 256, 512, 1024, 4096]
+            ),
+            "max_features": trial.suggest_float("max_features", 0.2, 1.0),
         }
     if name == "ocsvm":
         return {
-            "nu": trial.suggest_float("nu", 0.001, 0.2, log=True),
-            "gamma": trial.suggest_categorical("gamma", ["scale", "auto", 0.01, 0.05, 0.1]),
+            "nu": trial.suggest_float("nu", 0.001, 0.3, log=True),
+            "gamma": trial.suggest_categorical(
+                "gamma", ["scale", "auto", 0.005, 0.01, 0.05, 0.1, 0.5]
+            ),
+            "kernel": trial.suggest_categorical("kernel", ["rbf", "poly", "sigmoid"]),
         }
-    if name == "lof":
-        return {"n_neighbors": trial.suggest_int("n_neighbors", 5, 100, log=True)}
-    if name == "knn":
-        return {"n_neighbors": trial.suggest_int("n_neighbors", 1, 50, log=True)}
-    if name == "pca_recon":
-        return {"n_components": trial.suggest_int("n_components", 2, 28)}
     if name == "autoencoder":
         return {
-            "hidden_dim": trial.suggest_categorical("hidden_dim", [8, 16, 24, 32, 48]),
-            "latent_dim": trial.suggest_int("latent_dim", 2, 16),
-            "epochs": trial.suggest_int("epochs", 10, 40, step=10),
+            "hidden_dim": trial.suggest_categorical("hidden_dim", [8, 16, 24, 32, 48, 64]),
+            "latent_dim": trial.suggest_int("latent_dim", 2, 20),
+            "epochs": trial.suggest_int("epochs", 10, 60, step=10),
             "lr": trial.suggest_float("lr", 1e-4, 5e-3, log=True),
+            "weight_decay": trial.suggest_float("weight_decay", 1e-8, 1e-3, log=True),
+            "dropout": trial.suggest_float("dropout", 0.0, 0.4),
+            "noise_std": trial.suggest_float("noise_std", 0.0, 0.5),
+            "loss": trial.suggest_categorical("loss", ["mse", "mae", "huber"]),
         }
-    if name == "vae":
-        return {
-            "hidden_dim": trial.suggest_categorical("hidden_dim", [16, 24, 32, 48]),
-            "latent_dim": trial.suggest_int("latent_dim", 2, 16),
-            "beta": trial.suggest_float("beta", 0.05, 4.0, log=True),
-            "epochs": trial.suggest_int("epochs", 10, 40, step=10),
-        }
-    if name == "deep_svdd":
-        return {
-            "hidden_dim": trial.suggest_categorical("hidden_dim", [16, 32, 64]),
-            "rep_dim": trial.suggest_int("rep_dim", 4, 24),
-            "epochs": trial.suggest_int("epochs", 10, 40, step=10),
-            "lr": trial.suggest_float("lr", 1e-4, 5e-3, log=True),
-            "weight_decay": trial.suggest_float("weight_decay", 1e-7, 1e-3, log=True),
-        }
-    if name == "gmm":
-        return {
-            "n_components": trial.suggest_int("n_components", 1, 20),
-            "covariance_type": trial.suggest_categorical(
-                "covariance_type", ["full", "diag", "tied"]
-            ),
-        }
-    if name == "mahalanobis":
-        return {"support_fraction": trial.suggest_float("support_fraction", 0.55, 0.99)}
-    if name == "hbos":
-        return {
-            "n_bins": trial.suggest_int("n_bins", 10, 200, log=True),
-            "alpha": trial.suggest_float("alpha", 0.01, 0.5, log=True),
-        }
-    if name == "loda":
-        return {
-            "n_bins": trial.suggest_int("n_bins", 5, 100, log=True),
-            "n_random_cuts": trial.suggest_int("n_random_cuts", 20, 300, step=20),
-        }
+    if name == "pca_recon":
+        return {"n_components": trial.suggest_int("n_components", 2, 28)}
     raise ValueError(f"no search space defined for {name}")
 
 
-TUNABLE = [
-    "iforest",
-    "ocsvm",
-    "lof",
-    "knn",
-    "pca_recon",
-    "autoencoder",
-    "vae",
-    "deep_svdd",
-    "gmm",
-    "mahalanobis",
-    "hbos",
-    "loda",
-]
+TUNABLE = ["iforest", "ocsvm", "autoencoder", "pca_recon"]
 
 
 def tune_one(cfg, name, X_fit_normal, X_val, y_val, n_trials) -> tuple[dict, float, pd.DataFrame]:
