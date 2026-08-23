@@ -98,7 +98,14 @@ def main(cfg=None, tuned: bool = False):
     pool_full = [m for m in UNSUPERVISED if m in folds[0].models]
     rows = []
     rows += fixed_pool_results(cfg, folds, fold_info, PROPOSAL_TRIO, "trio i propozimit")
-    rows += fixed_pool_results(cfg, folds, fold_info, pool_full, "të gjithë (14)")
+    # With the study narrowed to the three algorithms of the proposal the full
+    # unsupervised pool IS the trio, so a second identical row would only
+    # pad the table. The branch stays so the code still reports both if the
+    # pool is ever widened again.
+    if sorted(pool_full) != sorted(PROPOSAL_TRIO):
+        rows += fixed_pool_results(
+            cfg, folds, fold_info, pool_full, f"të gjithë ({len(pool_full)})"
+        )
     rows += greedy_results(cfg, folds, fold_info, pool_full, "rank_avg")
     ens = pd.DataFrame(rows)
     save_table(ens, results_dir, f"ensemble_per_fold{suffix}")
