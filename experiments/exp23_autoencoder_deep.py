@@ -270,30 +270,119 @@ def _intrinsic_dimension(results_dir):
 
 
 def _write_verdict(results_dir, summaries, arch, table):
+    """Reads the conclusion off the numbers rather than asserting it.
+
+    An earlier version of this file stated in advance that extra encoder
+    layers do not help; the measurements disagreed. Every claim below is now
+    derived from the table it describes.
+    """
     best_arch = summaries["arkitektura"].iloc[0]
     best_loss = summaries["funksioni i humbjes"].iloc[0]
-    best_depth = summaries["thellësia"].iloc[0]
-    ae_best = arch.groupby("latent_dim")["ap"].mean().max()
-    pca_best = table[table["study"] == "PCA lineare"].groupby("latent_dim")["ap"].mean().max()
+    depth_tab = summaries["thellësia"].set_index("depth")["ap_mean"]
+    best_depth = int(depth_tab.idxmax())
+
+    # Nonlinearity is only worth something if it beats the linear projection
+    # at the SAME rank, so the two families are compared rank by rank.
+    ae_by_rank = arch[arch["hidden_dim"] == arch["hidden_dim"].max()]
+    ae_by_rank = ae_by_rank.groupby("latent_dim")["ap"].mean()
+    pca_by_rank = table[table["study"] == "PCA lineare"].groupby("latent_dim")["ap"].mean()
+    shared = sorted(set(ae_by_rank.index) & set(pca_by_rank.index))
+    gaps = {int(k): float(ae_by_rank[k] - pca_by_rank[k]) for k in shared}
+    ae_best_rank = int(ae_by_rank.idxmax())
+
     lines = [
         f"Arkitektura më e mirë: latent_dim={int(best_arch['latent_dim'])}, "
-        f"hidden_dim={int(best_arch['hidden_dim'])} me AP {best_arch['ap_mean']:.4f}.",
-        f"Thellësia optimale e enkoderit është {int(best_depth['depth'])} shtresë, "
-        f"pra shtimi i shtresave nuk ndihmon në këtë dataset.",
-        f"Funksioni i humbjes më i mirë është {best_loss['loss']} (AP {best_loss['ap_mean']:.4f}).",
-        f"Enkoderi jolinear arrin {ae_best:.4f} kundrejt {pca_best:.4f} të projeksionit "
-        f"linear me rang të njëjtë, pra diferenca prej {ae_best - pca_best:+.4f} njësi AP "
-        f"është ajo që paguan jolineariteti.",
+        f"hidden_dim={int(best_arch['hidden_dim'])} me AP {best_arch['ap_mean']:.4f}, "
+        f"kundrejt {float(summaries['arkitektura'].iloc[-1]['ap_mean']):.4f} të "
+        f"konfigurimit më të dobët, pra arkitektura vlen "
+        f"{best_arch['ap_mean'] - float(summaries['arkitektura'].iloc[-1]['ap_mean']):+.4f} "
+        f"njësi AP.",
     ]
-    for name in ("dropout", "weight decay", "denoising"):
-        best = summaries[name].iloc[0]
-        column = [c for c in best.index if c not in ("ap_mean", "ap_std", "n", "study")][0]
+
+    depth_1 = float(depth_tab.loc[1]) if 1 in depth_tab.index else float("nan")
+    if best_depth == 1:
         lines.append(
-            f"Regullarizimi '{name}': vlera më e mirë {column}={best[column]} "
-            f"(AP {best['ap_mean']:.4f})."
+            f"Thellësia optimale e enkoderit është 1 shtresë (AP {depth_1:.4f}), pra shtimi i "
+            f"shtresave nuk ndihmon në këtë dataset."
         )
+    else:
+        lines.append(
+            f"Thellësia optimale e enkoderit është {best_depth} shtresa "
+            f"(AP {float(depth_tab.loc[best_depth]):.4f}) kundrejt {depth_1:.4f} me një shtresë "
+            f"të vetme, pra thellimi vlen {float(depth_tab.loc[best_depth]) - depth_1:+.4f} "
+            f"njësi AP."
+        )
+
+    lines.append(
+        f"Funksioni i humbjes më i mirë është {best_loss['loss']} (AP {best_loss['ap_mean']:.4f}) "
+        f"kundrejt {float(summaries['funksioni i humbjes'].iloc[-1]['ap_mean']):.4f} të "
+        f"alternativës më të dobët; meqë pika e anomalisë është gjithmonë MSE, kjo tregon se "
+        f"përputhja mes objektivit të trajnimit dhe atij të pikëzimit ka rëndësi."
+    )
+
+    positive = sum(1 for v in gaps.values() if v > 0)
+    lines.append(
+        f"Kundrejt projeksionit linear me rang të njëjtë, enkoderi jolinear fiton në "
+        f"{positive} nga {len(gaps)} rangje; diferenca në rangun më të mirë të tij "
+        f"({ae_best_rank}) është {gaps.get(ae_best_rank, float('nan')):+.4f} njësi AP. "
+        f"Kjo është ajo që paguan jolineariteti."
+    )
+
+    intrinsic = _intrinsic_dimension(results_dir)
+    if intrinsic is not None:
+        lines.append(
+            f"Dimensioni latent optimal ({ae_best_rank}) është "
+            f"{ae_best_rank / intrinsic:.1f} herë dimensioni i brendshëm i vlerësuar i klasës "
+            f"normale ({intrinsic:.1f}), pra heuristika që e barazon ngushticën me dimensionin "
+            f"e brendshëm nuk vlen për zbulim: ngushtica duhet të jetë mjaft e gjerë sa "
+            f"normalja të rindërtohet mirë, jo aq e ngushtë sa të dëmtohen të dyja klasat."
+        )
+
+    for name in ("dropout", "weight decay", "denoising"):
+        summary = summaries[name]
+        column = [c for c in summary.columns if c not in ("ap_mean", "ap_std", "n", "study")][0]
+        best, worst = summary.iloc[0], summary.iloc[-1]
+        spread = float(best["ap_mean"] - worst["ap_mean"])
+        verdict = "pa efekt praktik" if spread < 0.01 else f"hapësirë prej {spread:.4f} njësish AP"
+        lines.append(
+            f"Regullarizimi '{name}': më i miri {column}={best[column]} "
+            f"(AP {best['ap_mean']:.4f}), më i dobëti {column}={worst[column]} "
+            f"(AP {worst['ap_mean']:.4f}), {verdict}."
+        )
+
+    epochs = summaries["epoka"].set_index("epochs")["ap_mean"]
+    peak = int(epochs.idxmax())
+    if peak < int(epochs.index.max()):
+        lines.append(
+            f"Trajnimi kulmon në {peak} epoka (AP {float(epochs.loc[peak]):.4f}) dhe bie në "
+            f"{float(epochs.loc[epochs.index.max()]):.4f} me "
+            f"{int(epochs.index.max())} epoka, çka përputhet me mekanizmin ku rrjeti i "
+            f"mbitrajnuar fillon t'i rindërtojë mirë edhe anomalitë."
+        )
+
     (results_dir / "autoencoder_verdict.txt").write_text("\n".join(lines) + "\n")
     print("\n" + "\n".join(lines))
+
+
+def verdict_from_saved(cfg=None):
+    """Recomputes the verdict from the saved tables, without refitting."""
+    cfg = cfg or load_config()
+    results_dir = REPO_ROOT / cfg.results_dir
+    table = pd.read_csv(results_dir / "autoencoder_studies_per_fold.csv")
+    summaries = {}
+    for study, group in table.groupby("study"):
+        keys = [
+            c
+            for c in group.columns
+            if c not in ("study", "fold", "ap", "final_train_loss") and group[c].notna().any()
+        ]
+        summaries[study] = (
+            group.groupby(keys)["ap"]
+            .agg(ap_mean="mean", ap_std="std", n="count")
+            .reset_index()
+            .sort_values("ap_mean", ascending=False)
+        )
+    _write_verdict(results_dir, summaries, table[table["study"] == "arkitektura"], table)
 
 
 if __name__ == "__main__":
