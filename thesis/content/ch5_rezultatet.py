@@ -409,4 +409,160 @@ _PARAPROCESIMI = [
       ndryshojnë formën e shpërndarjes janë ato që kanë rëndësi."""),
 ]
 
-BLOCKS = _HYRJE + _GJEOMETRIA + _PH2 + _PARAPROCESIMI
+
+_THELLIMI = [
+    h2("5.5", "Studime të thelluara për secilin algoritëm"),
+    p("""Krahasimi i nënkapitullit 5.3 i vlerësoi tri algoritmet nën konfigurimin e tyre të
+      parazgjedhur. Ky nënkapitull hyn brenda secilit prej tyre, me tri qëllime: të matet sa
+      lëviz rezultati nga zgjedhjet e projektimit, të identifikohet cili levë ka rëndësi, dhe të
+      testohet nëse shpjegimi i propozuar në Kapitullin 2 për sjelljen e secilit qëndron."""),
+    h3("5.5.1", "Isolation Forest: ku shkon kapaciteti"),
+    p("""Kapitulli 2 parashtroi hipotezën se dobësia e Isolation Forest-it në hapësira me sinjal
+      të përqendruar vjen nga zgjedhja uniforme e dimensionit të ndarjes. Kjo hipotezë
+      përmendet shpesh në literaturë por matet rrallë. Këtu ajo testohet me tri proba të
+      pavarura, dhe përpara tyre kontrollohet nëse shpjegimi alternativ, thjesht akordimi i
+      dobët, e shpjegon rezultatin vetë."""),
+    tab(
+        "iforest_surface",
+        "Average Precision mesatar mbi tetë fold-e për çdo kombinim të numrit të pemëve dhe "
+        "madhësisë së nën-mostrës.",
+        font_size=9.0,
+    ),
+    p("""Sipërfaqja nuk është e sheshtë, prandaj shpjegimi i akordimit nuk mund të hidhet
+      poshtë menjëherë. Konfigurimi i parazgjedhur me dyqind pemë dhe nën-mostër 256 jep 0.0913,
+      ndërsa më i miri, tetëqind pemë me nën-mostër 16384, jep 0.1515, pra gjashtëdhjetë e
+      gjashtë për qind më shumë. Boshti që e lëviz rezultatin është madhësia e nën-mostrës, me
+      hapësirë 0.0698 njësi, ndërsa numri i pemëve lëviz vetëm 0.0087. Rekomandimi klasik i një
+      nën-mostre prej 256 rezulton i papërshtatshëm për këtë dataset, gjë që në vetvete është
+      një gjetje praktike."""),
+    fig(
+        "iforest_surface",
+        "Sipërfaqja e hiperparametrave e Isolation Forest-it. Madhësia e nën-mostrës e lëviz "
+        "rezultatin tetë herë më shumë se numri i pemëve.",
+        14.5,
+    ),
+    p("""Megjithatë akordimi nuk mjafton për ta shpjeguar renditjen, sepse edhe konfigurimi më i
+      mirë mbetet nën Autoencoder-in dhe nën One-Class SVM-në në konfigurimin e tyre bazë.
+      Prandaj testohet mekanizmi vetë."""),
+    p("""Proba e parë hap pemët e përshtatura dhe numëron sa ndarje merr secila kolonë. Nëse
+      hipoteza qëndron, shpërndarja duhet të jetë praktikisht uniforme, pa lidhje me
+      informativitetin. Rezultati e konfirmon: pesë veçoritë më informative marrin 17.4 për qind
+      të ndarjeve, ndërsa pjesa e pritur nga rastësia e plotë është 17.2 për qind, dhe
+      korrelacioni Spearman mes përdorimit të një kolone dhe fuqisë së saj diskriminuese është
+      0.10 me p-vlerë 0.59. Me fjalë të tjera, algoritmi nuk e di se cilat kolona janë të
+      dobishme dhe nuk sillet sikur ta dinte."""),
+    fig(
+        "iforest_capacity",
+        "Majtas, shpërndarja e ndarjeve mbi kolonat kundrejt asaj që pritet nga rastësia. "
+        "Djathtas, përdorimi i një kolone kundrejt fuqisë së saj diskriminuese.",
+        15.0,
+    ),
+    p("""Proba e dytë përjashton shpjegimin konkurrues. Meqë veçoritë V1 deri V28 janë
+      komponentë kryesorë, ndarjet paralele me boshtet mund të jenë ose të favorizuara ose të
+      dëmtuara nga kjo përputhje. I njëjti pyll u ripërshtat mbi një kopje të rrotulluar
+      rastësisht të hapësirës, ku përputhja shkatërrohet por struktura ruhet. Ndryshimi është
+      0.0073 njësi Average Precision, nga 0.0913 në 0.0986, pra praktikisht i papërfillshëm.
+      Orientimi i boshteve nuk është pra shpjegimi."""),
+    tab(
+        "iforest_rotation",
+        "Average Precision për fold në hapësirën origjinale dhe në atë të rrotulluar rastësisht.",
+        font_size=9.0,
+    ),
+    p("""Proba e tretë është ajo më vendimtare, sepse ajo nuk vëzhgon por ndërhyn. Nëse
+      kapaciteti shpërndahet mbi kolona pa sinjal, atëherë zvogëlimi i numrit të kolonave që
+      sheh secila pemë duhet ta përmirësojë detektorin. Kjo është pikërisht ajo që ndodh: me
+      max_features 0.20, pra me rreth gjashtë kolona për pemë nga njëzet e nëntë, Average
+      Precision ngjitet nga 0.0913 në 0.1127, dhe fitorja është në të tetë fold-et me p-vlerë
+      0.0078."""),
+    tab(
+        "iforest_max_features",
+        "Efekti i kufizimit të secilës pemë në një nën-hapësirë veçorish, për fold dhe për "
+        "vlerë të max_features.",
+        font_size=8.5,
+    ),
+    p("""Të tria probat tregojnë në të njëjtin drejtim dhe secila mbulon një dobësi të tjetrës.
+      Numërimi i ndarjeve tregon se mekanizmi është i pranishëm, rrotullimi përjashton
+      shpjegimin alternativ, dhe kufizimi i nën-hapësirës tregon se ndërhyrja në mekanizëm e
+      ndryshon rezultatin në drejtimin e parashikuar. Kjo e shndërron shpjegimin nga
+      korrelacion i vëzhguar në pohim të testuar."""),
+    note("""Vlen të theksohet se edhe pas të tria përmirësimeve Isolation Forest-i mbetet i
+      fundit mes tri algoritmeve. Qëllimi i këtij nënkapitulli nuk ishte ta ngrinte atë në vend
+      të parë, por të shpjegonte pse ndodhet i fundit, dhe shpjegimi tani është i matur."""),
+    h3("5.5.2", "Autoencoder: ngushtica, humbja dhe mbitrajnimi"),
+    p("""Për Autoencoder-in u studiuan gjashtë leva veç e veç: gjerësia e shtresës së fshehur
+      bashkë me dimensionin latent, thellësia e enkoderit, funksioni i humbjes, dropout-i,
+      weight decay-i dhe korruptimi i hyrjes për variantin denoising, plus numri i epokave.
+      Secila u ndryshua veçmas mbi të njëjtat tetë fold-e, që efekti i saj të mos përzihet me
+      atë të të tjerave."""),
+    tab(
+        "autoencoder_studies",
+        "Përmbledhje e të gjitha studimeve mbi Autoencoder-in. Çdo rresht është një konfigurim, "
+        "i vlerësuar mbi tetë fold-e.",
+        font_size=8.0,
+    ),
+    p("""Gjetja më e madhe është se arkitektura ka rëndësi vendimtare. Kalimi nga konfigurimi i
+      parazgjedhur, me shtresë të fshehur 16 dhe dimension latent 8, te një shtresë e fshehur 32
+      me dimension latent 12 e ngre Average Precision nga 0.1929 në 0.3543, pra tetëdhjetë e
+      katër për qind më shumë. Hapësira mes konfigurimit më të mirë dhe atij më të keq të
+      arkitekturës është 0.2227 njësi, dukshëm më e madhe se hapësira 0.1016 mes tri
+      algoritmeve nën konfigurimin bazë."""),
+    fig(
+        "autoencoder_architecture",
+        "Average Precision për çdo kombinim të gjerësisë së shtresës së fshehur dhe të "
+        "dimensionit latent.",
+        14.5,
+    ),
+    p("""Kjo gjetje ka një pasojë të drejtpërdrejtë për interpretimin e nënkapitullit 5.3:
+      renditja e raportuar atje është renditje e konfigurimeve të parazgjedhura dhe jo e
+      algoritmeve në kapacitetin e tyre të plotë. Nënkapitulli 5.9 e mat sa e ndryshon kjo
+      renditjen kur të tre akordohen njësoj."""),
+    p("""Gjetja e dytë e kundërshton një heuristikë të përhapur. Pritet zakonisht që dimensioni
+      latent duhet të përafrojë dimensionin e brendshëm të të dhënave, i cili u vlerësua në 3.8
+      me metodën TwoNN dhe 7.3 me atë të gjasës maksimale. Dimensioni latent optimal rezulton
+      12, pra rreth tri herë vlerësimi i parë dhe qartësisht mbi të dytin. Shpjegimi qëndron te
+      objektivi: ngushtica nuk duhet ta përshkruajë klasën normale në mënyrë minimale, por të
+      jetë mjaft e gjerë sa ajo të rindërtohet mirë dhe mjaft e ngushtë sa anomalitë të mos
+      rindërtohen. Kur ngushtica shtrëngohet nën këtë vlerë, të dyja klasat rindërtohen keq dhe
+      dallimi mes tyre zhduket."""),
+    p("""Gjetja e tretë tregon se jolineariteti paguan. Rindërtimi linear me analizë të
+      komponentëve kryesorë, i vlerësuar në të njëjtat rangje dhe nën të njëjtin protokoll,
+      shërben si dysheme ablacioni për familjen e rindërtimit. Autoencoder-i e tejkalon atë në
+      të shtatë rangjet e krahasueshme, dhe në rangun e tij më të mirë diferenca është 0.2087
+      njësi Average Precision. Vlen të vërehet gjithashtu se dyshemeja lineare rritet në mënyrë
+      monotone me rangun, ndërsa Autoencoder-i ka një optimum të brendshëm, çka është vetë një
+      dallim mekanicist mes të dyve."""),
+    fig(
+        "autoencoder_vs_linear",
+        "Autoencoder-i jolinear kundrejt rindërtimit linear me analizë të komponentëve kryesorë, "
+        "në të njëjtat rangje.",
+        14.5,
+    ),
+    p("""Gjetja e katërt ka të bëjë me funksionin e humbjes dhe është metodologjikisht e
+      rëndësishme. Në të gjitha variantet pika e anomalisë llogaritet gjithmonë si gabim
+      kuadratik mesatar, sepse ndryshe ablacioni nuk do të ishte i interpretueshëm. Trajnimi me
+      gabim kuadratik jep 0.1929, ndërsa trajnimi me gabim absolut jep 0.1113 dhe me humbje
+      Huber 0.1157. Përputhja mes objektivit të trajnimit dhe atij të pikëzimit ka pra rëndësi
+      të matshme, dhe humbjet robuste, të cilat zakonisht rekomandohen kur ka vlera
+      ekstreme, e dëmtojnë detektorin pikërisht sepse i zbusin gabimet e mëdha që përbëjnë
+      sinjalin."""),
+    p("""Gjetja e pestë është mbitrajnimi. Cilësia kulmon në njëzet epoka me 0.1929 dhe bie në
+      0.1505 me gjashtëdhjetë, ndërsa humbja e trajnimit vazhdon të bjerë. Ky është konfirmim i
+      drejtpërdrejtë i mekanizmit të përshkruar në Kapitullin 2: rrjeti i mbitrajnuar fillon t'i
+      rindërtojë mirë edhe anomalitë dhe pika e humbet fuqinë dalluese. Pasoja praktike është
+      se kriteri i ndalimit nuk mund të jetë humbja e trajnimit, sepse ajo vazhdon të
+      përmirësohet ndërsa detektori përkeqësohet."""),
+    fig(
+        "autoencoder_training",
+        "Humbja e trajnimit kundrejt cilësisë së zbulimit sipas numrit të epokave. Të dyja "
+        "kurbat lëvizin në drejtime të kundërta pas njëzet epokave.",
+        14.5,
+    ),
+    p("""Levat e regullarizimit japin efekte të vogla. Dropout-i 0.1 e ngre rezultatin me 0.0066
+      njësi, weight decay-i 1e-4 me 0.0161, ndërsa vlera e madhe 1e-2 e ul me 0.0855. Varianti
+      denoising, ku hyrja korruptohet me zhurmë gausiane, nuk jep asnjë efekt praktik: hapësira
+      mes nivelit më të mirë dhe atij më të keq të zhurmës është nën 0.005 njësi. Ky është një
+      rezultat negativ i vogël por i dobishëm, sepse denoising rekomandohet shpesh pa
+      kualifikim."""),
+]
+
+BLOCKS = _HYRJE + _GJEOMETRIA + _PH2 + _THELLIMI + _PARAPROCESIMI
