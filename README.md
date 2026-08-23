@@ -34,8 +34,10 @@ shpjegimit, politika e dritares së trajnimit, dhe analiza e gabimeve në nivel 
   njëjtin rajon. Mashtrimi median kërkon ~530 alarme.
 - **Vonesa.** Mesatarja end-to-end nën 100 ms në të gjitha ritmet e testuara, rreth një rend
   madhësie nën objektivin prej 1 s. Ngopja rreth 2,400 msg/s me një consumer.
-- **Cilësia (StandardScaler, hiperparametra të parazgjedhur).** LR 0.720; Autoencoder 0.193;
-  One-Class SVM 0.148; Isolation Forest 0.091.
+- **Cilësia (StandardScaler, hiperparametra të parazgjedhur).** LR 0.734; Autoencoder 0.193;
+  One-Class SVM 0.151; Isolation Forest 0.091.
+- **Akordimi e përmbys renditjen e dy të fundit.** Autoencoder 0.193 → 0.335, Isolation Forest
+  0.091 → 0.168, One-Class SVM 0.151 → 0.146; udhëheqësi mbetet, dy të fundit ndërrohen.
 - **Paraprocesimi ka ndikim më të madh se algoritmi.** Transformimi kuantil e ngre OCSVM-në me
   **+0.218 AP** (në 0.368, rezultati më i mirë unsupervised i studimit) në 8/8 fold-e;
   referencën e mbikëqyrur nuk e prek (p = 0.84).
@@ -45,10 +47,17 @@ shpjegimit, politika e dritares së trajnimit, dhe analiza e gabimeve në nivel 
 - **Analiza e gabimeve.** Në buxhet 100 alarmesh, 37% e mashtrimeve nuk arrihen nga asnjë
   detektor unsupervised; referenca e mbikëqyrur i kap 59% të tyre.
 - **Ansambli.** Rezultat negativ nën të dy regjimet e hiperparametrave.
-- **Protokolli.** Ndarja e rastësishme e fryn AP-në unsupervised ~2.7×.
+- **Protokolli.** Ndarja e rastësishme e fryn AP-në unsupervised ~3.0× (deri 4.5× për
+  Isolation Forest); referencën e mbikëqyrur nuk e fryn fare (0.92×).
 - **Zhvendosja.** PSI 3.22 për mashtrimet kundrejt 0.14 për normalet: ndryshojnë mashtrimet,
   jo modeli i normalitetit.
-- **Pragu adaptiv.** F1 mesatar 0.128 → 0.169 me ngarkesë hetimore më të qëndrueshme.
+- **Pragu adaptiv.** Për të tre detektorët unsupervised F1 0.124 → 0.166 me CV të ngarkesës
+  0.84 → 0.62; për referencën e mbikëqyrur e përkeqëson (0.720 → 0.535), sepse pragu i saj
+  statik është tashmë i kalibruar.
+- **Ndërhyrja kauzale.** Me vetëm 3 komponentët më informativë, Isolation Forest fiton +0.530 AP,
+  më shumë se Autoencoder (+0.397) dhe One-Class SVM (+0.360); referenca humbet (−0.124).
+- **Kostoja e One-Class SVM-së.** 1,000 mostra trajnimi japin të njëjtën cilësi si 20,000, me
+  kohë trajnimi 160× më të vogël dhe kosto pikëzimi 9× më të vogël.
 
 ---
 
@@ -68,7 +77,8 @@ make train              # përshtat modelet mbi ndarjen 70/30
 make protocol           # 8 fold-e rolling-origin (hapi bazë, ~2 min)
 make tune               # kërkim Optuna mbi ndarje të brendshme kohore
 make protocol-tuned     # ri-ekzekuton protokollin me hiperparametrat e akorduar
-make evaluate           # të gjitha tabelat dhe figurat, përfshirë studimet e thelluara
+make evaluate           # tabelat dhe figurat nga pikët e ruajtura (minuta)
+make deep-studies       # studimet për algoritëm; ripërshtatin modelet (orë)
 make thesis             # gjeneron punimin .docx nga results/
 
 docker compose -f docker/docker-compose.yml up -d
