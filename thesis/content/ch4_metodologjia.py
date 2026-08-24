@@ -468,10 +468,22 @@ _ARKITEKTURA = [
       qëndrueshme."""),
     h3("4.9.3", "Persistimi dhe vizualizimi"),
     p("""Të gjitha ngjarjet e pikëzuara dhe alarmet ruhen në PostgreSQL në dy tabela të
-      indeksuara sipas etiketës së ekzekutimit, me shkrime të grumbulluara. Mbi to është
-      ndërtuar një panel Grafana OSS, i konfiguruar tërësisht nga skedarë në depo, pra burimi i
-      të dhënave dhe vetë paneli, që gjendja e vizualizimit të mos varet nga veprime manuale në
-      ndërfaqe dhe të jetë pjesë e riprodhueshmërisë."""),
+      indeksuara sipas etiketës së ekzekutimit, me shkrime të grumbulluara që të mos bëhet vetë
+      persistimi pengesa e rrjedhës. Skema ruan për çdo ngjarje identifikuesin e transaksionit,
+      modelin, pikën, pragun në fuqi, vulën kohore të mbërritjes dhe atë të pikëzimit, pra
+      gjithçka që nevojitet për ta rindërtuar vonesën dhe vendimin pas faktit."""),
+    p("""Mbi këto tabela është ndërtuar një panel Grafana OSS me nëntë panele: katër tregues
+      përmbledhës për numrin e ngjarjeve të pikëzuara, alarmeve të publikuara, alarmeve që
+      rezultojnë mashtrime të vërteta dhe mashtrimeve të pranishme në rrjedhë; katër seri kohore
+      për kapacitetin e pikëzimit, alarmet me kalimin e kohës, percentilet e vonesës
+      end-to-end dhe percentilin e nëntëdhjetë e pestë të kohës së inferencës për model; dhe një
+      tabelë me alarmet më të fundit."""),
+    p("""I gjithë konfigurimi, burimi i të dhënave dhe vetë paneli, gjendet si skedar në depo dhe
+      ngarkohet automatikisht kur ngrihet grumbulli, që gjendja e vizualizimit të mos varet nga
+      veprime manuale në ndërfaqe dhe të jetë pjesë e riprodhueshmërisë. Një hollësi teknike
+      meriton përmendje sepse kushtëzoi implementimin: makro-ja standarde e Grafana-s për
+      grupim kohor nuk pranon shprehje të mbivendosura mbi kolonën e kohës, prandaj grupimi
+      kryhet me aritmetikë të drejtpërdrejtë mbi sekondat epokë."""),
     h2("4.10", "Riprodhueshmëria"),
     p("""Çdo eksperiment shkruan një manifest me SHA-në e commit-it, hash-in SHA-256 të
       konfigurimit, versionet e paketave të gjurmuara, vulën kohore dhe përshkrimin e harduerit.
