@@ -604,10 +604,12 @@ _THELLIMI = [
       Secila u ndryshua veçmas mbi të njëjtat tetë fold-e, që efekti i saj të mos përzihet me
       atë të të tjerave."""),
     tab(
-        "autoencoder_studies",
-        "Përmbledhje e të gjitha studimeve mbi Autoencoder-in. Çdo rresht është një konfigurim, "
-        "i vlerësuar mbi tetë fold-e.",
-        font_size=8.0,
+        "autoencoder_studies_tidy",
+        "Përmbledhje e të gjitha studimeve mbi Autoencoder-in. Çdo rresht është një konfigurim i "
+        "vetëm, i vlerësuar mbi tetë fold-e, dhe kolona e dytë emërton levën që ndryshon.",
+        round={"AP": 4, "s.d.": 4},
+        widths=[3.4, 6.2, 1.7, 1.7, 1.4],
+        font_size=8.5,
     ),
     p("""Gjetja më e madhe është se arkitektura ka rëndësi vendimtare. Kalimi nga konfigurimi i
       parazgjedhur, me shtresë të fshehur 16 dhe dimension latent 8, te një shtresë e fshehur 32
