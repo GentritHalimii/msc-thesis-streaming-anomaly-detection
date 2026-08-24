@@ -71,7 +71,7 @@ def environment_table(cfg) -> pd.DataFrame:
         ("Procesori", hw.get("processor") or platform.machine()),
         ("Bërthama logjike", str(hw.get("cpu_count", psutil.cpu_count(logical=True)))),
         ("Memoria e sistemit", f"{mem_gb} GB"),
-        ("Përshpejtues grafik", "asnjë — të gjitha modelet trajnohen në CPU"),
+        ("Përshpejtues grafik", "asnjë; të gjitha modelet trajnohen në CPU"),
         ("Python", manifest.get("python", platform.python_version())),
     ]
     for pkg in ("numpy", "pandas", "scikit-learn", "torch", "confluent-kafka", "psycopg"):

@@ -133,7 +133,11 @@ def main():
     rows += pca_rows
 
     table = pd.DataFrame(rows)
-    save_table(table, results_dir, "autoencoder_studies_per_fold", float_fmt="%.5f")
+    # %.10g, not %.5f: fixed decimals collapse weight_decay=1e-6 onto
+    # weight_decay=0 when the record is read back, which silently merges two
+    # configurations into one row. The per-fold file is the record, so it
+    # keeps enough significant digits to round trip.
+    save_table(table, results_dir, "autoencoder_studies_per_fold", float_fmt="%.10g")
 
     # ---- summaries -------------------------------------------------------
     summaries = {}
@@ -154,6 +158,7 @@ def main():
 
     flat = pd.concat([s.assign(study=name) for name, s in summaries.items()], ignore_index=True)
     save_table(flat, results_dir, "autoencoder_studies", float_fmt="%.4f")
+    save_table(tidy_summary(summaries), results_dir, "autoencoder_studies_tidy", float_fmt="%.4f")
 
     # ---- figure: architecture surface -----------------------------------
     arch = table[table["study"] == "arkitektura"]
@@ -364,6 +369,34 @@ def _write_verdict(results_dir, summaries, arch, table):
     print("\n" + "\n".join(lines))
 
 
+def tidy_summary(summaries) -> pd.DataFrame:
+    """One readable row per configuration.
+
+    The flat concatenation has a column per hyperparameter, so a document
+    table built from it is mostly empty cells. Here the varied setting is
+    collapsed into a single string, which is what a reader actually needs.
+    """
+    rows = []
+    for study, table in summaries.items():
+        keys = [c for c in table.columns if c not in ("ap_mean", "ap_std", "n", "study")]
+        for _, r in table.iterrows():
+            setting = ", ".join(
+                f"{k}={r[k]:g}" if isinstance(r[k], float) else f"{k}={r[k]}"
+                for k in keys
+                if pd.notna(r[k])
+            )
+            rows.append(
+                {
+                    "Studimi": study,
+                    "Konfigurimi": setting,
+                    "AP": r["ap_mean"],
+                    "s.d.": r["ap_std"],
+                    "n": int(r["n"]),
+                }
+            )
+    return pd.DataFrame(rows)
+
+
 def verdict_from_saved(cfg=None):
     """Recomputes the verdict from the saved tables, without refitting."""
     cfg = cfg or load_config()
@@ -382,6 +415,7 @@ def verdict_from_saved(cfg=None):
             .reset_index()
             .sort_values("ap_mean", ascending=False)
         )
+    save_table(tidy_summary(summaries), results_dir, "autoencoder_studies_tidy", float_fmt="%.4f")
     _write_verdict(results_dir, summaries, table[table["study"] == "arkitektura"], table)
 
 
