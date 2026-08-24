@@ -14,6 +14,7 @@ from src.config import REPO_ROOT, load_config
 from src.evaluation.manifest import write_manifest
 from src.evaluation.report import (
     AX,
+    MODEL_LABELS,
     model_plot_kwargs,
     new_figure,
     save_figure,
@@ -55,6 +56,8 @@ def main(cfg=None):
             }
         )
     table = pd.DataFrame(rows).sort_values(["model", "prag_adaptiv", "rate_msg_s"])
+    # Display names, like every other table in the study.
+    table["model"] = table["model"].map(lambda m: MODEL_LABELS.get(m, m))
     # Achieved-vs-target throughput shows where the consumer stops keeping up.
     table["throughput_ratio"] = table["throughput_msg_s"] / table["rate_msg_s"]
     save_table(table, REPO_ROOT / cfg.results_dir, "latency_summary")
