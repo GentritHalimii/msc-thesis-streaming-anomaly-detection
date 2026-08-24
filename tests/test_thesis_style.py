@@ -119,3 +119,41 @@ def test_terms_that_belong_in_english_are_not_translated(term):
     assert not offenders, f"'{term}' was translated; keep it in English:\n" + "\n".join(
         offenders[:10]
     )
+
+
+def _math_markup():
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "thesis"))
+    from docx_helpers import _MATH_MARKUP
+
+    return _MATH_MARKUP
+
+
+def test_equation_markup_scopes_whole_words():
+    """ "c_het" is a cost with the subscript "het". Matching a single letter
+    subscripted the h and left "et" sitting on the baseline, which is how the
+    first typeset draft rendered it."""
+    markup = _math_markup()
+
+    def parse(text):
+        return [
+            (m.group(1), m.group(2) if m.group(2) is not None else m.group(3))
+            for m in markup.finditer(text)
+        ]
+
+    assert parse("c_het") == [("_", "het")]
+    assert parse("R_{n−1}") == [("_", "n−1")]
+    assert parse("ℝ^d") == [("^", "d")]
+    assert parse("2^{−E[h(x)] / c(n)}") == [("^", "−E[h(x)] / c(n)")]
+
+
+def test_no_equation_leaves_tex_markers_on_the_baseline():
+    """Every _ and ^ in an equation must be consumed by the markup parser; a
+    leftover marker is printed as a literal character on the page."""
+    markup = _math_markup()
+    for name, blocks in _blocks():
+        for block in blocks:
+            if block[0] != "eq":
+                continue
+            remainder = markup.sub("", block[1])
+            assert "_" not in remainder, f"{name}: {block[1]}"
+            assert "^" not in remainder, f"{name}: {block[1]}"
