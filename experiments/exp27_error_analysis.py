@@ -139,13 +139,13 @@ def main(cfg=None):
     print(comparison.to_string(index=False))
 
     # --- Figure: coverage and what the missed frauds look like ------------
-    fig, (ax1, ax2) = new_figure(ncols=2, figsize=(7.6, 3.8))
+    fig, (ax1, ax2) = new_figure(ncols=2, figsize=(8.4, 3.8))
     ax1.bar(coverage["n_detektore"], 100 * coverage["pjesa"], color=BLUE, width=0.6)
     for n, share, count in zip(
         coverage["n_detektore"], coverage["pjesa"], coverage["mashtrime"], strict=True
     ):
         ax1.text(n, 100 * share + 1, f"{count}", ha="center", fontsize=8, color="#52514e")
-    ax1.set_xlabel("Numri i detektorëve që e arrijnë mashtrimin")
+    ax1.set_xlabel("Detektorë që e arrijnë mashtrimin")
     ax1.set_ylabel("Përqindja e mashtrimeve")
     ax1.set_xticks(coverage["n_detektore"])
 
@@ -168,9 +168,10 @@ def main(cfg=None):
         label="Të pakapura",
         linewidth=0,
     )
-    ax2.set_xlabel("Distanca ‖z‖ nga qendra e transaksioneve legjitime")
+    ax2.set_xlabel("Distanca ‖z‖ nga qendra legjitime")
     ax2.set_ylabel("Densiteti")
     ax2.legend(fontsize=8.5)
+    fig.tight_layout(w_pad=2.0)
     save_figure(fig, REPO_ROOT / cfg.results_dir, "error_analysis")
 
     n_total = len(caught)
