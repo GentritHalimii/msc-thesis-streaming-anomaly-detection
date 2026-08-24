@@ -39,7 +39,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 RESULTS = REPO_ROOT / "results"
 CITE_RE = re.compile(r"\[@([a-zA-Z0-9_]+)\]")
 # Printed stand-in for a value that does not exist, rather than "nan".
-MISSING = "—"
+MISSING = "n/a"  # never an em dash: the thesis reserves that character for nothing
 
 
 class Numbering:

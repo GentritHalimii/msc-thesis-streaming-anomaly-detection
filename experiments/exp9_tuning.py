@@ -163,7 +163,12 @@ def main():
     )
     table = pd.DataFrame(rows).sort_values("improvement", ascending=False)
     save_table(table, results_dir, "tuning_summary")
-    save_table(pd.concat(histories, ignore_index=True), results_dir, "tuning_history")
+    save_table(
+        pd.concat(histories, ignore_index=True),
+        results_dir,
+        "tuning_history",
+        float_fmt="%.10g",  # learning rates and weight decays live below 1e-4
+    )
     print(
         "\n"
         + table[["model", "inner_ap_default", "inner_ap_tuned", "improvement"]].to_string(

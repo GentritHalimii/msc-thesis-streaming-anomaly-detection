@@ -137,7 +137,7 @@ def figure_ap_ranking(summary: pd.DataFrame, cfg):
         error_kw={"ecolor": "#898781", "elinewidth": 1, "capsize": 2},
     )
     ax.set_yticks(ypos, [MODEL_LABELS.get(m, m) for m in d["model"]])
-    ax.set_xlabel(AX["ap"] + " — mesatare mbi 8 fold-e (±1 s.d.)")
+    ax.set_xlabel(AX["ap"] + ", mesatare mbi 8 fold-e (±1 s.d.)")
     ax.grid(axis="y", visible=False)
     for y, v in zip(ypos, d["ap_mean"], strict=True):
         ax.text(v + 0.008, y, f"{v:.3f}", va="center", fontsize=8, color="#52514e")
@@ -173,7 +173,7 @@ def figure_quality_cost(summary: pd.DataFrame, cfg):
         )
     ax.set_xscale("log")
     ax.set_xlabel("Kosto e pikëzimit (mikrosekonda për transaksion, shkallë log)")
-    ax.set_ylabel(AX["ap"] + " — mesatare mbi 8 fold-e")
+    ax.set_ylabel(AX["ap"] + ", mesatare mbi 8 fold-e")
     ax.set_xlim(0.03, 200)
     best = summary.loc[summary["model"] != "logreg"].nlargest(1, "ap_mean").iloc[0]
     ax.annotate(
