@@ -257,7 +257,10 @@ def add_equation(doc: Document, expression: str, number: int):
     return para
 
 
-_MATH_MARKUP = re.compile(r"([_^])(?:\{([^{}]*)\}|(\w))")
+# The unbraced form takes the whole word, not one character: "c_het" is a
+# cost with the subscript "het", and matching a single letter turned it
+# into "c" subscript-h followed by a stray "et".
+_MATH_MARKUP = re.compile(r"([_^])(?:\{([^{}]*)\}|(\w+))")
 
 
 def _add_math_runs(para, text: str):

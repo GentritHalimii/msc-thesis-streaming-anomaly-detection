@@ -82,7 +82,7 @@ _ALGORITMET = [
       atij dimensioni, dhe përsërit derisa çdo pikë të mbetet e vetme në një gjethe."""),
     p("""Pika e anomalisë del nga gjatësia mesatare e shtegut deri te izolimi, e normalizuar
       me gjatësinë e pritur të shtegut c(n) në një pemë kërkimi binare me n nyje:"""),
-    eq("s(x, n) = 2^( −E[h(x)] / c(n) ),   c(n) = 2H(n−1) − 2(n−1)/n"),
+    eq("s(x, n) = 2^{−E[h(x)] / c(n)},   c(n) = 2H(n−1) − 2(n−1)/n"),
     p("""ku H është numri harmonik. Normalizimi e bën pikën të krahasueshme mes pemëve me
       thellësi të ndryshme dhe e kufizon atë në intervalin (0, 1), ku vlerat afër njëshit
       tregojnë izolim të lehtë. Në implementimin e këtij punimi pika merret me shenjë të
