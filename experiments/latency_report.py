@@ -9,6 +9,7 @@ rate column and the thesis text qualifies every claim with it.
 import json
 
 import pandas as pd
+from matplotlib.lines import Line2D
 
 from src.config import REPO_ROOT, load_config
 from src.evaluation.manifest import write_manifest
@@ -56,16 +57,20 @@ def main(cfg=None):
             }
         )
     table = pd.DataFrame(rows).sort_values(["model", "prag_adaptiv", "rate_msg_s"])
-    # Display names, like every other table in the study.
-    table["model"] = table["model"].map(lambda m: MODEL_LABELS.get(m, m))
+    # The raw key drives the colour and line style; the display name is what
+    # the document shows. Keeping both avoids a lookup failure in the figure.
+    table["model_key"] = table["model"]
+    table["model"] = table["model_key"].map(lambda m: MODEL_LABELS.get(m, m))
     # Achieved-vs-target throughput shows where the consumer stops keeping up.
     table["throughput_ratio"] = table["throughput_msg_s"] / table["rate_msg_s"]
-    save_table(table, REPO_ROOT / cfg.results_dir, "latency_summary")
-    print(table.to_string(index=False))
+    save_table(table.drop(columns=["model_key"]), REPO_ROOT / cfg.results_dir, "latency_summary")
+    print(table.drop(columns=["model_key"]).to_string(index=False))
 
     fig, ax = new_figure()
-    for model in table["model"].unique():
-        sub = table[(table["model"] == model) & (~table["prag_adaptiv"])].sort_values("rate_msg_s")
+    for model in table["model_key"].unique():
+        sub = table[(table["model_key"] == model) & (~table["prag_adaptiv"])].sort_values(
+            "rate_msg_s"
+        )
         if sub.empty:
             continue
         kw = model_plot_kwargs(model)
@@ -74,18 +79,28 @@ def main(cfg=None):
         ax.plot(sub["rate_msg_s"], sub["e2e_ms_p50"], marker="o", markersize=3, **kw_p50)
     ax.set_xscale("log")
     ax.set_yscale("log")
-    ax.set_xlabel(AX["rate"] + " — mbërritje sintetike konstante")
+    ax.set_xlabel(AX["rate"] + " (mbërritje sintetike konstante)")
     ax.set_ylabel(AX["latency_ms"])
     ax.axhline(1000, color="#c3c2b7", linewidth=1)
+    # Headroom above the target line, otherwise its label is clipped by the
+    # top of the axes and the reader cannot see how far below the line the
+    # measurements sit.
+    ax.set_ylim(top=2000)
     ax.annotate(
         "objektivi prej 1 sekonde",
-        xy=(0.02, 0.97),
+        xy=(0.02, 0.985),
         xycoords="axes fraction",
         fontsize=8,
         color="#898781",
         va="top",
     )
-    ax.legend()
+    # Two series per model, so the legend has to say which is which.
+    handles, labels = ax.get_legend_handles_labels()
+    style = [
+        Line2D([], [], color="#52514e", lw=1.6, marker="o", markersize=4, label="p99"),
+        Line2D([], [], color="#52514e", lw=1.6, alpha=0.45, marker="o", markersize=3, label="p50"),
+    ]
+    ax.legend(handles + style, labels + [h.get_label() for h in style], fontsize=8)
     save_figure(fig, REPO_ROOT / cfg.results_dir, "latency_vs_rate")
     write_manifest(REPO_ROOT / cfg.results_dir, "latency_report", cfg.raw)
 
