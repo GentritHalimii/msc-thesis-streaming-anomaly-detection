@@ -584,10 +584,19 @@ _THELLIMI = [
       Precision ngjitet nga 0.0913 në 0.1127, dhe fitorja është në të tetë fold-et me p-vlerë
       0.0078."""),
     tab(
-        "iforest_max_features",
-        "Efekti i kufizimit të secilës pemë në një nën-hapësirë veçorish, për fold dhe për "
-        "vlerë të max_features.",
-        font_size=8.5,
+        "iforest_max_features_summary",
+        "Efekti i kufizimit të secilës pemë në një nën-hapësirë veçorish, mesatarisht mbi tetë "
+        "fold-e. Kolona e fundit është diferenca ndaj përdorimit të të gjitha kolonave.",
+        rename={
+            "max_features": "max_features",
+            "ap_mean": "AP",
+            "ap_std": "s.d.",
+            "n": "Fold-e",
+            "fitore_ndaj_1.0": "Fitore ndaj 1.0",
+            "vs_1.0": "Δ ndaj 1.0",
+        },
+        round={"ap_mean": 4, "ap_std": 4, "vs_1.0": 4},
+        font_size=9.5,
     ),
     p("""Të tria probat tregojnë në të njëjtin drejtim dhe secila mbulon një dobësi të tjetrës.
       Numërimi i ndarjeve tregon se mekanizmi është i pranishëm, rrotullimi përjashton

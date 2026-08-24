@@ -280,6 +280,18 @@ def main(cfg=None):
     # capacity is spread over uninformative columns, then giving each tree a
     # smaller random subset should shorten the paths that noise dominates.
     mf_pivot = max_features_tab.pivot(index="fold", columns="max_features", values="ap")
+    # A per-fold dump of 48 rows is a data file, not a table a reader can use;
+    # the document gets the aggregate with the paired win count beside it.
+    mf_summary = (
+        max_features_tab.groupby("max_features")["ap"]
+        .agg(ap_mean="mean", ap_std="std", n="count")
+        .reset_index()
+    )
+    mf_summary["fitore_ndaj_1.0"] = [
+        int((mf_pivot[v] > mf_pivot[1.0]).sum()) for v in mf_summary["max_features"]
+    ]
+    mf_summary["vs_1.0"] = mf_summary["ap_mean"] - float(mf_pivot[1.0].mean())
+    save_table(mf_summary, results_dir, "iforest_max_features_summary", float_fmt="%.5f")
     mf_mean = mf_pivot.mean()
     mf_best = float(mf_mean.idxmax())
     wins = int((mf_pivot[mf_best] > mf_pivot[1.0]).sum())
