@@ -40,7 +40,8 @@ _SINTEZA = [
             "informative marrin 17.4 për qind të ndarjeve kundrejt 17.2 për qind që pritet nga "
             "rastësia e plotë, ndërsa rrotullimi i hapësirës e ndryshon rezultatin vetëm me 0.007 "
             "njësi, çka e përjashton përputhjen e boshteve si shpjegim.",
-            "Referenca e mbikëqyrur mbetet dukshëm përpara, duke fituar në të tetë fold-et kundrejt "
+            "Referenca e mbikëqyrur mbetet dukshëm përpara, duke fituar në të tetë fold-et "
+            "kundrejt "
             "secilit prej tre detektorëve.",
             "Akordimi i hiperparametrave e ndryshon renditjen mes dy detektorëve të fundit. "
             "Nën vlerat e parazgjedhura One-Class SVM qëndron para Isolation Forest-it; kur të "
@@ -49,7 +50,8 @@ _SINTEZA = [
             "detektor unsupervised, ndërsa referenca e mbikëqyrur i kap 59 për qind të tyre.",
             "Qasja ensemble nuk e përmirëson zbulimin në asnjë nga variantet e testuara, dhe "
             "analiza e gabimeve në nivel transaksioni e shpjegon pse.",
-            "Degradimi me kalimin e kohës vjen nga ndryshimi i popullatës së mashtrimeve dhe jo nga "
+            "Degradimi me kalimin e kohës vjen nga ndryshimi i popullatës së mashtrimeve dhe jo "
+            "nga "
             "vjetërsimi i modelit të normalitetit.",
             "Pragu adaptiv me dritare rrëshqitëse e stabilizon ngarkesën hetimore dhe "
             "njëkohësisht e përmirëson cilësinë e zbulimit për të tre detektorët unsupervised, "
@@ -178,7 +180,8 @@ _SINTEZA = [
             "mëdha se çdo zgjedhje algoritmi, dhe një sistem që e trajton skaluesin si detaj "
             "implementimi po lë vlerë të konsiderueshme pa marrë.",
             "Kostoja e pikëzimit duhet të jetë kriter zgjedhjeje qysh në fillim. Dy metoda me "
-            "cilësi të ngjashme mund të ndryshojnë me qindra herë në kosto pikëzimi, dhe në rrjedhë "
+            "cilësi të ngjashme mund të ndryshojnë me qindra herë në kosto pikëzimi, dhe në "
+            "rrjedhë "
             "ky dallim përcakton nëse metoda është e vendosshme apo jo.",
             "Etiketat historike, edhe të vonuara, kanë vlerë të madhe. Hendeku i matur dhe analiza "
             "e mashtrimeve të paarritshme sugjerojnë që metodat unsupervised duhen përdorur si "
@@ -202,7 +205,8 @@ _SINTEZA = [
             "Mungesa e identifikuesit të kartës e bën të pamundur agregimin për llogari dhe "
             "modelimin sekuencial, pra dy nga tri llojet e anomalive në taksonominë standarde "
             "[@chandola2009] mbeten jashtë fushëveprimit.",
-            "Kohëzgjatja prej dyzet e tetë orësh lejon vetëm vlerësimin e zhvendosjes brenda-ditore "
+            "Kohëzgjatja prej dyzet e tetë orësh lejon vetëm vlerësimin e zhvendosjes "
+            "brenda-ditore "
             "dhe mes dy ditëve, jo të asaj sezonale.",
             "Anonimizimi me PCA e bën interpretimin semantik të pamundur; interpretueshmëria e "
             "arritur këtu është relative ndaj sinjalit dhe jo ndaj kuptimit të biznesit.",
@@ -214,7 +218,8 @@ _SINTEZA = [
     bullets(
         [
             "Tetë fold-e japin fuqi statistikore të kufizuar. Kufizimi i krahasimit te tri "
-            "algoritmet e bëri testin post-hoc të përdorshëm, por me një bashkësi më të gjerë ai do "
+            "algoritmet e bëri testin post-hoc të përdorshëm, por me një bashkësi më të gjerë ai "
+            "do "
             "të ishte përsëri i pafuqishëm.",
             "Numri i pozitivëve për bllok testimi varion nga trembëdhjetë në tetëdhjetë e tetë, "
             "prandaj disa vlerësime për fold janë të zhurmshme, gjë që pasqyrohet në devijimet "
@@ -222,8 +227,10 @@ _SINTEZA = [
             "Akordimi i hiperparametrave u krye një herë, në prerjen 70/30, dhe jo brenda çdo "
             "fold-i. Ri-akordimi për fold do të ishte më i rreptë por do ta shumëfishonte koston "
             "llogaritëse tetë herë.",
-            "Kontaminimi i parazgjedhur nxirret nga norma e mashtrimit në dritaren e trajnimit, pra "
-            "përdor etiketa historike. Kjo është e deklaruar dhe e njëjtë me supozimin e referencës "
+            "Kontaminimi i parazgjedhur nxirret nga norma e mashtrimit në dritaren e trajnimit, "
+            "pra "
+            "përdor etiketa historike. Kjo është e deklaruar dhe e njëjtë me supozimin e "
+            "referencës "
             "së mbikëqyrur, por nuk është plotësisht pa etiketa.",
             "Studimi i paraprocesimit dhe ai i hiperparametrave u kryen veçmas dhe u kombinuan më "
             "pas në një dizajn dy-nga-dy; një kërkim i përbashkët mbi të dyja hapësirat "
@@ -235,7 +242,8 @@ _SINTEZA = [
         [
             "Ritmi i mbërritjes është sintetik dhe konstant. Trafiku real është i shpërthyeshëm, "
             "dhe shpërthimet do ta zhvendosnin bishtin e vonesës lart.",
-            "Të gjitha matjet u kryen në një host të vetëm me një broker dhe një particion, prandaj "
+            "Të gjitha matjet u kryen në një host të vetëm me një broker dhe një particion, "
+            "prandaj "
             "rezultatet nuk thonë asgjë për sjelljen në një grumbull të shpërndarë.",
             "Sistemi nuk trajton dështime, ritentativa apo mesazhe të dyfishta, dhe nuk përfshin "
             "ritrajnim automatik.",
@@ -245,8 +253,10 @@ _SINTEZA = [
     p("""Nga kufizimet dalin drejtimet, të renditura sipas premtimit që kanë."""),
     numbers(
         [
-            "Vlerësimi mbi një dataset me identifikues llogarie, ku veçoritë e agreguara për mbajtës "
-            "mund të ndërtohen. Kjo do të testonte nëse hendeku mes metodave unsupervised dhe atyre "
+            "Vlerësimi mbi një dataset me identifikues llogarie, ku veçoritë e agreguara për "
+            "mbajtës "
+            "mund të ndërtohen. Kjo do të testonte nëse hendeku mes metodave unsupervised dhe "
+            "atyre "
             "të mbikëqyrura ngushtohet kur konteksti bëhet i disponueshëm, dhe analiza e "
             "mashtrimeve të paarritshme sugjeron se pikërisht aty qëndron pjesa më e madhe e "
             "hapësirës për përmirësim.",
@@ -259,10 +269,12 @@ _SINTEZA = [
             "Zgjerimi i familjes së detektorëve me metoda deep one-class si Deep SVDD [@ruff2018] "
             "ose me modele gjenerative të thella, të vlerësuara nën të njëjtin protokoll dhe me të "
             "njëjtin karakterizim gjeometrik paraprak.",
-            "Ritrajnim inkremental me dritare rrëshqitëse dhe krahasim i drejtpërdrejtë me trajnimin "
+            "Ritrajnim inkremental me dritare rrëshqitëse dhe krahasim i drejtpërdrejtë me "
+            "trajnimin "
             "një herë, në kuadrin e vlerësimit prekuencial [@gama2013]. Analiza e zhvendosjes këtu "
             "parashikon se përfitimi do të jetë modest, dhe ky parashikim është i testueshëm.",
-            "Testimi i sistemit nën trafik të shpërthyeshëm dhe me disa consumer-a paralelë, për të "
+            "Testimi i sistemit nën trafik të shpërthyeshëm dhe me disa consumer-a paralelë, për "
+            "të "
             "matur sjelljen e vonesës nën ngarkesë realiste.",
         ]
     ),

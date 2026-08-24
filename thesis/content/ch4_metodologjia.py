@@ -402,7 +402,8 @@ _PRAGU = [
             "të përshtatura, dhe ripërshtatja mbi një hapësirë të rrotulluar rastësisht.",
             "Autoencoder: sipërfaqja mbi dimensionin latent dhe gjerësinë e fshehur, thellësia e "
             "enkoderit, funksioni i humbjes, tri regullarizues të ndryshëm, kurba e trajnimit "
-            "përballë cilësisë së zbulimit, dhe krahasimi me projeksionin linear në rang të njëjtë.",
+            "përballë cilësisë së zbulimit, dhe krahasimi me projeksionin linear në rang të "
+            "njëjtë.",
             "One-Class SVM: krahasimi i kernelëve, sipërfaqja mbi nu dhe gamma, dhe kurba e të "
             "mësuarit mbi madhësinë e nën-mostrës së trajnimit bashkë me koston përkatëse.",
             "Të tre bashkë: ndjeshmëria ndaj paraprocesimit, ndikimi i kufizimit të hyrjes te "

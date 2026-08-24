@@ -45,7 +45,8 @@ BLOCKS = [
       të ripërdoren mes regjimit offline dhe atij në rrjedhë."""),
     bullets(
         [
-            "config/, një skedar i vetëm YAML me të gjithë parametrat: seed-in, raportin e ndarjes, "
+            "config/, një skedar i vetëm YAML me të gjithë parametrat: seed-in, raportin e "
+            "ndarjes, "
             "gjeometrinë e protokollit, hiperparametrat e secilit model, buxhetet e alarmeve dhe "
             "konfigurimin e Kafka-s dhe PostgreSQL-it.",
             "src/data/, leximi, renditja kronologjike, ndarja dhe shtatë opsionet e paraprocesimit "
@@ -177,10 +178,12 @@ BLOCKS = [
             "Testet e ndarjes: çdo vulë kohore e trajnimit paraprin çdo vulë të testimit; blloqet "
             "nuk mbivendosen dhe e mbulojnë rrjedhën pa boshllëqe; ndarja është deterministe mes "
             "ekzekutimeve.",
-            "Testet e rrjedhjes së informacionit: statistikat e skaluesit janë identike me momentet "
+            "Testet e rrjedhjes së informacionit: statistikat e skaluesit janë identike me "
+            "momentet "
             "e dritares së trajnimit dhe nuk ndryshojnë kur transformohen të dhënat e testimit; "
             "kolona Time nuk gjendet mes veçorive hyrëse.",
-            "Testet e kontratës së modeleve: për secilin detektor, pikat e injektuara artificialisht "
+            "Testet e kontratës së modeleve: për secilin detektor, pikat e injektuara "
+            "artificialisht "
             "si ekstreme marrin pikë më të larta se mostrat normale; ruajtja dhe ringarkimi japin "
             "pikë identike; dy përshtatje të njëpasnjëshme japin rezultate identike; çdo variant i "
             "Autoencoder-it mbetet funksional.",
@@ -194,7 +197,8 @@ BLOCKS = [
             "korrigjimi i Holm-it verifikohet se është monoton.",
             "Testet e stilit të punimit: teksti nuk përmban viza të gjata brenda paragrafëve, nuk "
             "përdor vetën e parë njëjës, dhe nuk i përkthen termat që ruhen në anglisht.",
-            "Testet e integrimit: barazia e pikëve mes regjimit offline dhe atij në rrjedhë kundrejt "
+            "Testet e integrimit: barazia e pikëve mes regjimit offline dhe atij në rrjedhë "
+            "kundrejt "
             "një broker-i të vërtetë, dhe qarkullimi i plotë i të dhënave nëpër PostgreSQL me "
             "numërim rreshtash dhe besnikëri të vlerave.",
         ]
