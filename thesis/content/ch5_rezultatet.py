@@ -1,6 +1,6 @@
 """Kapitulli 5 — REZULTATET."""
 
-from blocks import bullets, fig, h1, h2, h3, note, numbers, p, tab
+from blocks import fig, h1, h2, h3, note, p, tab
 
 _HYRJE = [
     h1("5", "Rezultatet"),
@@ -1087,7 +1087,8 @@ _ANALIZAT = [
     p("""Monitorimi me Page-Hinkley, me prag të kalibruar veç e veç për çdo fold dhe model përmes
       permutacioneve, jep sinjal zhvendosjeje në njëmbëdhjetë nga njëzet e katër kombinime
       fold-model. Zhvendosja është pra e pranishme por jo e vazhdueshme, çka përputhet me faktin
-      se ajo vjen nga popullata e mashtrimeve dhe jo nga një trend i qëndrueshëm i normalitetit."""),
+      se ajo vjen nga popullata e mashtrimeve dhe jo nga një trend i qëndrueshëm i
+      normalitetit."""),
     tab(
         "drift_page_hinkley",
         "Zbulimi i pikave të ndryshimit me Page-Hinkley mbi rrjedhën e pikëve të anomalisë, me "

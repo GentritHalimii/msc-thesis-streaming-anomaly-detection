@@ -12,6 +12,7 @@ page-number fields, per-section numbering formats, and the table-of-contents
 field that Word populates when the file is opened.
 """
 
+import re
 from pathlib import Path
 
 from docx import Document
@@ -252,11 +253,44 @@ def add_equation(doc: Document, expression: str, number: int):
     pf.alignment = WD_ALIGN_PARAGRAPH.LEFT
     pf.tab_stops.add_tab_stop(Cm(TEXT_WIDTH_CM / 2), WD_TAB_ALIGNMENT.CENTER)
     pf.tab_stops.add_tab_stop(Cm(TEXT_WIDTH_CM), WD_TAB_ALIGNMENT.RIGHT)
-    run = para.add_run(f"\t{expression}\t({number})")
+    _add_math_runs(para, f"\t{expression}\t({number})")
+    return para
+
+
+_MATH_MARKUP = re.compile(r"([_^])(?:\{([^{}]*)\}|(\w))")
+
+
+def _add_math_runs(para, text: str):
+    """Writes the expression with real subscript and superscript runs.
+
+    The sources write mathematics as plain text with TeX-style markers, so
+    "R_{n-1}" reached the page as those literal characters. Word has real
+    sub- and superscript formatting; using it costs one pass over the string
+    and is the difference between a typeset equation and a code listing.
+    """
+    position = 0
+    for match in _MATH_MARKUP.finditer(text):
+        if match.start() > position:
+            _styled_run(para, text[position : match.start()])
+        _styled_run(
+            para,
+            match.group(2) if match.group(2) is not None else match.group(3),
+            sub=match.group(1) == "_",
+            sup=match.group(1) == "^",
+        )
+        position = match.end()
+    if position < len(text) or position == 0:
+        _styled_run(para, text[position:])
+
+
+def _styled_run(para, text: str, sub: bool = False, sup: bool = False):
+    run = para.add_run(text)
     run.font.name = BODY_FONT
     run.font.size = BODY_SIZE
     run.italic = True
-    return para
+    run.font.subscript = sub
+    run.font.superscript = sup
+    return run
 
 
 def add_table(

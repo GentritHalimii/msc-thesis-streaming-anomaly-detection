@@ -106,7 +106,8 @@ BLOCKS = [
     p("""Objektivat specifike, të renditura sipas rendit në të cilin realizohen:"""),
     numbers(
         [
-            "Rishikimi i literaturës mbi tri algoritmet e propozimit, mbi zbulimin e mashtrimeve me "
+            "Rishikimi i literaturës mbi tri algoritmet e propozimit, mbi zbulimin e mashtrimeve "
+            "me "
             "karta dhe mbi arkitekturat streaming me Apache Kafka, me theks te metodologjia e "
             "vlerësimit.",
             "Karakterizimi gjeometrik i dataset-it për të përcaktuar kufirin e sipërm të "
@@ -122,7 +123,8 @@ BLOCKS = [
             "Hetimi eksperimental i qasjes ensemble dhe raportimi i rezultatit pavarësisht nga "
             "drejtimi i tij.",
             "Analiza e shkaqeve: zhvendosja e shpërndarjeve, interpretueshmëria e vendimeve, "
-            "testimi kauzal i mekanizmit të propozuar dhe analiza e gabimeve në nivel transaksioni.",
+            "testimi kauzal i mekanizmit të propozuar dhe analiza e gabimeve në nivel "
+            "transaksioni.",
             "Persistimi i rezultateve në PostgreSQL dhe vizualizimi i tyre në një panel Grafana të "
             "konfiguruar plotësisht nga kodi.",
         ]
