@@ -37,9 +37,15 @@ BLOCKS = [
             "make thesis, gjeneron këtë dokument nga rezultatet e ruajtura.",
         ]
     ),
-    p("""Determinizmi u verifikua empirikisht: dy cikle të plota dhe të pavarura ritrajnimi e
-      vlerësimi prodhuan tabela metrike identike bit-për-bit, me përjashtim të kolonave të
-      kohës dhe të memories."""),
+    p("""Determinizmi u verifikua empirikisht dhe jo vetëm i deklaruar. Dy cikle të plota dhe të
+      pavarura ritrajnimi e vlerësimi prodhuan tabela metrike identike, me përjashtim të
+      kolonave të kohës dhe të memories, të cilat matin burimet dhe jo rezultatin. Kontrolli më
+      i rreptë u bë në nivel vektori: ripërshtatja e të katër modeleve mbi fold-in e parë dhe
+      krahasimi i pikëve me ato të ruajtura më parë jep barazi bit-për-bit për të katër, edhe
+      kur makina është nën ngarkesë tjetër, çka përjashton varësinë nga renditja e fijeve të
+      ekzekutimit. Kjo mundësohet nga fiksimi i seed-it në një vend të vetëm, nga aktivizimi i
+      algoritmeve deterministe në bibliotekën e rrjetave nervore, dhe nga ruajtja e pikëve me
+      precizion të plotë."""),
     h2("8.2", "Shtojca B: struktura e depos së kodit"),
     p("""Kodi është organizuar sipas përgjegjësive dhe jo sipas eksperimenteve, që komponentët
       të ripërdoren mes regjimit offline dhe atij në rrjedhë."""),
