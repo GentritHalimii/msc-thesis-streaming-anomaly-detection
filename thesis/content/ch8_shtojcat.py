@@ -158,6 +158,45 @@ BLOCKS = [
         },
         font_size=8.5,
     ),
+    p("""Pasiguria kryesore e këtij punimi raportohet si shpërhapje nëpër tetë fold-e, e cila
+      mat sa lëviz rezultati kur ndryshon periudha. Ajo nuk e mat pasigurinë e mostrimit brenda
+      një bashkësie të vetme testimi, e cila është pyetje tjetër dhe kërkon procedurë tjetër.
+      Për prerjen e vetme kronologjike 70/30 ajo nxirret me riparashtrim bootstrap mbi
+      transaksionet e bashkësisë së testimit [@efron1993]."""),
+    tab(
+        "bootstrap_ci",
+        "Average Precision mbi prerjen e vetme 70/30 me interval besimi 95 për qind, nxjerrë me "
+        "riparashtrim bootstrap mbi transaksionet e bashkësisë së testimit.",
+        rename={
+            "model": "Modeli",
+            "ap": "AP",
+            "ap_ci95_low": "Kufiri i poshtëm",
+            "ap_ci95_high": "Kufiri i sipërm",
+        },
+        round={"ap": 4, "ap_ci95_low": 4, "ap_ci95_high": 4},
+        font_size=9.5,
+    ),
+    tab(
+        "bootstrap_pairwise",
+        "Diferencat e çiftuara mes modeleve mbi të njëjtat riparashtrime bootstrap. Kolona e "
+        "fundit tregon pjesën e riparashtrimeve ku diferenca ruan shenjën.",
+        rename={
+            "comparison": "Krahasimi",
+            "delta_ap_mean": "Δ AP",
+            "delta_ci95_low": "Kufiri i poshtëm",
+            "delta_ci95_high": "Kufiri i sipërm",
+            "frac_replicates_positive": "Pjesa pozitive",
+        },
+        round={"delta_ap_mean": 4, "delta_ci95_low": 4, "delta_ci95_high": 4},
+        font_size=9.0,
+    ),
+    p("""Krahasimi mes kësaj tabele dhe testeve të Kapitullit 5 ndriçon një dallim që shpesh
+      ngatërrohet. Mbi prerjen e vetme, diferenca mes Autoencoder-it dhe One-Class SVM-së e
+      ruan shenjën në njëqind për qind të riparashtrimeve, pra brenda asaj dritareje ajo është
+      e sigurt. Mbi tetë fold-e i njëjti krahasim nuk arrin domethënie, sepse aty pyetja nuk
+      është nëse diferenca ekziston brenda një periudhe, por nëse ajo qëndron nga një periudhë
+      në tjetrën. Të dyja janë të vërteta dhe matin gjëra të ndryshme; raportimi i vetëm i së
+      parës do të mbivlerësonte qëndrueshmërinë e renditjes."""),
     h2("8.6", "Shtojca F: sipërfaqja e plotë e Isolation Forest-it"),
     p("""Sipërfaqja e hiperparametrave paraqitet në Kapitullin 5 si figurë. Tabela më poshtë jep
       vlerat e sakta, që lexuesi të mund të verifikojë se ku ndodhet maksimumi dhe sa i sheshtë

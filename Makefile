@@ -47,6 +47,7 @@ evaluate:                  ## every table and figure that reads the saved fold s
 	$(RUN) python -m experiments.exp6_shuffled_split
 	$(RUN) python -m experiments.exp10_benchmark
 	$(RUN) python -m experiments.exp11_significance
+	$(RUN) python -m experiments.exp7_bootstrap_ci
 	$(RUN) python -m experiments.exp12_ensembles
 	$(RUN) python -m experiments.exp13_drift
 	$(RUN) python -m experiments.exp14_alert_budget

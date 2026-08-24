@@ -46,7 +46,7 @@ class EnsembleModel(AnomalyModel):
 
     def fit(self, X: np.ndarray) -> "EnsembleModel":
         raise NotImplementedError(
-            "ensembles are built from already-fitted members (experiments/exp4_ensemble.py)"
+            "ensembles are built from already-fitted members (see build_ensembles below)"
         )
 
     def combine(self, member_scores: dict[str, np.ndarray]) -> np.ndarray:
@@ -94,3 +94,32 @@ class EnsembleModel(AnomalyModel):
             member_thresholds=payload["member_thresholds"],
             members=members,
         )
+
+
+def build_ensembles(cfg, scored, contamination) -> dict[str, "EnsembleModel"]:
+    """The two fixed combination rules, built from already-fitted members.
+
+    Lives here rather than in an experiment script because two experiments
+    need it; it used to sit in the single-split ensemble experiment, which
+    made that script an import target for another one.
+    """
+    from src.evaluation.thresholds import percentile_threshold
+    from src.models.build import UNSUPERVISED, load_model
+
+    means = {n: float(scored.train_scores[n].mean()) for n in UNSUPERVISED}
+    stds = {n: float(scored.train_scores[n].std()) for n in UNSUPERVISED}
+    thresholds = {
+        n: percentile_threshold(scored.train_scores[n], contamination) for n in UNSUPERVISED
+    }
+    members = {n: load_model(n, cfg) for n in UNSUPERVISED}
+    return {
+        mode: EnsembleModel(
+            mode=mode,
+            member_names=UNSUPERVISED,
+            train_means=means,
+            train_stds=stds,
+            member_thresholds=thresholds,
+            members=members,
+        )
+        for mode in ("avg", "vote")
+    }
