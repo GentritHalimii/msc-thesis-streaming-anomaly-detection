@@ -36,6 +36,23 @@ def main(cfg=None):
     best_ens = ens.sort_values("ap_mean", ascending=False).iloc[0]
     b100 = budget[budget["budget_k"] == 100].sort_values("recall_at_k", ascending=False)
 
+    # Read the tuning effect off exp18 rather than restating a number that
+    # can go stale the moment the search is re-run.
+    tuning_path = results_dir / "tuning_effect.csv"
+    if tuning_path.exists():
+        te = pd.read_csv(tuning_path)
+        te = te[te["Detektori"] != reference["model"]].sort_values("AP_i_akorduar", ascending=False)
+        order_default = list(te.sort_values("AP_default", ascending=False)["Detektori"])
+        order_tuned = list(te["Detektori"])
+        changed = order_default != order_tuned
+        tuning_note = (
+            f"Pas akordimit renditja {'ndryshon' if changed else 'nuk ndryshon'}: "
+            f"{' > '.join(order_default)} bëhet {' > '.join(order_tuned)}, dhe "
+            f"{te.iloc[0]['Detektori']} arrin AP {te.iloc[0]['AP_i_akorduar']:.3f}."
+        )
+    else:
+        tuning_note = "Efekti i akordimit nuk është matur ende."
+
     rows = [
         {
             "Pyetja": "PH1",
@@ -57,8 +74,7 @@ def main(cfg=None):
                 f"AP {best_unsup['ap_mean']:.3f} ± {best_unsup['ap_std']:.3f} mbi 8 fold-e, "
                 f"me koston e dytë më të ulët të pikëzimit "
                 f"({best_unsup['score_us_per_tx']:.2f} µs/tx). Referenca e mbikëqyrur "
-                f"mbetet përpara me AP {reference['ap_mean']:.3f}. Renditja ndryshon pas "
-                f"akordimit të hiperparametrave (rho = 0.17)."
+                f"mbetet përpara me AP {reference['ap_mean']:.3f}. {tuning_note}"
             ),
         },
         {
