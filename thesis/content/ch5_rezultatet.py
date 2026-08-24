@@ -114,6 +114,115 @@ _GJEOMETRIA = [
       lejon. Pyetja e vërtetë bëhet se kush e kalon atë kufi dhe me çfarë mjetesh."""),
 ]
 
+_PH1 = [
+    h2("5.2", "PH1: realizueshmëria operacionale"),
+    p("""Pyetja e parë hulumtuese ka dy pjesë: nëse një sistem i tillë mund të ndërtohet duke
+      integruar Apache Kafka-n me modele unsupervised, dhe nëse vonesa mesatare end-to-end
+      mbetet nën një sekondë. Pjesa e parë u përgjigj me vetë implementimin, i përshkruar në
+      Kapitullin 4. Kjo pjesë i përgjigjet të dytës me matje."""),
+    p("""Protokolli i matjes është i deklaruar plotësisht. Për secilin nga katër modelet, njëzet
+      mijë transaksione ripërsëriten mbi një broker të vërtetë Kafka në modalitetin KRaft, me
+      ritëm të kontrolluar në katër nivele: 50, 200, 1000 dhe 2000 mesazhe në sekondë. Vonesa
+      end-to-end matet nga çasti kur producer-i e krijon mesazhin deri kur consumer-i e ka
+      pikëzuar atë, me orë monotonike të të njëjtit host, prandaj ajo nuk përfshin asnjë
+      pasiguri sinkronizimi mes makinave."""),
+    tab(
+        "latency_summary",
+        "Vonesa end-to-end, koha e inferencës dhe kapaciteti përpunues për çdo kombinim modeli "
+        "dhe ritmi. Kolona e fundit është raporti mes kapacitetit të arritur dhe atij të "
+        "synuar.",
+        query="prag_adaptiv == False",
+        columns=[
+            "model",
+            "rate_msg_s",
+            "e2e_ms_mean",
+            "e2e_ms_p50",
+            "e2e_ms_p95",
+            "e2e_ms_p99",
+            "infer_ms_mean",
+            "batch_size_mean",
+            "throughput_msg_s",
+            "cpu_percent_mean",
+            "rss_peak_mb",
+            "throughput_ratio",
+        ],
+        rename={
+            "model": "Modeli",
+            "rate_msg_s": "Ritmi",
+            "e2e_ms_mean": "e2e mes. (ms)",
+            "e2e_ms_p50": "p50",
+            "e2e_ms_p95": "p95",
+            "e2e_ms_p99": "p99",
+            "infer_ms_mean": "Inferenca (ms)",
+            "batch_size_mean": "Grumbulli",
+            "throughput_msg_s": "msg/s",
+            "cpu_percent_mean": "CPU %",
+            "rss_peak_mb": "RSS (MB)",
+            "throughput_ratio": "Raporti",
+        },
+        round={
+            "e2e_ms_mean": 1,
+            "e2e_ms_p50": 1,
+            "e2e_ms_p95": 1,
+            "e2e_ms_p99": 1,
+            "infer_ms_mean": 3,
+            "batch_size_mean": 1,
+            "throughput_msg_s": 0,
+            "cpu_percent_mean": 1,
+            "rss_peak_mb": 0,
+            "throughput_ratio": 3,
+        },
+        font_size=8.0,
+    ),
+    p("""Hipoteza H1 konfirmohet me rezervë të gjerë. Vonesa mesatare end-to-end lëviz nga 18.9
+      deri 60.6 milisekonda nëpër të gjashtëmbëdhjetë kombinimet, pra midis gjashtëmbëdhjetë dhe
+      pesëdhjetë e tre herë nën objektivin prej një sekonde. Edhe percentili i nëntëdhjetë e
+      nëntë, i cili është matja e duhur për një kufizim operacional, nuk e kalon 114.3
+      milisekondat në asnjë konfigurim, pra mbetet gati nëntë herë nën objektiv."""),
+    fig(
+        "latency_vs_rate",
+        "Vonesa end-to-end sipas ritmit të mbërritjes, për secilin model. Zona e hijezuar tregon "
+        "intervalin mes percentilit të pesëdhjetë dhe atij të nëntëdhjetë e pestë.",
+        14.5,
+    ),
+    p("""Inferenca zë një pjesë të vogël të kësaj vonese. Për tre nga katër modelet ajo mbetet nën
+      0.4 milisekonda mesatarisht në çdo ritëm, pra nën një përqind të vonesës totale. Isolation
+      Forest-i është përjashtimi, me 5.77 milisekonda në ritmin më të ulët, por edhe kjo është
+      vetëm nëntë e gjysmë për qind e vonesës së tij totale. Pengesa nuk është pra pikëzimi por
+      transporti dhe grumbullimi i mesazheve."""),
+    p("""Një vëzhgim që i kundërvihet intuitës e mbështet këtë lexim: vonesa bie kur ritmi rritet.
+      Për Isolation Forest-in ajo shkon nga 60.6 milisekonda në ritmin 50 në 33.8 milisekonda në
+      ritmin 2000. Shpjegimi qëndron te madhësia mesatare e grumbullit, e cila rritet nga 3.7 në
+      63.9 mesazhe. Në ritme të ulëta consumer-i e pret skadimin e intervalit të poll-it përpara
+      se të marrë një grumbull të vogël, dhe ajo pritje dominon vonesën; në ritme të larta
+      grumbulli mbushet menjëherë dhe pritja zhduket. Kjo do të thotë se sistemi është i kufizuar
+      nga latenca e transportit dhe jo nga kapaciteti llogaritës, të paktën në këto
+      ritme."""),
+    p("""Kapaciteti përpunues e tregon ku fillon kufiri. Deri në një mijë mesazhe në sekondë
+      consumer-i e mban ritmin, me raport mes kapacitetit të arritur dhe atij të synuar mes 0.90
+      dhe 0.94. Në dy mijë mesazhe në sekondë raporti bie në rreth 0.88 dhe kapaciteti i arritur
+      ngec rreth 1750 mesazheve në sekondë për të katër modelet, pra pika e ngopjes për një
+      consumer të vetëm ndodhet afër asaj vlere. Meqë hipoteza H1 e vendos kufizimin te një mijë
+      mesazhe në sekondë, ajo qëndron me rezervë edhe në këtë dimension."""),
+    p("""Kostoja e burimeve mbetet modeste. Përdorimi mesatar i CPU-së nuk e kalon pesëdhjetë për
+      qind të një bërthame në asnjë konfigurim, dhe memoria rezidente maksimale qëndron mes 347
+      dhe 360 megabajtësh, e dominuar nga vetë interpretuesi Python dhe bibliotekat e ngarkuara e
+      jo nga modelet."""),
+    p("""Së fundi u mat edhe kostoja operacionale e pragut adaptiv, i cili në consumer kërkon
+      mbajtjen e një dritareje rrëshqitëse pikësh dhe rillogaritjen periodike të një kuantili.
+      Në ritmin 200 mesazhe në sekondë, me tridhjetë e nëntë rifreskime gjatë njëzet mijë
+      mesazheve, vonesa mesatare është 55.1 milisekonda për Isolation Forest-in kundrejt 55.7 me
+      prag statik, 29.7 kundrejt 28.3 për Autoencoder-in dhe 29.0 kundrejt 31.9 për One-Class
+      SVM-në. Dallimet janë brenda zhurmës së matjes, pra procedura e propozuar në nënkapitullin
+      5.13 nuk ka kosto operacionale të matshme."""),
+    p("""Persistimi u verifikua në të njëjtin ekzekutim: transaksionet e pikëzuara dhe alarmet e
+      gjeneruara shkruhen në PostgreSQL përmes shkrimeve në grumbull, dhe paneli Grafana i
+      konfiguruar plotësisht nga skedarë i lexon ato drejtpërdrejt nga baza. Testi i integrimit
+      verifikon se pikët e prodhuara në rrjedhë përputhen me ato offline për të njëjtat
+      transaksione, që rezultatet e Kapitullit 5 të vlejnë edhe për sistemin në ekzekutim e jo
+      vetëm për vlerësimin jashtë linje."""),
+]
+
 _PH2 = [
     h2("5.3", "PH2: krahasimi i algoritmeve"),
     h3("5.3.1", "Rezultatet nën konfigurimin bazë"),
@@ -1216,4 +1325,14 @@ _ANALIZAT = [
       jo të japë një numër të ri për krahasim me literaturën."""),
 ]
 
-BLOCKS = _HYRJE + _GJEOMETRIA + _PH2 + _PH3 + _THELLIMI + _PARAPROCESIMI + _KAUZALITETI + _ANALIZAT
+BLOCKS = (
+    _HYRJE
+    + _GJEOMETRIA
+    + _PH1
+    + _PH2
+    + _PH3
+    + _THELLIMI
+    + _PARAPROCESIMI
+    + _KAUZALITETI
+    + _ANALIZAT
+)
