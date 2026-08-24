@@ -20,6 +20,7 @@ over the full rolling-origin protocol:
 """
 
 import argparse
+import sys
 
 import numpy as np
 import pandas as pd
@@ -138,7 +139,16 @@ def main():
     # configurations into one row. The per-fold file is the record, so it
     # keeps enough significant digits to round trip.
     save_table(table, results_dir, "autoencoder_studies_per_fold", float_fmt="%.10g")
+    summarise(cfg, results_dir, df, folds, table)
 
+
+def summarise(cfg, results_dir, df, folds, table):
+    """Tables, figures and verdict from the per-fold record.
+
+    Separated from the fitting loop, which costs about an hour, so that a
+    change to a figure or to the verdict can be rebuilt in a minute. Only the
+    training-dynamics figure needs a model, and it refits a single one.
+    """
     # ---- summaries -------------------------------------------------------
     summaries = {}
     for study, group in table.groupby("study"):
@@ -253,12 +263,15 @@ def main():
         markersize=5,
         color=GREEN,
         capsize=2,
-        label=AX["ap"],
+        label=AX["ap"] + " (blloqet e testimit)",
     )
     ax2.set_ylabel(AX["ap"] + " në blloqet e testimit")
     ax2.grid(visible=False)
-    lines = ax1.get_lines() + ax2.get_lines()[:1]
-    ax1.legend(lines, [line.get_label() for line in lines], loc="center right")
+    # An errorbar's labelled artist is the container, not its first Line2D;
+    # taking the line gave a legend entry reading "_nolegend_".
+    handles = [*ax1.get_legend_handles_labels()[0], *ax2.get_legend_handles_labels()[0]]
+    labels = [*ax1.get_legend_handles_labels()[1], *ax2.get_legend_handles_labels()[1]]
+    ax1.legend(handles, labels, loc="center right", fontsize=8.5)
     save_figure(fig, REPO_ROOT / cfg.results_dir, "autoencoder_training")
 
     _write_verdict(results_dir, summaries, arch, table)
@@ -397,6 +410,15 @@ def tidy_summary(summaries) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def main_from_saved(cfg=None):
+    cfg = cfg or load_config()
+    results_dir = REPO_ROOT / cfg.results_dir
+    df = load_transactions(REPO_ROOT / cfg.data.raw_csv)
+    folds = rolling_origin_folds(len(df), cfg.protocol.n_folds, cfg.protocol.initial_train_fraction)
+    table = pd.read_csv(results_dir / "autoencoder_studies_per_fold.csv")
+    summarise(cfg, results_dir, df, folds, table)
+
+
 def verdict_from_saved(cfg=None):
     """Recomputes the verdict from the saved tables, without refitting."""
     cfg = cfg or load_config()
@@ -420,4 +442,7 @@ def verdict_from_saved(cfg=None):
 
 
 if __name__ == "__main__":
-    main()
+    if "--from-saved" in sys.argv:
+        main_from_saved()
+    else:
+        main()
