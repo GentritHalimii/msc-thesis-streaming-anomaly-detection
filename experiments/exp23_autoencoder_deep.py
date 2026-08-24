@@ -250,7 +250,7 @@ def summarise(cfg, results_dir, df, folds, table):
         long_run.history,
         color=GREY,
         linewidth=1.6,
-        label="Humbja e trajnimit",
+        label="Humbja e trajnimit (majtas)",
     )
     ax1.set_xlabel(AX["epochs"])
     ax1.set_ylabel("Humbja e rindërtimit (trajnim)")
@@ -263,7 +263,7 @@ def summarise(cfg, results_dir, df, folds, table):
         markersize=5,
         color=GREEN,
         capsize=2,
-        label=AX["ap"] + " (blloqet e testimit)",
+        label="Cilësia e zbulimit (djathtas)",
     )
     ax2.set_ylabel(AX["ap"] + " në blloqet e testimit")
     ax2.grid(visible=False)
@@ -271,7 +271,17 @@ def summarise(cfg, results_dir, df, folds, table):
     # taking the line gave a legend entry reading "_nolegend_".
     handles = [*ax1.get_legend_handles_labels()[0], *ax2.get_legend_handles_labels()[0]]
     labels = [*ax1.get_legend_handles_labels()[1], *ax2.get_legend_handles_labels()[1]]
-    ax1.legend(handles, labels, loc="center right", fontsize=8.5)
+    # Above the axes: the curves cross the middle of the panel, so any
+    # in-frame position sits on top of data.
+    ax1.legend(
+        handles,
+        labels,
+        loc="lower center",
+        bbox_to_anchor=(0.5, 1.01),
+        ncol=2,
+        frameon=False,
+        fontsize=8.5,
+    )
     save_figure(fig, REPO_ROOT / cfg.results_dir, "autoencoder_training")
 
     _write_verdict(results_dir, summaries, arch, table)
