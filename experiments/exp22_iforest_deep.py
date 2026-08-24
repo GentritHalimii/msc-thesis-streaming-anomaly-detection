@@ -201,7 +201,7 @@ def main(cfg=None):
     rot_summary = rotation_tab.groupby("hapësira")["ap"].agg(["mean", "std"])
 
     # ---- figures ---------------------------------------------------------
-    fig, (ax1, ax2) = new_figure(ncols=2, figsize=(7.4, 3.8))
+    fig, (ax1, ax2) = new_figure(ncols=2, figsize=(8.6, 3.8))
     mf = max_features_tab.groupby("max_features")["ap"].agg(["mean", "std"])
     ax1.errorbar(
         mf.index,
@@ -215,15 +215,19 @@ def main(cfg=None):
     )
     ax1.set_xlabel("max_features (pjesa e kolonave për pemë)")
     ax1.set_ylabel(AX["ap"])
+    ax1.set_ylim(bottom=min(0.0, float((mf["mean"] - mf["std"]).min())))
 
     ax2.scatter(signal, usage_share, s=40, color=BLUE, alpha=0.8, edgecolor="white", linewidth=0.8)
     ax2.axhline(1 / len(FEATURE_COLUMNS), color=GREY, lw=1, ls=":")
+    # Left-anchored and just under the line, so it clears both the cloud of
+    # points on the right and the feature labels.
     ax2.text(
-        signal.max() * 0.4,
-        1 / len(FEATURE_COLUMNS) * 1.06,
+        signal.min(),
+        1 / len(FEATURE_COLUMNS) * 0.985,
         "pjesa e pritur nëse ndarjet janë uniforme",
         fontsize=7.5,
         color=GREY,
+        va="top",
     )
     for j in top5:
         ax2.annotate(
@@ -245,6 +249,7 @@ def main(cfg=None):
         color="#52514e",
         va="top",
     )
+    fig.tight_layout(w_pad=2.5)
     save_figure(fig, REPO_ROOT / cfg.results_dir, "iforest_capacity")
 
     default_ap = float(grid.loc[200, 256])
