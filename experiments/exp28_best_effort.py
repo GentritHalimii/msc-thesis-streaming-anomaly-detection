@@ -181,7 +181,7 @@ def summarise(results_dir, per_fold, cfg):
     import numpy as np
 
     x = np.arange(len(order))
-    width = 0.2
+    width = 0.18  # a hair under 0.25 so grouped bars do not touch and read as stacked
     for i, name in enumerate(ALL_MODELS):
         row = wide[wide["model"] == MODEL_LABELS.get(name, name)]
         if row.empty:
