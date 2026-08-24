@@ -175,10 +175,10 @@ def summarise(cfg, results_dir, df, folds, table):
     grid = arch.groupby(["hidden_dim", "latent_dim"])["ap"].mean().unstack()
     fig, ax = new_figure(figsize=(6.6, 3.4))
     im = ax.imshow(grid.to_numpy(), cmap="Greens", aspect="auto", origin="lower")
-    ax.set_xticks(range(len(grid.columns)), [str(c) for c in grid.columns])
-    ax.set_yticks(range(len(grid.index)), [str(i) for i in grid.index])
+    ax.set_xticks(range(len(grid.columns)), [f"{int(c)}" for c in grid.columns])
+    ax.set_yticks(range(len(grid.index)), [f"{int(i)}" for i in grid.index])
     ax.set_xlabel(AX["latent"])
-    ax.set_ylabel("hidden_dim")
+    ax.set_ylabel("Gjerësia e shtresës së fshehur")
     for i in range(grid.shape[0]):
         for j in range(grid.shape[1]):
             value = grid.iat[i, j]
