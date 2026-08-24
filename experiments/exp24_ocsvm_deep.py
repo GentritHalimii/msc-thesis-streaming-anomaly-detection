@@ -88,8 +88,16 @@ def main(cfg=None):
     rows += run(cfg, folds, df, [{"train_subsample": n} for n in SUBSAMPLES], "nën-mostra")
 
     table = pd.DataFrame(rows)
-    save_table(table, results_dir, "ocsvm_studies_per_fold", float_fmt="%.5f")
+    save_table(table, results_dir, "ocsvm_studies_per_fold", float_fmt="%.10g")
+    summarise(cfg, results_dir, table)
 
+
+def summarise(cfg, results_dir, table):
+    """Tables, figures and verdict from the per-fold record.
+
+    Separated from the fitting loop because the kernel study alone costs the
+    better part of an hour, and a change to a figure should not.
+    """
     # ---- kernels ---------------------------------------------------------
     kernels = (
         table[table["study"] == "kerneli"]
@@ -154,7 +162,7 @@ def main(cfg=None):
     print("\n=== kurba e të mësuarit ===")
     print(learning.to_string(index=False))
 
-    fig, (ax1, ax2) = new_figure(ncols=2, figsize=(7.4, 3.8))
+    fig, (ax1, ax2) = new_figure(ncols=2, figsize=(8.6, 3.8))
     ax1.errorbar(
         learning["train_subsample"],
         learning["ap_mean"],
@@ -201,8 +209,9 @@ def main(cfg=None):
     ax2.set_xscale("log")
     ax2.set_yscale("log")
     ax2.set_xlabel("Transaksione normale në trajnim")
-    ax2.set_ylabel("Kosto")
+    ax2.set_ylabel("Kosto (shkallë logaritmike)")
     ax2.legend(fontsize=8.5)
+    fig.tight_layout(w_pad=2.5)
     save_figure(fig, REPO_ROOT / cfg.results_dir, "ocsvm_learning_curve")
 
     at_used = learning.loc[learning["train_subsample"] == used].iloc[0]
@@ -226,5 +235,20 @@ def main(cfg=None):
     write_manifest(results_dir, "exp24_ocsvm_deep", cfg.raw)
 
 
+def main_from_saved(cfg=None):
+    cfg = cfg or load_config()
+    results_dir = REPO_ROOT / cfg.results_dir
+    summarise(cfg, results_dir, pd.read_csv(results_dir / "ocsvm_studies_per_fold.csv"))
+
+
 if __name__ == "__main__":
-    main()
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--from-saved",
+        action="store_true",
+        help="rebuild tables, figures and verdict from ocsvm_studies_per_fold.csv",
+    )
+    args = parser.parse_args()
+    main_from_saved() if args.from_saved else main()
