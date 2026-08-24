@@ -198,7 +198,12 @@ def summarise(cfg, results_dir, df, folds, table):
 
     # ---- figure: non-linear encoder against the linear floor -------------
     fig, ax = new_figure(figsize=(6.6, 4.0))
-    ae_curve = arch[arch["hidden_dim"] == 16].groupby("latent_dim")["ap"].agg(["mean", "std"])
+    # The widest hidden layer, matching the verdict. At hidden_dim=16 the
+    # encoder cannot reach the larger latent widths at all, so the curve
+    # stopped short of the linear one and the two were not comparable over
+    # the same range.
+    widest = arch["hidden_dim"].max()
+    ae_curve = arch[arch["hidden_dim"] == widest].groupby("latent_dim")["ap"].agg(["mean", "std"])
     pca_curve = (
         table[table["study"] == "PCA lineare"].groupby("latent_dim")["ap"].agg(["mean", "std"])
     )
@@ -210,7 +215,7 @@ def summarise(cfg, results_dir, df, folds, table):
         markersize=4,
         color=GREEN,
         capsize=2,
-        label="Autoencoder (jolinear)",
+        label=f"Autoencoder jolinear (gjerësia {int(widest)})",
     )
     ax.errorbar(
         pca_curve.index,
@@ -226,10 +231,13 @@ def summarise(cfg, results_dir, df, folds, table):
     intrinsic = _intrinsic_dimension(results_dir)
     if intrinsic is not None:
         ax.axvline(intrinsic, color=GREY, lw=1.2, ls="--")
+        # Anchored near the floor in axes coordinates so the rotated label
+        # grows upward from there instead of running under the legend.
         ax.text(
-            intrinsic * 1.04,
-            ax.get_ylim()[1] * 0.35,
-            f"dimensioni i brendshëm ≈ {intrinsic:.1f}",
+            intrinsic,
+            0.02,
+            f" dimensioni i brendshëm ≈ {intrinsic:.1f}",
+            transform=ax.get_xaxis_transform(),
             fontsize=8,
             color=GREY,
             rotation=90,
@@ -237,7 +245,7 @@ def summarise(cfg, results_dir, df, folds, table):
         )
     ax.set_xlabel(AX["latent"])
     ax.set_ylabel(AX["ap"])
-    ax.legend()
+    ax.legend(loc="upper left", fontsize=8.5)
     save_figure(fig, REPO_ROOT / cfg.results_dir, "autoencoder_vs_linear")
 
     # ---- figure: training dynamics --------------------------------------
