@@ -15,12 +15,12 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import average_precision_score
 
-from experiments.exp4_ensemble import build_ensembles
 from src.config import REPO_ROOT, load_config
 from src.evaluation.harness import contamination_value, score_test_window
 from src.evaluation.manifest import write_manifest
 from src.evaluation.report import MODEL_LABELS, save_table
 from src.models.build import UNSUPERVISED
+from src.models.ensemble import build_ensembles
 
 B = 1000
 PAIRS = [
