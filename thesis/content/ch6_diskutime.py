@@ -22,9 +22,10 @@ _SINTEZA = [
     numbers(
         [
             "Sistemi është i realizueshëm operacionalisht me rezervë të gjerë. Vonesa mesatare "
-            "end-to-end qëndron rreth një rend madhësie nën objektivin prej një sekonde në të "
-            "gjitha konfigurimet e testuara, dhe vetë inferenca zë një pjesë të papërfillshme të "
-            "saj për të tre detektorët.",
+            "end-to-end qëndron midis gjashtëmbëdhjetë dhe pesëdhjetë e tre herë nën objektivin "
+            "prej një sekonde në të gjashtëmbëdhjetë konfigurimet e testuara, percentili i "
+            "nëntëdhjetë e nëntë nuk e kalon 115 milisekondën, dhe vetë inferenca zë nën dhjetë "
+            "për qind të vonesës edhe në rastin më të keq.",
             "Kufiri i sipërm i problemit është gjeometrik dhe matet pa asnjë model. Mashtrimet "
             "ndodhen 7.9 herë më larg klasës legjitime sesa një transaksion tipik legjitim, por "
             "vetëm distanca jep Average Precision 0.30, sepse bishti i klasës legjitime e mbush të "
@@ -50,6 +51,10 @@ _SINTEZA = [
             "detektor unsupervised, ndërsa referenca e mbikëqyrur i kap 59 për qind të tyre.",
             "Qasja ensemble nuk e përmirëson zbulimin në asnjë nga variantet e testuara, dhe "
             "analiza e gabimeve në nivel transaksioni e shpjegon pse.",
+            "Kur secili detektor vlerësohet në konfigurimin e vet më të mirë, hapësira mes tyre "
+            "bie nga 0.102 njësi në 0.049, pra nga një raport 2.1 herë në një raport 1.15 herë. "
+            "Pjesa më e madhe e asaj që duket si dallim mes algoritmeve është dallim në se sa "
+            "mirë vlerat e parazgjedhura u përshtaten këtyre të dhënave.",
             "Degradimi me kalimin e kohës vjen nga ndryshimi i popullatës së mashtrimeve dhe jo "
             "nga "
             "vjetërsimi i modelit të normalitetit.",
@@ -141,6 +146,25 @@ _SINTEZA = [
       investimi në një paraprocesim më të mirë ose në një veçori të re. Rezultati gjithashtu
       tregon një rrezik konkret, sepse kombinimi i verbër i të gjithë detektorëve në
       dispozicion, praktikë e zakonshme, e ul cilësinë nën atë të anëtarit më të mirë."""),
+    h3("6.2.5", "Pse renditja varet nga konfigurimi"),
+    p("""Gjetja e nënkapitullit 5.16 e detyron një lexim më të kujdesshëm të çdo renditjeje të
+      publikuar, përfshirë atë të këtij punimi. Nën konfigurimet e parazgjedhura tri algoritmet
+      ndahen me raport 2.1 herë mes më të mirit dhe më të keqit; kur secilit i jepet
+      paraprocesimi dhe hiperparametrat e vet më të mirë, ai raport bie në 1.15 herë dhe
+      renditja përmbyset plotësisht."""),
+    p("""Shpjegimi nuk është se algoritmet janë ekuivalente, por se vlerat e parazgjedhura të
+      bibliotekave janë zgjedhur për probleme të tjera. Nën-mostra e parazgjedhur prej 256
+      pikash e Isolation Forest-it vjen nga punimi origjinal, ku ajo justifikohet me argumentin
+      se nën-mostra të vogla e zvogëlojnë maskimin; mbi këto të dhëna optimumi është
+      gjashtëdhjetë e katër herë më i madh. Parametri nu i parazgjedhur prej 0.05 i One-Class
+      SVM-së është tridhjetë herë mbi normën reale të mashtrimit. Dhe ngushtica e
+      parazgjedhur e Autoencoder-it është më e ngushtë se optimumi i matur."""),
+    p("""Pasoja metodologjike është se një krahasim algoritmesh nën vlera të parazgjedhura mat
+      diçka të vërtetë por të kufizuar: sa mirë i shërbejnë secilit algoritëm zgjedhjet e
+      autorëve të bibliotekës mbi këtë dataset. Ai nuk mat kapacitetin e algoritmit. Të dyja
+      raportohen këtu, dhe dallimi mes tyre deklarohet, sepse studimet që raportojnë vetëm të
+      parën dhe e përshkruajnë atë si të dytën janë burim i njohur i renditjeve që nuk
+      përsëriten."""),
     h2("6.3", "Krahasimi me literaturën"),
     p("""Vlerat absolute të raportuara këtu janë dukshëm më të ulëta se shumica e rezultateve të
       publikuara mbi këtë dataset. Punimi ofron tri shpjegime të matura për këtë dallim në vend
