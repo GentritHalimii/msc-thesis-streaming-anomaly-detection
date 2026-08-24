@@ -4,6 +4,12 @@ Implementation plan for the thesis prototype specified in `PROMPT.md`. Phases ar
 so that every statistical result exists (offline) before any Kafka code runs, and each
 phase ends with passing tests and a commit.
 
+> **This file records the plan as written before implementation started, and is kept as
+> that record.** The work went further than the plan in places and narrower in others: the
+> detector set was later reduced to the three algorithms of the research proposal, and the
+> single-split ensemble scripts were superseded by eight-fold versions. For the pipeline as
+> it stands, see `README.md` and the `Makefile`.
+
 ## Phase 0 — Scaffolding
 
 - `pyproject.toml` + pinned `requirements.txt` (uv-managed venv, Python pinned — see open
