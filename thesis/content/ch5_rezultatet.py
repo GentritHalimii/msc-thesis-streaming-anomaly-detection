@@ -1293,7 +1293,8 @@ _ANALIZAT = [
       parazgjedhje dhe ai që ishte i pari përfundojnë brenda 0.05 njësive nga njëri-tjetri."""),
     fig(
         "best_effort",
-        "Average Precision për secilin detektor nën të katër qelizat e dizajnit dy-nga-dy.",
+        "Average Precision për secilin detektor nën të katër qelizat e dizajnit dy-nga-dy. "
+        "Referenca e mbikëqyrur shfaqet vetëm në dy qelizat e para, sepse ajo nuk akordohet.",
         15.0,
     ),
     p("""Krahasimi i hapësirave është gjetja kryesore. Nën konfigurimet e parazgjedhura hapësira
