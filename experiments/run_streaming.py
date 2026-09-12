@@ -36,13 +36,28 @@ def fresh_topics(cfg, run_id: str) -> tuple[str, str]:
 
 
 def run_one(
-    cfg, model: str, rate: float, max_messages: int, store: bool = False, adaptive: bool = False
+    cfg,
+    model: str,
+    rate: float,
+    max_messages: int,
+    store: bool = False,
+    adaptive: bool = False,
+    label: str = "",
 ) -> None:
+    """One producer/consumer pair against the broker.
+
+    `label` marks a run as a demonstration rather than a measurement. Labelled
+    runs still reach PostgreSQL and Grafana, but their per-message CSV lands in
+    a subdirectory that the latency report does not read, so showing the panel
+    to somebody cannot overwrite a number the thesis quotes.
+    """
     run_id = uuid.uuid4().hex[:8]
     tx_topic, alert_topic = fresh_topics(cfg, run_id)
     cfg.kafka.topic_transactions = tx_topic
     cfg.kafka.topic_alerts = alert_topic
     run_tag = f"{model}{'-adaptive' if adaptive else ''}_rate{rate:g}"
+    if label:
+        run_tag = f"{run_tag}-{label}"
 
     env_args = [
         "--tx-topic",
@@ -62,6 +77,7 @@ def run_one(
             run_tag,
             "--ready-file",
             str(ready_file),
+            *(["--out-dir", str(REPO_ROOT / cfg.results_dir / "latency" / label)] if label else []),
             *env_args,
             *(["--store"] if store else []),
             *(["--adaptive"] if adaptive else ["--no-adaptive"]),
@@ -108,6 +124,12 @@ def main():
     parser.add_argument(
         "--adaptive", action="store_true", help="sliding-window quantile threshold in the consumer"
     )
+    parser.add_argument(
+        "--label",
+        default="",
+        help="mark this run as a demonstration: it still reaches PostgreSQL, but its latency "
+        "CSV is written aside so the measurement corpus is untouched",
+    )
     args = parser.parse_args()
 
     cfg = load_config()
@@ -122,6 +144,7 @@ def main():
                 args.max_messages,
                 store=args.store,
                 adaptive=args.adaptive,
+                label=args.label,
             )
     write_manifest(REPO_ROOT / cfg.results_dir, "run_streaming", cfg.raw)
 

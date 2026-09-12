@@ -292,6 +292,12 @@ if __name__ == "__main__":
     parser.add_argument("--store", action="store_true", help="persist to PostgreSQL")
     parser.add_argument("--ready-file", default=None, help="touched when consumer is assigned")
     parser.add_argument(
+        "--out-dir",
+        default=None,
+        help="where the per-message CSV goes; a demonstration run writes aside from the "
+        "measurement corpus that the latency report reads",
+    )
+    parser.add_argument(
         "--adaptive",
         dest="adaptive",
         action="store_true",
@@ -309,6 +315,7 @@ if __name__ == "__main__":
         config,
         args.model,
         args.run_tag,
+        out_dir=Path(args.out_dir) if args.out_dir else None,
         store=args.store,
         ready_file=args.ready_file,
         adaptive=args.adaptive,
