@@ -555,7 +555,7 @@ function jobs(block, context) {
 
 // --------------------------------------------------------------- provenance
 
-function provenance() {
+function provenance(block, context) {
   return asyncHost(async () => {
     const payload = await api.provenance();
     const counts = payload.inventory.counts;
@@ -574,6 +574,47 @@ function provenance() {
         el("div", { class: "value", text: String(value) })
       )
     );
+
+    const stale = payload.staleness || { stale: [], never_run: [] };
+    const staleCard = stale.stale.length
+      ? el(
+          "div",
+          { class: "callout warn" },
+          el("h4", { text: `${stale.stale.length} rezultate janë më të vjetra se hyrjet e tyre` }),
+          el("p", {
+            text:
+              "Një rezultat i llogaritur përpara se hyrja e tij të rigjenerohej nuk është i " +
+              "gabuar në ndonjë mënyrë që lexuesi e sheh; ai thjesht përshkruan një version " +
+              "të mëparshëm të studimit. Rigjeneroji përpara dorëzimit.",
+          }),
+          el(
+            "div",
+            { class: "runner", style: "border-style:solid" },
+            ...stale.stale.map((item) =>
+              el(
+                "span",
+                { class: "exp" },
+                el("button", {
+                  class: "btn small",
+                  text: item.title,
+                  title: `më i vjetër se: ${item.newer_inputs.map((n) => n.id).join(", ")}`,
+                  onClick: () => context.run(item.id),
+                }),
+                el("span", {
+                  class: "cost",
+                  text: `më i vjetër se ${item.newer_inputs.map((n) => n.id).join(", ")}`,
+                })
+              )
+            )
+          )
+        )
+      : el(
+          "div",
+          { class: "callout" },
+          el("p", {
+            text: `Asnjë rezultat nuk është më i vjetër se hyrjet e veta; ${stale.known} ekzekutime janë kontrolluar.`,
+          })
+        );
 
     const mixed = payload.distinct_commits.length > 1;
     const table = el(
@@ -601,6 +642,7 @@ function provenance() {
       "div",
       {},
       el("div", { class: "tiles" }, ...tiles),
+      staleCard,
       mixed
         ? el(
             "div",

@@ -231,3 +231,55 @@ def thesis_document() -> dict[str, Any]:
         "docx": _stat(out / "Punimi_Diplomes_GentritHalimi.docx"),
         "pdf": _stat(out / "Punimi_Diplomes_GentritHalimi.pdf"),
     }
+
+
+def staleness() -> dict[str, Any]:
+    """Which runs are older than the runs they depend on.
+
+    A result computed before its own input was last regenerated is not wrong
+    in any way a reader can see; it is simply out of date, and the only place
+    that shows is the timestamp inside the manifest. This turns that into an
+    explicit list, so nothing silently describes a previous version of the
+    study.
+    """
+    from webapp.catalog import EXPERIMENTS
+
+    stamps: dict[str, str] = {}
+    for experiment in EXPERIMENTS.values():
+        if not experiment.writes_manifest:
+            continue
+        record = read_manifest(experiment.manifest or experiment.module.rsplit(".", 1)[-1])
+        if record and record.get("timestamp"):
+            stamps[experiment.id] = record["timestamp"]
+
+    stale: list[dict[str, Any]] = []
+    for experiment in EXPERIMENTS.values():
+        mine = stamps.get(experiment.id)
+        if mine is None:
+            continue
+        newer = [
+            {"id": need, "timestamp": stamps[need]}
+            for need in experiment.needs
+            if need in stamps and stamps[need] > mine
+        ]
+        if newer:
+            stale.append(
+                {
+                    "id": experiment.id,
+                    "title": experiment.title,
+                    "timestamp": mine,
+                    "newer_inputs": sorted(newer, key=lambda item: item["timestamp"], reverse=True),
+                }
+            )
+    never_run = sorted(
+        {
+            e.id
+            for e in EXPERIMENTS.values()
+            if e.writes_manifest and e.id not in stamps and not e.args and not e.docker
+        }
+    )
+    return {
+        "stale": sorted(stale, key=lambda item: item["timestamp"]),
+        "never_run": never_run,
+        "known": len(stamps),
+    }

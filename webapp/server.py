@@ -170,6 +170,7 @@ def provenance() -> dict[str, Any]:
     configs = {r["config_sha_short"] for r in runs if r.get("config_sha_short")}
     return {
         "runs": runs,
+        "staleness": artifacts.staleness(),
         "inventory": artifacts.inventory(),
         "distinct_commits": sorted(s for s in shas if s),
         "distinct_configs": sorted(c for c in configs if c),

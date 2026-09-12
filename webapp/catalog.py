@@ -30,6 +30,9 @@ class Experiment:
     tables: tuple[str, ...] = ()
     figures: tuple[str, ...] = ()
     manifest: str | None = None
+    # Three helpers write figures or a document but no manifest, so their
+    # absence from the provenance list is expected rather than a missing run.
+    writes_manifest: bool = True
     needs: tuple[str, ...] = ()
     docker: bool = False
     note: str = ""
@@ -47,6 +50,7 @@ class Experiment:
             "tables": list(self.tables),
             "figures": list(self.figures),
             "manifest": self.manifest or self.module.rsplit(".", 1)[-1],
+            "writes_manifest": self.writes_manifest,
             "needs": list(self.needs),
             "docker": self.docker,
             "note": self.note,
@@ -134,6 +138,7 @@ _ALL: tuple[Experiment, ...] = (
         module="experiments.make_diagrams",
         thesis="§3.7, §4.9",
         figures=("diagram_architecture", "diagram_protocol", "diagram_leakage"),
+        writes_manifest=False,
     ),
     Experiment(
         id="make_reference_tables",
@@ -144,6 +149,7 @@ _ALL: tuple[Experiment, ...] = (
         module="experiments.make_reference_tables",
         thesis="§4.10, Shtojca C",
         tables=("environment", "model_zoo"),
+        writes_manifest=False,
     ),
     # ----------------------------------------------------------- vleresimi
     Experiment(
@@ -621,6 +627,7 @@ _ALL: tuple[Experiment, ...] = (
         module="thesis.build_thesis",
         thesis="",
         note="Dy kalime: i pari shkruan dokumentin, i dyti zgjidh numrat e faqeve.",
+        writes_manifest=False,
     ),
 )
 
