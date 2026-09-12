@@ -134,7 +134,14 @@ def figure_info(name: str) -> dict[str, Any]:
 
 
 def verdict_path(name: str) -> Path:
-    return results_dir() / f"{name}_verdict.txt"
+    """Most experiments write `<name>_verdict.txt`, but a run with a variant
+    writes `<base>_verdict_<variant>.txt`. Both spellings are accepted, the
+    second by naming the file stem itself."""
+    direct = results_dir() / f"{name}_verdict.txt"
+    if direct.exists():
+        return direct
+    literal = results_dir() / f"{name}.txt"
+    return literal if literal.exists() else direct
 
 
 def read_verdict(name: str) -> dict[str, Any] | None:
