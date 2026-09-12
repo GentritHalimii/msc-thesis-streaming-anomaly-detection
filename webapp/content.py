@@ -536,7 +536,7 @@ _ENSEMBLE = page(
             "kombinimin unsupervised në një model me etiketa."
         ),
         verdict("ensemble", "Verdikti me hiperparametra të parazgjedhur"),
-        verdict("ensemble_tuned", "Verdikti me hiperparametra të akorduar"),
+        verdict("ensemble_verdict_tuned", "Verdikti me hiperparametra të akorduar"),
         metrics("ensembles"),
         chart(
             "barsh",

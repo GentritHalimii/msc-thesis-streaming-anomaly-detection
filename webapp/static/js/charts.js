@@ -351,7 +351,7 @@ function barsh(ctx) {
   if (spec.limit) rows = rows.slice(0, spec.limit);
 
   const labels = rows.map((row) =>
-    spec.groupLabel ? `${pretty(row[spec.label])} · ${row[spec.groupLabel]}` : pretty(row[spec.label])
+    spec.groupLabel ? `${row[spec.groupLabel]} · ${pretty(row[spec.label])}` : pretty(row[spec.label])
   );
   const longest = Math.max(...labels.map((text) => text.length), 6);
   const margin = { top: 8, right: 58, bottom: 40, left: Math.min(Math.max(longest * 6.6, 90), 260) };
