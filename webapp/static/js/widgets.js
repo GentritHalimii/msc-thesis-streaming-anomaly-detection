@@ -13,6 +13,7 @@ export function renderWidget(block, context) {
     grafana,
     jobs,
     provenance,
+    tour,
     document: documentWidget,
   };
   const widget = widgets[block.widget];
@@ -87,6 +88,43 @@ function researchQuestions() {
       })
     );
   });
+}
+
+// --------------------------------------------------------------------- tour
+
+function tour(block, context) {
+  const steps = block.payload || [];
+  if (!steps.length) {
+    return el(
+      "div",
+      { class: "empty" },
+      el("strong", { text: "Udhërrëfyesi kërkon rezultate" }),
+      "Ekzekuto të paktën protokollin dhe vlerësimin."
+    );
+  }
+  return el(
+    "div",
+    { class: "tour" },
+    ...steps.map((step) =>
+      el(
+        "div",
+        { class: "tour-step" },
+        el("div", { class: "n", text: String(step.index).padStart(2, "0") }),
+        el(
+          "div",
+          {},
+          el("div", { class: "t", text: step.title }),
+          el("div", { class: "d", text: step.text }),
+          el("div", { class: "ev", text: step.evidence })
+        ),
+        el("button", {
+          class: "btn small go",
+          text: "Shih provën",
+          onClick: () => context.goto(step.page, step.section),
+        })
+      )
+    )
+  );
 }
 
 // ----------------------------------------------------------------- services

@@ -481,6 +481,3 @@ def tour() -> list[dict[str, Any]]:
         }
         for index, (title, text, claim, page, section) in enumerate(steps, start=1)
     ]
-
-
-COMPUTATIONS["tour"] = tour

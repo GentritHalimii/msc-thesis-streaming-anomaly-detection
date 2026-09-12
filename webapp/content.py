@@ -127,6 +127,18 @@ _OVERVIEW = page(
         widget("research_questions"),
     ),
     section(
+        "udherrefyesi",
+        "Argumenti me radhë",
+        "Kapitujt 5 dhe 6",
+        prose(
+            "Nëntë gjetjet e studimit, në rendin në të cilin varen nga njëra-tjetra. Secila "
+            "shoqërohet me numrin e vet të lexuar nga dosja e rezultateve dhe me lidhjen te "
+            "seksioni që e provon. Kjo është edhe rruga më e shkurtër për ta kuptuar punimin, "
+            "edhe skeleti i një prezantimi."
+        ),
+        widget("tour"),
+    ),
+    section(
         "fushëveprimi",
         "Fushëveprimi dhe pse është i ngushtë",
         "§1.4, §2.13",

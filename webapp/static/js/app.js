@@ -246,6 +246,7 @@ async function renderPage(force = false) {
     tables: payload.tables,
     colors: state.meta.colors,
     run,
+    goto: go,
     registerJobRefresh: (fn) => {
       state.jobRefresh = fn;
     },
