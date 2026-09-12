@@ -318,3 +318,169 @@ def compute(name: str) -> list[dict[str, Any]]:
         return builder()
     except Exception as exc:  # noqa: BLE001 - a broken tile must not break the page
         return [_tile("Gabim", "—", hint=f"{type(exc).__name__}: {exc}", tone="muted")]
+
+
+# --- the argument, in order -------------------------------------------------
+
+
+def _safe(builder: Callable[[], str], default: str = "—") -> str:
+    try:
+        value = builder()
+    except Exception:  # noqa: BLE001 - a missing table must not break the tour
+        return default
+    return value if value else default
+
+
+def tour() -> list[dict[str, Any]]:
+    """Nine steps through the study, each with a number read from disk.
+
+    This is the orientation somebody needs who has not read the document: the
+    claims in the order they depend on each other, every one of them linking
+    to the section that proves it.
+    """
+
+    def geometry_claim() -> str:
+        row = artifacts.table_frame("geometry_summary").query("dritarja == 'trajnim'").iloc[0]
+        return (
+            f"{float(row['raporti_distancave']):.1f}× më larg, por vetëm "
+            f"{_fmt(float(row['ap_vetem_distance']))} AP"
+        )
+
+    def latency_claim() -> str:
+        frame = artifacts.table_frame("latency_summary")
+        static = frame[~frame["prag_adaptiv"].astype(bool)]
+        return f"{static['e2e_ms_mean'].min():.0f}–{static['e2e_ms_mean'].max():.0f} ms"
+
+    def ranking_claim() -> str:
+        frame = artifacts.table_frame("benchmark_summary")
+        unsup = frame[frame["model"] != REFERENCE].sort_values("ap_mean", ascending=False)
+        reference = _lookup(frame, "model", REFERENCE, "ap_mean") or 0.0
+        best = float(unsup.iloc[0]["ap_mean"])
+        return f"{unsup.iloc[0]['model']} {_fmt(best)} kundrejt {_fmt(reference)} të referencës"
+
+    def significance_claim() -> str:
+        frame = artifacts.table_frame("significance_wilcoxon")
+        significant = int(frame["significant_holm_05"].astype(bool).sum())
+        return f"{significant} nga {len(frame)} krahasime mbijetojnë korrigjimin"
+
+    def causal_claim() -> str:
+        frame = artifacts.table_frame("feature_selection")
+        labelled = frame[frame["renditja"].str.contains("etiketa", na=False)]
+        labelled = labelled[~labelled["renditja"].str.contains("pa etiketa", na=False)]
+        gains = labelled.groupby("model")["vs_te_gjitha"].max().sort_values(ascending=False)
+        return f"{gains.index[0]} fiton {gains.iloc[0]:+.3f} AP, më shumë se të tjerët"
+
+    def scaling_claim() -> str:
+        frame = artifacts.table_frame("scaling_significance")
+        unsup = frame[frame["Detektori"] != REFERENCE]
+        best = unsup.sort_values("delta_ndaj_standard", ascending=False).iloc[0]
+        return (
+            f"{best['Detektori']} fiton {float(best['delta_ndaj_standard']):+.3f} AP "
+            f"vetëm nga paraprocesimi"
+        )
+
+    def effort_claim() -> str:
+        frame = artifacts.table_frame("best_effort_interaction")
+        column = "AP më i mirë i arritshëm"
+        ordered = frame.sort_values(column, ascending=False)
+        span = float(ordered.iloc[0][column]) / float(ordered.iloc[-1][column])
+        base_span = float(ordered["bazë"].max()) / float(ordered["bazë"].min())
+        return f"hapësira bie nga {base_span:.1f}× në {span:.2f}×"
+
+    def ensemble_claim() -> str:
+        frame = artifacts.table_frame("ensemble_summary").sort_values("ap_mean", ascending=False)
+        best = frame.iloc[0]
+        return f"më i miri {float(best['vs_best_single']):+.4f} ndaj anëtarit më të mirë"
+
+    def protocol_claim() -> str:
+        frame = artifacts.table_frame("protocol_inflation")
+        return f"ndarja e rastësishme e fryn AP-në {frame['fryrja'].mean():.1f}×"
+
+    steps = [
+        (
+            "Problemi ka një tavan që nuk varet nga algoritmi",
+            "Mashtrimet janë vërtet larg klasës legjitime, por bishti i asaj klase e mbush të "
+            "njëjtin rajon. Kjo e vendos kufirin që çdo metodë distance mund të arrijë.",
+            geometry_claim,
+            "dataseti",
+            "gjeometria",
+        ),
+        (
+            "Sistemi është i realizueshëm me rezervë të gjerë",
+            "Vonesa end-to-end mbi një broker të vërtetë Kafka qëndron një deri dy rende "
+            "madhësie nën objektivin prej një sekonde.",
+            latency_claim,
+            "rrjedha",
+            "vonesa",
+        ),
+        (
+            "Etiketat historike vlejnë shumë",
+            "Nën konfigurimin bazë, referenca e mbikëqyrur mbetet dukshëm përpara çdo detektori "
+            "unsupervised. Hendeku është kuantifikimi i vlerës së atyre etiketave.",
+            ranking_claim,
+            "rezultatet",
+            "kryesore",
+        ),
+        (
+            "Jo çdo dallim mes detektorëve është i qëndrueshëm",
+            "Krahasimet e paradeklaruara bëhen mbi fold-e, me korrigjim për krahasime të "
+            "shumëfishta. Njëri prej tyre nuk arrin domethënie, dhe kjo raportohet.",
+            significance_claim,
+            "rezultatet",
+            "domethenia",
+        ),
+        (
+            "Dobësia e Isolation Forest-it u mat dhe u testua kauzalisht",
+            "Tri proba tregojnë se kapaciteti shpërndahet mbi kolona pa sinjal; ndërhyrja mbi "
+            "hyrjen e kthen korrelacionin në pohim të testuar.",
+            causal_claim,
+            "kauzaliteti",
+            "nderhyrja",
+        ),
+        (
+            "Paraprocesimi peshon më shumë se zgjedhja e algoritmit",
+            "Të tria metodat e përcaktojnë anomalinë përmes largësisë, dhe largësia varet "
+            "plotësisht nga shkalla e veçorive. Referenca e mbikëqyrur nuk preket.",
+            scaling_claim,
+            "konfigurimi",
+            "paraprocesimi",
+        ),
+        (
+            "Renditja nuk mbijeton kalimin nga vlerat e parazgjedhura",
+            "Kur secilit detektor i jepet konfigurimi i vet më i mirë, hapësira mes tyre "
+            "ngushtohet dhe radha përmbyset.",
+            effort_claim,
+            "konfigurimi",
+            "kapaciteti",
+        ),
+        (
+            "Ansambli nuk ndihmon, dhe dihet pse",
+            "Detektorët nuk gabojnë në mënyra të pavarura: mashtrimet e vështira janë të "
+            "vështira për të tre njëkohësisht.",
+            ensemble_claim,
+            "ansambli",
+            "ansambli",
+        ),
+        (
+            "Vendimet e protokollit peshojnë më shumë se zgjedhja e algoritmit",
+            "E njëjta ndarje 70/30, një herë sipas kohës dhe një herë e përzier, jep rezultate "
+            "që nuk krahasohen me njëri-tjetrin.",
+            protocol_claim,
+            "protokolli",
+            "krahasimi",
+        ),
+    ]
+    return [
+        {
+            "index": index,
+            "title": title,
+            "text": text,
+            "evidence": _safe(claim),
+            "page": page,
+            "section": section,
+        }
+        for index, (title, text, claim, page, section) in enumerate(steps, start=1)
+    ]
+
+
+COMPUTATIONS["tour"] = tour
