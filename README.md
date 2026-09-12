@@ -61,6 +61,32 @@ shpjegimit, politika e dritares së trajnimit, dhe analiza e gabimeve në nivel 
 
 ---
 
+## Paneli i rezultateve
+
+```bash
+make webapp             # http://127.0.0.1:8800
+```
+
+Një aplikacion web lokal mbi të njëjtat rezultate. Ai nuk ruan asnjë kopje të tyre: çdo
+tabelë, figurë dhe verdikt lexohet nga `results/` në çastin kur kërkohet faqja, prandaj
+paneli nuk mund të bjerë ndesh me studimin.
+
+| Çfarë ofron | Pse |
+|---|---|
+| Njëmbëdhjetë faqe në rendin e punimit, me referencë te nënkapitulli përkatës | Për ta ndjekur të njëjtin argument më shpejt |
+| Verdikti i çdo eksperimenti, i shkruar nga vetë kodi | Teksti që parafrazon punimi, i lexueshëm pa hapur dokumentin |
+| Grafikë interaktivë krahas figurës origjinale të punimit | Eksplorim, pa humbur besnikërinë ndaj dokumentit |
+| Konsolë ekzekutimi me log në kohë reale | Rigjenerimi i çdo hapi nga shfletuesi |
+| Gjendja e Kafka-s, PostgreSQL-it dhe Grafana-s, me panelin e futur brenda faqes | Demonstrim i shtresës së rrjedhës pa hapur terminal |
+| Modaliteti *Prezantim* | Mbrojtja e temës me projektor |
+
+Konsola pranon vetëm identifikues nga katalogu i eksperimenteve, kurrë një rresht komande,
+dhe i ekzekuton ato një nga një sepse eksperimentet konkurrojnë për çdo bërthamë të makinës.
+Grafikët janë SVG të vizatuar nga kodi i vetë projektit, pa asnjë bibliotekë të jashtme, që
+paneli të punojë edhe pa rrjet dhe ngjyrat e serive të jenë identike me ato të figurave.
+
+---
+
 ## Dataset-i (nuk përfshihet në depo)
 
 Kaggle / ULB *Credit Card Fraud Detection*: 284,807 transaksione, 492 mashtrime (0.172%).
@@ -80,6 +106,7 @@ make protocol-tuned     # ri-ekzekuton protokollin me hiperparametrat e akorduar
 make evaluate           # tabelat dhe figurat nga pikët e ruajtura (minuta)
 make deep-studies       # studimet për algoritëm; ripërshtatin modelet (orë)
 make thesis             # gjeneron punimin .docx nga results/
+make webapp             # paneli interaktiv mbi results/
 
 docker compose -f docker/docker-compose.yml up -d
 make test-integration   # pariteti offline≈streaming + PostgreSQL

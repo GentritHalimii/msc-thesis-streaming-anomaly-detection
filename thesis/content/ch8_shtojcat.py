@@ -35,6 +35,9 @@ BLOCKS = [
             "make stream dhe make latency-report, ekzekutojnë skanimin e vonesës dhe prodhojnë "
             "tabelat operacionale.",
             "make thesis, gjeneron këtë dokument nga rezultatet e ruajtura.",
+            "make webapp, ngre panelin interaktiv mbi të njëjtat rezultate në "
+            "http://127.0.0.1:8800, nga i cili çdo hap i mësipërm mund të ri-ekzekutohet edhe "
+            "nga shfletuesi.",
         ]
     ),
     p("""Determinizmi u verifikua empirikisht dhe jo vetëm i deklaruar. Dy cikle të plota dhe të
