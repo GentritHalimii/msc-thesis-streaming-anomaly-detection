@@ -316,6 +316,9 @@ async function boot() {
   renderSidebar();
   renderTopbar();
   await renderPage(true);
+  // ?present=1 opens straight into presentation mode, so the link handed to a
+  // projector needs no clicking once it is open.
+  if (new URLSearchParams(location.search).has("present")) togglePresent();
 
   window.addEventListener("hashchange", () => renderPage());
   document.getElementById("present-prev").addEventListener("click", () => presentStep(-1));
