@@ -229,3 +229,16 @@ def test_pages_resolve_over_http():
             assert payload["sections"], f"{page['id']} nuk ka seksione"
         assert client.get("/api/page/nuk-ekziston").status_code == 404
         assert client.post("/api/jobs", json={"target": "sudo rm"}).status_code == 400
+
+
+@needs_results
+def test_staleness_only_reports_runs_that_write_a_manifest():
+    """Three helpers write figures or a document and no manifest. Reporting
+    them as "never run" would train the reader to ignore the warning."""
+    report = artifacts.staleness()
+    silent = {e.id for e in catalog.EXPERIMENTS.values() if not e.writes_manifest}
+    assert not (set(report["never_run"]) & silent)
+    for item in report["stale"]:
+        assert item["newer_inputs"], "një hyrje më e re duhet të emërtohet"
+        for newer in item["newer_inputs"]:
+            assert newer["timestamp"] > item["timestamp"]
