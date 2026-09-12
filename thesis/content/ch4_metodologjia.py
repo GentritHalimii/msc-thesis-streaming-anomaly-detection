@@ -484,6 +484,25 @@ _ARKITEKTURA = [
       meriton përmendje sepse kushtëzoi implementimin: makro-ja standarde e Grafana-s për
       grupim kohor nuk pranon shprehje të mbivendosura mbi kolonën e kohës, prandaj grupimi
       kryhet me aritmetikë të drejtpërdrejtë mbi sekondat epokë."""),
+    h3("4.9.4", "Paneli interaktiv i rezultateve"),
+    p("""Mbi të njëjtën dosje rezultatesh është ndërtuar edhe një aplikacion web lokal, i cili
+      shërben për dy qëllime që dokumenti i shtypur nuk i mbulon dot. I pari është kontrolli:
+      çdo tabelë, figurë dhe verdikt lexohet prej tij në çastin kur kërkohet faqja, prandaj
+      paneli tregon gjendjen e vërtetë të depos dhe jo një kopje të saj, dhe çdo mospërputhje
+      mes tij dhe këtij dokumenti do të ishte e dukshme menjëherë. I dyti është riprodhimi:
+      secili seksion ka butonin e vet që e ri-ekzekuton eksperimentin përkatës dhe e shfaq
+      daljen e tij rresht pas rreshti ndërsa ajo prodhohet."""),
+    p("""Dy zgjedhje projektimi meritojnë përmendje sepse burojnë nga vetë natyra e studimit.
+      Konsola e ekzekutimit nuk pranon rreshta komande por vetëm identifikues nga një katalog i
+      deklaruar, dhe i ekzekuton ata rreptësisht një nga një, sepse eksperimentet konkurrojnë
+      për çdo bërthamë dhe një ekzekutim paralel do t'i shtrembëronte kolonat e kohës që
+      raporton Kapitulli 5. Grafikët vizatohen si SVG nga vetë kodi i projektit, pa asnjë
+      bibliotekë të jashtme, që paneli të funksionojë edhe pa lidhje rrjeti dhe që ngjyrat e
+      serive të jenë identike me ato të figurave të këtij dokumenti."""),
+    p("""Paneli integron edhe shtresën e rrjedhës: tregon gjendjen e të tre kontejnerëve, lejon
+      ngritjen e tyre, i lexon numëruesit drejtpërdrejt nga PostgreSQL dhe e fut panelin Grafana
+      brenda faqes. Kështu e gjithë zinxhiri, nga ekzekutimi i një eksperimenti deri te alarmet
+      që mbërrijnë në bazë, mund të demonstrohet pa u larguar nga shfletuesi."""),
     h2("4.10", "Riprodhueshmëria"),
     p("""Çdo eksperiment shkruan një manifest me SHA-në e commit-it, hash-in SHA-256 të
       konfigurimit, versionet e paketave të gjurmuara, vulën kohore dhe përshkrimin e harduerit.

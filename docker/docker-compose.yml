@@ -28,6 +28,11 @@ services:
       POSTGRES_USER: anomaly
       POSTGRES_PASSWORD: anomaly
       POSTGRES_DB: anomaly
+    # A named volume, so scored events and alerts survive `docker compose
+    # down` and the Grafana panel still has something to show at the start of
+    # a demonstration.
+    volumes:
+      - sad-pgdata:/var/lib/postgresql/data
 
   grafana:
     image: grafana/grafana-oss:11.2.0
@@ -40,7 +45,13 @@ services:
       GF_AUTH_ANONYMOUS_ENABLED: "true"
       GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
       GF_USERS_DEFAULT_THEME: light
+      # Without this Grafana sends X-Frame-Options: deny and the results panel
+      # can only link to the dashboard instead of showing it inline.
+      GF_SECURITY_ALLOW_EMBEDDING: "true"
     volumes:
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
     depends_on:
       - postgres
+
+volumes:
+  sad-pgdata:
