@@ -3,7 +3,7 @@ RUN := $(UV) run
 
 .PHONY: setup lint format test test-integration train protocol protocol-tuned \
         evaluate deep-studies tune stream stream-store stream-adaptive \
-        latency-report thesis all clean
+        latency-report webapp thesis all clean
 
 setup:
 	$(UV) sync
@@ -83,6 +83,10 @@ stream-store:
 
 latency-report:
 	$(RUN) python -m experiments.latency_report
+
+# --- results panel ---------------------------------------------------------
+webapp:                    ## interactive panel over results/ at http://127.0.0.1:8800
+	$(UV) run --group webapp python -m webapp
 
 # --- thesis ----------------------------------------------------------------
 thesis:                    ## build the Albanian thesis document from results/
