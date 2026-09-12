@@ -22,9 +22,9 @@ _SINTEZA = [
     numbers(
         [
             "Sistemi është i realizueshëm operacionalisht me rezervë të gjerë. Vonesa mesatare "
-            "end-to-end qëndron midis gjashtëmbëdhjetë dhe pesëdhjetë e tre herë nën objektivin "
+            "end-to-end qëndron midis pesëmbëdhjetë dhe pesëdhjetë e tre herë nën objektivin "
             "prej një sekonde në të gjashtëmbëdhjetë konfigurimet e testuara, percentili i "
-            "nëntëdhjetë e nëntë nuk e kalon 115 milisekondën, dhe vetë inferenca zë nën dhjetë "
+            "nëntëdhjetë e nëntë nuk e kalon 132 milisekondën, dhe vetë inferenca zë nën dhjetë "
             "për qind të vonesës edhe në rastin më të keq.",
             "Kufiri i sipërm i problemit është gjeometrik dhe matet pa asnjë model. Mashtrimet "
             "ndodhen 7.9 herë më larg klasës legjitime sesa një transaksion tipik legjitim, por "

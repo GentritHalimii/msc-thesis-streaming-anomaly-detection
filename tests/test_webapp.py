@@ -242,3 +242,22 @@ def test_staleness_only_reports_runs_that_write_a_manifest():
         assert item["newer_inputs"], "një hyrje më e re duhet të emërtohet"
         for newer in item["newer_inputs"]:
             assert newer["timestamp"] > item["timestamp"]
+
+
+@needs_results
+def test_no_referenced_table_is_entirely_empty():
+    """A table of NaN renders as a table of dashes and reads as a result.
+
+    The one that prompted this had its keys written as strings by the fitting
+    loop and read back as floats by the rebuild path, so every lookup missed.
+    """
+
+    empty: list[str] = []
+    for _, _, block in _blocks():
+        if block["kind"] not in {"table", "chart"} or not artifacts.has_table(block["source"]):
+            continue
+        frame = artifacts.table_frame(block["source"])
+        numeric = frame.select_dtypes("number")
+        if len(frame) and len(numeric.columns) and bool(numeric.isna().all().all()):
+            empty.append(block["source"])
+    assert not empty, f"tabela krejtësisht bosh: {sorted(set(empty))}"

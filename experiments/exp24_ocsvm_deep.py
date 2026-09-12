@@ -92,12 +92,30 @@ def main(cfg=None):
     summarise(cfg, results_dir, table)
 
 
+def _as_setting(value) -> str:
+    """The setting columns as the fitting loop wrote them.
+
+    `run()` stores every setting with `str()`, so in memory nu is the string
+    "0.001". Read back from CSV, pandas parses that column as a float and the
+    surface reindex, which matches on strings, produced a table of NaN. This
+    normalises both paths to the same key.
+    """
+    try:
+        return f"{float(value):g}"
+    except (TypeError, ValueError):
+        return str(value)
+
+
 def summarise(cfg, results_dir, table):
     """Tables, figures and verdict from the per-fold record.
 
     Separated from the fitting loop because the kernel study alone costs the
     better part of an hour, and a change to a figure should not.
     """
+    table = table.copy()
+    for column in ("nu", "gamma"):
+        if column in table.columns:
+            table[column] = table[column].map(_as_setting)
     # ---- kernels ---------------------------------------------------------
     kernels = (
         table[table["study"] == "kerneli"]

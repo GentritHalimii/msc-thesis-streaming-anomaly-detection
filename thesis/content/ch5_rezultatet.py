@@ -175,44 +175,45 @@ _PH1 = [
         font_size=8.0,
     ),
     p("""Hipoteza H1 konfirmohet me rezervë të gjerë. Vonesa mesatare end-to-end lëviz nga 18.9
-      deri 60.6 milisekonda nëpër të gjashtëmbëdhjetë kombinimet, pra midis gjashtëmbëdhjetë dhe
+      deri 67.9 milisekonda nëpër të gjashtëmbëdhjetë kombinimet, pra midis pesëmbëdhjetë dhe
       pesëdhjetë e tre herë nën objektivin prej një sekonde. Edhe percentili i nëntëdhjetë e
-      nëntë, i cili është matja e duhur për një kufizim operacional, nuk e kalon 114.3
-      milisekondat në asnjë konfigurim, pra mbetet gati nëntë herë nën objektiv."""),
+      nëntë, i cili është matja e duhur për një kufizim operacional, nuk e kalon 131.5
+      milisekondat në asnjë konfigurim, pra mbetet gati tetë herë nën objektiv."""),
     fig(
         "latency_vs_rate",
         "Vonesa end-to-end sipas ritmit të mbërritjes, për secilin model. Zona e hijezuar tregon "
         "intervalin mes percentilit të pesëdhjetë dhe atij të nëntëdhjetë e pestë.",
         14.5,
     ),
-    p("""Inferenca zë një pjesë të vogël të kësaj vonese. Për tre nga katër modelet ajo mbetet nën
-      0.4 milisekonda mesatarisht në çdo ritëm, pra nën një përqind të vonesës totale. Isolation
-      Forest-i është përjashtimi, me 5.77 milisekonda në ritmin më të ulët, por edhe kjo është
-      vetëm nëntë e gjysmë për qind e vonesës së tij totale. Pengesa nuk është pra pikëzimi por
-      transporti dhe grumbullimi i mesazheve."""),
+    p("""Inferenca zë një pjesë të vogël të kësaj vonese. Për tre nga katër modelet ajo mbetet
+      nën gjysmë milisekonde mesatarisht në çdo ritëm, pra nën një e gjysmë për qind të vonesës
+      totale. Isolation Forest-i është përjashtimi, me 5.46 milisekonda në ritmin më të ulët,
+      por edhe kjo është vetëm nëntë e katër për qind e vonesës së tij totale. Pengesa nuk
+      është pra pikëzimi por transporti dhe grumbullimi i mesazheve."""),
     p("""Një vëzhgim që i kundërvihet intuitës e mbështet këtë lexim: vonesa bie kur ritmi rritet.
-      Për Isolation Forest-in ajo shkon nga 60.6 milisekonda në ritmin 50 në 33.8 milisekonda në
-      ritmin 2000. Shpjegimi qëndron te madhësia mesatare e grumbullit, e cila rritet nga 3.7 në
-      63.9 mesazhe. Në ritme të ulëta consumer-i e pret skadimin e intervalit të poll-it përpara
+      Për Isolation Forest-in ajo shkon nga 58.1 milisekonda në ritmin 50 në 43.0 milisekonda në
+      ritmin 2000, dhe për Autoencoder-in nga 30.1 në 18.9. Shpjegimi qëndron te madhësia
+      mesatare e grumbullit, e cila rritet nga 2.7 në 63.9 mesazhe. Në ritme të ulëta consumer-i e
+      pret skadimin e intervalit të poll-it përpara
       se të marrë një grumbull të vogël, dhe ajo pritje dominon vonesën; në ritme të larta
       grumbulli mbushet menjëherë dhe pritja zhduket. Kjo do të thotë se sistemi është i kufizuar
       nga latenca e transportit dhe jo nga kapaciteti llogaritës, të paktën në këto
       ritme."""),
     p("""Kapaciteti përpunues e tregon ku fillon kufiri. Deri në një mijë mesazhe në sekondë
       consumer-i e mban ritmin, me raport mes kapacitetit të arritur dhe atij të synuar mes 0.90
-      dhe 0.94. Në dy mijë mesazhe në sekondë raporti bie në rreth 0.88 dhe kapaciteti i arritur
-      ngec rreth 1750 mesazheve në sekondë për të katër modelet, pra pika e ngopjes për një
+      dhe 0.94. Në dy mijë mesazhe në sekondë raporti bie në rreth 0.87 dhe kapaciteti i arritur
+      ngec rreth 1760 mesazheve në sekondë për të katër modelet, pra pika e ngopjes për një
       consumer të vetëm ndodhet afër asaj vlere. Meqë hipoteza H1 e vendos kufizimin te një mijë
       mesazhe në sekondë, ajo qëndron me rezervë edhe në këtë dimension."""),
-    p("""Kostoja e burimeve mbetet modeste. Përdorimi mesatar i CPU-së nuk e kalon pesëdhjetë për
-      qind të një bërthame në asnjë konfigurim, dhe memoria rezidente maksimale qëndron mes 347
+    p("""Kostoja e burimeve mbetet modeste. Përdorimi mesatar i CPU-së nuk e kalon tre të
+      katërtat e një bërthame në asnjë konfigurim, dhe memoria rezidente maksimale qëndron mes 353
       dhe 360 megabajtësh, e dominuar nga vetë interpretuesi Python dhe bibliotekat e ngarkuara e
       jo nga modelet."""),
     p("""Së fundi u mat edhe kostoja operacionale e pragut adaptiv, i cili në consumer kërkon
       mbajtjen e një dritareje rrëshqitëse pikësh dhe rillogaritjen periodike të një kuantili.
       Në ritmin 200 mesazhe në sekondë, me tridhjetë e nëntë rifreskime gjatë njëzet mijë
-      mesazheve, vonesa mesatare është 55.1 milisekonda për Isolation Forest-in kundrejt 55.7 me
-      prag statik, 29.7 kundrejt 28.3 për Autoencoder-in dhe 29.0 kundrejt 31.9 për One-Class
+      mesazheve, vonesa mesatare është 63.6 milisekonda për Isolation Forest-in kundrejt 67.9
+      me prag statik, 29.7 kundrejt 30.2 për Autoencoder-in dhe 31.9 kundrejt 30.6 për One-Class
       SVM-në. Dallimet janë brenda zhurmës së matjes, pra procedura e propozuar në nënkapitullin
       5.13 nuk ka kosto operacionale të matshme."""),
     p("""Persistimi u verifikua në të njëjtin ekzekutim: transaksionet e pikëzuara dhe alarmet e
