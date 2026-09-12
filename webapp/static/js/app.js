@@ -16,7 +16,10 @@ const state = {
 // ------------------------------------------------------------------- theme
 
 function initTheme() {
-  const stored = localStorage.getItem("panel-theme");
+  // ?theme=dark is honoured first, so a link can carry the theme into a
+  // projector session or a screenshot without touching stored preferences.
+  const requested = new URLSearchParams(location.search).get("theme");
+  const stored = requested || localStorage.getItem("panel-theme");
   if (stored) document.documentElement.dataset.theme = stored;
   else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
     document.documentElement.dataset.theme = "dark";
