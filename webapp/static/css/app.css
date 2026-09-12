@@ -448,3 +448,43 @@ body.present { font-size: 16.5px; }
 body.present .content { padding: 38px 7vw 96px; }
 body.present .page-head h2 { font-size: 34px; }
 body.present .section-head h3 { font-size: 24px; }
+
+/* guided tour */
+.tour { display: grid; gap: 10px; margin: 16px 0; counter-reset: tour; }
+.tour-step {
+  display: grid;
+  grid-template-columns: 42px 1fr auto;
+  gap: 14px;
+  align-items: start;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  padding: 14px 16px;
+  transition: border-color 0.12s, transform 0.08s;
+}
+.tour-step:hover { border-color: var(--border-strong); }
+.tour-step .n {
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--muted);
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+.tour-step .t { font-size: 15px; font-weight: 600; margin-bottom: 4px; letter-spacing: -0.005em; }
+.tour-step .d { font-size: 13.5px; color: var(--text-2); max-width: 72ch; }
+.tour-step .ev {
+  margin-top: 8px;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 4px 9px;
+  display: inline-block;
+}
+@media (max-width: 760px) {
+  .tour-step { grid-template-columns: 32px 1fr; }
+  .tour-step .go { grid-column: 2; justify-self: start; }
+}

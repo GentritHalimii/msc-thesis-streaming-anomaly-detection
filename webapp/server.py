@@ -74,6 +74,8 @@ def _resolve_block(block: dict[str, Any], tables: dict[str, Any]) -> dict[str, A
         resolved["table_key"] = key
         if key not in tables:
             tables[key] = _load_table(block["source"], block.get("query"))
+    elif kind == "widget" and block.get("widget") == "tour":
+        resolved["payload"] = metrics.tour()
     elif kind == "runner":
         resolved["payload"] = [
             catalog.EXPERIMENTS[e].as_dict()
