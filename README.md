@@ -32,8 +32,8 @@ shpjegimit, politika e dritares së trajnimit, dhe analiza e gabimeve në nivel 
 - **Kufiri gjeometrik.** Mashtrimet janë 7.9× më larg klasës legjitime se një transaksion
   tipik legjitim, por vetëm distanca jep AP 0.30; bishti i klasës legjitime e mbush të
   njëjtin rajon. Mashtrimi median kërkon ~530 alarme.
-- **Vonesa.** Mesatarja end-to-end nën 100 ms në të gjitha ritmet e testuara, rreth një rend
-  madhësie nën objektivin prej 1 s. Ngopja rreth 2,400 msg/s me një consumer.
+- **Vonesa.** Mesatarja end-to-end 19–68 ms në 16 konfigurime, p99 maksimal 132 ms, pra 8–53×
+  nën objektivin prej 1 s. Ngopja rreth 1,760 msg/s me një consumer.
 - **Cilësia (StandardScaler, hiperparametra të parazgjedhur).** LR 0.734; Autoencoder 0.193;
   One-Class SVM 0.151; Isolation Forest 0.091.
 - **Akordimi e përmbys renditjen e dy të fundit.** Autoencoder 0.193 → 0.335, Isolation Forest
