@@ -160,6 +160,7 @@ _PH1 = [
             "rss_peak_mb": "RSS (MB)",
             "throughput_ratio": "Raporti",
         },
+        widths=[2.7, 1.0, 1.25, 0.95, 0.95, 0.95, 1.25, 1.15, 1.05, 0.95, 1.0, 1.05],
         round={
             "e2e_ms_mean": 1,
             "e2e_ms_p50": 1,

@@ -9,6 +9,7 @@ lists generated as Word fields so they stay correct after any edit.
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.shared import Pt
 from docx_helpers import (
+    add_logo,
     add_page_number_footer,
     add_paragraph,
     add_toc_entry,
@@ -53,8 +54,9 @@ def render_cover(doc) -> None:
     section = doc.sections[0]
     section.different_first_page_header_footer = False
 
+    add_logo(doc)
     _center(doc, PROGRAMI, size=13, bold=True)
-    _blank(doc, 5)
+    _blank(doc, 4)
     _center(doc, TITULLI, size=14, bold=True)
     _blank(doc, 2)
     _center(doc, "Shkalla e Magjistraturës", size=12)
@@ -65,6 +67,7 @@ def render_cover(doc) -> None:
     _center(doc, "Prishtinë", size=12)
     page_break(doc)
 
+    add_logo(doc)
     _center(doc, PROGRAMI, size=13, bold=True)
     _blank(doc, 1)
     _center(doc, "Punim Diplome", size=12, bold=True)

@@ -33,8 +33,8 @@ BODY_SIZE = Pt(12)
 CAPTION_SIZE = Pt(11)
 TITLE_SIZE = Pt(14)
 LINE_SPACING = 1.5
-# A4 (21 cm) minus the 3 cm binding margin and the 2.5 cm outer margin.
-TEXT_WIDTH_CM = 15.5
+# A4 (21 cm) minus the 3 cm margins the template annotates on all four sides.
+TEXT_WIDTH_CM = 15.0
 INK = RGBColor(0, 0, 0)
 MUTED = RGBColor(0x40, 0x40, 0x40)
 
@@ -54,12 +54,23 @@ def new_document() -> Document:
     pf.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
 
     for section in doc.sections:
-        section.top_margin = Cm(2.5)
-        section.bottom_margin = Cm(2.5)
-        section.left_margin = Cm(3.0)  # binding edge
-        section.right_margin = Cm(2.5)
+        _apply_page_setup(section)
     _set_update_fields_on_open(doc)
     return doc
+
+
+def _apply_page_setup(section) -> None:
+    """A4 with the 3 cm margins the template annotates on all four sides.
+
+    python-docx defaults to US Letter, which is 6 mm wider and 18 mm shorter
+    than the paper this document is printed on, so the size is set explicitly.
+    """
+    section.page_width = Cm(21.0)
+    section.page_height = Cm(29.7)
+    section.top_margin = Cm(3.0)
+    section.bottom_margin = Cm(3.0)
+    section.left_margin = Cm(3.0)
+    section.right_margin = Cm(3.0)
 
 
 def _set_update_fields_on_open(doc: Document) -> None:
@@ -115,10 +126,7 @@ def add_page_number_footer(section) -> None:
 
 def start_new_section(doc: Document, fmt: str, start: int | None = None):
     section = doc.add_section(WD_SECTION.NEW_PAGE)
-    section.top_margin = Cm(2.5)
-    section.bottom_margin = Cm(2.5)
-    section.left_margin = Cm(3.0)
-    section.right_margin = Cm(2.5)
+    _apply_page_setup(section)
     section.header.is_linked_to_previous = False
     section.footer.is_linked_to_previous = False
     set_page_numbering(section, fmt, start)
@@ -351,6 +359,24 @@ def add_toc_field(doc: Document, instruction: str, placeholder: str):
     for run in para.runs:
         run.font.name = BODY_FONT
         run.font.size = BODY_SIZE
+
+
+LOGO_PATH = Path(__file__).parent / "assets" / "ubt-logo.png"
+
+
+def add_logo(doc: Document, width_cm: float = 11.0):
+    """The university logo, centred, as the template's two front pages show.
+
+    The template annotates it "do not change the logo", so the file is the one
+    embedded in the faculty's own instructions rather than a redrawn copy.
+    """
+    if not LOGO_PATH.exists():  # pragma: no cover - the asset ships with the repo
+        return None
+    para = doc.add_paragraph()
+    para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    para.paragraph_format.space_after = Pt(14)
+    para.add_run().add_picture(str(LOGO_PATH), width=Cm(width_cm))
+    return para
 
 
 def page_break(doc: Document):
