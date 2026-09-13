@@ -23,14 +23,20 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from docx.enum.text import WD_ALIGN_PARAGRAPH  # noqa: E402
 from docx_helpers import (  # noqa: E402
+    CITE_CLOSE,
+    CITE_OPEN,
     add_bullets,
     add_equation,
     add_figure,
     add_heading,
     add_paragraph,
     add_table,
+    apply_list_numbering,
+    bookmark_paragraph,
+    define_reference_numbering,
     new_document,
     page_break,
+    reference_bookmark,
     start_new_section,
 )
 from references import REFERENCES  # noqa: E402
@@ -80,14 +86,20 @@ class Numbering:
 
 
 def resolve_citations(text: str, numbering: Numbering) -> str:
-    """Replace [@a][@b] runs with a single bracket group, IEEE style."""
+    """Turn [@key] into a marked span the run writers render as a Word field.
+
+    The marker carries both the key, which names the bookmark on the reference
+    entry, and the number assigned here, which becomes the field's cached
+    result so the text reads correctly before Word refreshes anything.
+    """
 
     def repl(match: re.Match) -> str:
-        return f"[{numbering.cite(match.group(1))}]"
+        key = match.group(1)
+        return f"{CITE_OPEN}{key}|{numbering.cite(key)}{CITE_CLOSE}"
 
     text = CITE_RE.sub(repl, text)
-    # merge adjacent bracket groups: [3][4][7] -> [3], [4], [7]
-    return re.sub(r"\](\s*)\[", r"], [", text)
+    # separate adjacent citations: [3][4][7] -> [3], [4], [7]
+    return re.sub(f"{CITE_CLOSE}\\s*{CITE_OPEN}", f"{CITE_CLOSE}, {CITE_OPEN}", text)
 
 
 def load_table(csv_name: str, options: dict) -> pd.DataFrame:
@@ -289,13 +301,12 @@ def build(output: Path, page_map: dict[str, str] | None = None):
     # Chapter 7: references, ordered by first appearance.
     page_break(doc)
     add_heading(doc, "REFERENCAT", 1, "7")
+    num_id = define_reference_numbering(doc)
     ordered = sorted(numbering.citations.items(), key=lambda kv: kv[1])
-    for key, num in ordered:
-        para = add_paragraph(
-            doc, f"[{num}]\t{REFERENCES[key]}", align=WD_ALIGN_PARAGRAPH.JUSTIFY, space_after=6
-        )
-        para.paragraph_format.left_indent = __import__("docx").shared.Cm(1.2)
-        para.paragraph_format.first_line_indent = __import__("docx").shared.Cm(-1.2)
+    for bookmark_id, (key, _num) in enumerate(ordered, start=1):
+        para = add_paragraph(doc, REFERENCES[key], align=WD_ALIGN_PARAGRAPH.JUSTIFY, space_after=6)
+        apply_list_numbering(para, num_id)
+        bookmark_paragraph(para, reference_bookmark(key), bookmark_id)
 
     # Chapter 8: appendices, after the reference list as the template requires.
     page_break(doc)

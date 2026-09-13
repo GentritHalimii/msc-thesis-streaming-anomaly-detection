@@ -38,6 +38,14 @@ TEXT_WIDTH_CM = 15.0
 INK = RGBColor(0, 0, 0)
 MUTED = RGBColor(0x40, 0x40, 0x40)
 
+# A resolved citation travels through the content layer as text, so it is
+# wrapped in private-use code points that cannot occur in the thesis itself.
+# The run writers below turn each wrapped span into a Word cross-reference.
+CITE_OPEN = "\ue000"
+CITE_CLOSE = "\ue001"
+CITE_RUN_RE = re.compile(f"{CITE_OPEN}([a-zA-Z0-9_]+)\\|([0-9]+){CITE_CLOSE}")
+REFERENCE_NUM_ID = 100
+
 
 # --------------------------------------------------------------------------
 # document scaffolding
@@ -101,6 +109,122 @@ def _field(paragraph, instruction: str, placeholder: str = "") -> None:
         run._r.append(el)
 
 
+def define_reference_numbering(doc: Document) -> int:
+    """A list definition that prints "[1]", "[2]", ... for the reference list.
+
+    The reference numbers have to be Word's own, not text: only then does a
+    cross-reference to an entry return the number Word currently shows, and
+    only then do the numbers close up when an entry is added or removed.
+    The definition is private to the reference list, so its counter cannot be
+    disturbed by any other list in the document.
+    """
+    numbering = doc.part.numbering_part.element
+    abstract_id = str(REFERENCE_NUM_ID)
+
+    abstract = OxmlElement("w:abstractNum")
+    abstract.set(qn("w:abstractNumId"), abstract_id)
+    multi = OxmlElement("w:multiLevelType")
+    multi.set(qn("w:val"), "singleLevel")
+    abstract.append(multi)
+
+    lvl = OxmlElement("w:lvl")
+    lvl.set(qn("w:ilvl"), "0")
+    for tag, value in (
+        ("w:start", "1"),
+        ("w:numFmt", "decimal"),
+        ("w:lvlText", "[%1]"),
+        ("w:lvlJc", "left"),
+    ):
+        el = OxmlElement(tag)
+        el.set(qn("w:val"), value)
+        lvl.append(el)
+    ppr = OxmlElement("w:pPr")
+    ind = OxmlElement("w:ind")
+    ind.set(qn("w:left"), "680")  # 1.2 cm, hanging by the same amount
+    ind.set(qn("w:hanging"), "680")
+    ppr.append(ind)
+    lvl.append(ppr)
+    abstract.append(lvl)
+
+    num = OxmlElement("w:num")
+    num.set(qn("w:numId"), str(REFERENCE_NUM_ID))
+    ref = OxmlElement("w:abstractNumId")
+    ref.set(qn("w:val"), abstract_id)
+    num.append(ref)
+
+    # w:abstractNum elements must precede every w:num in the part.
+    last_abstract = numbering.findall(qn("w:abstractNum"))[-1]
+    last_abstract.addnext(abstract)
+    numbering.append(num)
+    return REFERENCE_NUM_ID
+
+
+def apply_list_numbering(para, num_id: int, level: int = 0) -> None:
+    """Attach a paragraph to a numbering definition."""
+    ppr = para._p.get_or_add_pPr()
+    npr = OxmlElement("w:numPr")
+    ilvl = OxmlElement("w:ilvl")
+    ilvl.set(qn("w:val"), str(level))
+    nid = OxmlElement("w:numId")
+    nid.set(qn("w:val"), str(num_id))
+    npr.append(ilvl)
+    npr.append(nid)
+    ppr.append(npr)
+
+
+def bookmark_paragraph(para, name: str, bookmark_id: int) -> None:
+    """Wrap a whole paragraph in a bookmark, the way Word marks a numbered
+    item so that a cross-reference can report its number."""
+    start = OxmlElement("w:bookmarkStart")
+    start.set(qn("w:id"), str(bookmark_id))
+    start.set(qn("w:name"), name)
+    end = OxmlElement("w:bookmarkEnd")
+    end.set(qn("w:id"), str(bookmark_id))
+    para._p.insert(0, start)
+    para._p.append(end)
+
+
+def reference_bookmark(key: str) -> str:
+    return f"Ref_{key}"
+
+
+def _add_citation_field(para, key: str, number: int):
+    """One in-text citation, as a cross-reference to the reference entry.
+
+    The instruction asks for the bookmarked paragraph's number in relative
+    context, which for this list definition is the bracketed form the reader
+    sees. The cached result carries the number computed at build time, so the
+    document reads correctly before Word has refreshed anything.
+    """
+    _field(para, f" REF {reference_bookmark(key)} \\r \\h ", f"[{number}]")
+    run = para.runs[-1]
+    run.font.name = BODY_FONT
+    return run
+
+
+def _add_text_runs(para, text: str, *, size=None, italic: bool = False, color=None):
+    """Text plus any citations it carries, as a sequence of runs."""
+    position = 0
+    for match in CITE_RUN_RE.finditer(text):
+        if match.start() > position:
+            _plain_run(para, text[position : match.start()], size, italic, color)
+        _add_citation_field(para, match.group(1), int(match.group(2)))
+        position = match.end()
+    if position < len(text) or position == 0:
+        _plain_run(para, text[position:], size, italic, color)
+
+
+def _plain_run(para, text: str, size, italic: bool, color):
+    run = para.add_run(text)
+    run.font.name = BODY_FONT
+    if size is not None:
+        run.font.size = size
+    run.italic = italic
+    if color is not None:
+        run.font.color.rgb = color
+    return run
+
+
 def set_page_numbering(section, fmt: str = "decimal", start: int | None = None) -> None:
     """Per-section page-number format; `fmt` is 'decimal' or 'upperRoman'."""
     pg = OxmlElement("w:pgNumType")
@@ -154,10 +278,7 @@ def add_paragraph(
     pf.space_after = Pt(space_after)
     if first_line_indent:
         pf.first_line_indent = Cm(first_line_indent)
-    run = para.add_run(text)
-    run.font.name = BODY_FONT
-    run.font.size = size
-    run.italic = italic
+    _add_text_runs(para, text, size=size, italic=italic)
     return para
 
 
@@ -175,6 +296,8 @@ def add_heading(doc: Document, text: str, level: int, number: str | None = None)
         if number
         else (text.upper() if level == 1 else text)
     )
+    if CITE_OPEN in label:  # pragma: no cover - guarded by tests/test_thesis_style
+        raise ValueError("a heading cannot carry a citation: it has no run to hold a field")
     run = para.add_run(label)
     run.font.name = BODY_FONT
     run.bold = True
@@ -215,9 +338,7 @@ def add_bullets(doc: Document, items: list[str], numbered: bool = False):
         pf.left_indent = Cm(1.6)
         pf.first_line_indent = Cm(-0.8)
         marker = f"{index}." if numbered else "•"
-        run = para.add_run(f"{marker}\t{item}")
-        run.font.name = BODY_FONT
-        run.font.size = BODY_SIZE
+        _add_text_runs(para, f"{marker}\t{item}", size=BODY_SIZE)
         pf.tab_stops.add_tab_stop(Cm(1.6))
 
 
@@ -229,10 +350,7 @@ def add_caption(doc: Document, text: str, *, above: bool = False):
     pf.space_before = Pt(2 if not above else 8)
     pf.space_after = Pt(10 if not above else 4)
     pf.keep_with_next = above
-    run = para.add_run(text)
-    run.font.name = BODY_FONT
-    run.font.size = CAPTION_SIZE
-    run.font.color.rgb = MUTED
+    _add_text_runs(para, text, size=CAPTION_SIZE, color=MUTED)
     return para
 
 

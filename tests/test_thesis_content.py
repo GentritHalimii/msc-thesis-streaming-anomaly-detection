@@ -120,3 +120,90 @@ def test_every_referenced_table_exists_with_its_columns():
                 if missing:
                     problems.append(f"{block[1]}.{key}: {sorted(missing)}")
     assert not problems, "table references do not match generated data: " + "; ".join(problems)
+
+
+# --- references and citations as Word fields --------------------------------
+# The template asks for automatic references. That means the numbers belong to
+# Word: the reference list is a numbering definition, each entry carries a
+# bookmark, and every in-text citation is a cross-reference to one. These
+# checks pin the wiring, because a broken field shows up in Word as an error
+# message where a citation should be, and never at build time.
+
+
+def _field_instructions(paragraph):
+    from docx.oxml.ns import qn
+
+    return [node.text for node in paragraph._p.iter(qn("w:instrText"))]
+
+
+def _field_results(paragraph):
+    from docx.oxml.ns import qn
+
+    inside, results = False, []
+    for node in paragraph._p.iter():
+        if node.tag == qn("w:fldChar"):
+            kind = node.get(qn("w:fldCharType"))
+            inside = kind == "separate"
+        elif node.tag == qn("w:t") and inside:
+            results.append(node.text)
+    return results
+
+
+def test_adjacent_citations_become_separate_fields():
+    from build_thesis import Numbering, resolve_citations
+    from docx_helpers import add_paragraph, new_document, reference_bookmark
+
+    keys = sorted(REFERENCES)[:2]
+    numbering = Numbering()
+    text = f"Fjali me dy burime [@{keys[0]}][@{keys[1]}]."
+    doc = new_document()
+    para = add_paragraph(doc, resolve_citations(text, numbering))
+
+    instructions = _field_instructions(para)
+    assert len(instructions) == 2, "each citation needs its own field"
+    for key, instruction in zip(keys, instructions, strict=True):
+        assert reference_bookmark(key) in instruction
+        assert "\\r" in instruction, "the field must report the entry's own number"
+    assert _field_results(para) == ["[1]", "[2]"], "the cached result carries the number"
+    assert ", " in para.text, "IEEE separates adjacent citations with a comma"
+    assert "" not in para.text and "" not in para.text
+
+
+def test_reference_entries_are_word_numbered_and_bookmarked():
+    from docx.oxml.ns import qn
+
+    from docx_helpers import (
+        add_paragraph,
+        apply_list_numbering,
+        bookmark_paragraph,
+        define_reference_numbering,
+        new_document,
+        reference_bookmark,
+    )
+
+    doc = new_document()
+    num_id = define_reference_numbering(doc)
+    keys = sorted(REFERENCES)[:3]
+    for index, key in enumerate(keys, start=1):
+        para = add_paragraph(doc, REFERENCES[key])
+        apply_list_numbering(para, num_id)
+        bookmark_paragraph(para, reference_bookmark(key), index)
+
+    numbering = doc.part.numbering_part.element
+    defined = [
+        el
+        for el in numbering.findall(qn("w:abstractNum"))
+        if el.get(qn("w:abstractNumId")) == str(num_id)
+    ]
+    assert defined, "the reference list needs its own numbering definition"
+    level = defined[0].find(qn("w:lvl"))
+    assert level.find(qn("w:lvlText")).get(qn("w:val")) == "[%1]"
+    assert level.find(qn("w:numFmt")).get(qn("w:val")) == "decimal"
+
+    names = {
+        el.get(qn("w:name")) for el in doc.element.body.iter(qn("w:bookmarkStart"))
+    }
+    assert {reference_bookmark(k) for k in keys} <= names
+    assert not any(
+        REFERENCES[k].startswith("[") for k in keys
+    ), "the number comes from Word, so it is not written into the entry"
