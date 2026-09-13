@@ -16,8 +16,8 @@ BLOCKS = [
     p("""Ajo që e bën këtë problem të vështirë nuk është vetëm vëllimi, por kombinimi i tri
       kufizimeve që rrallë shfaqen bashkë. E para është çekuilibri ekstrem i klasave:
       mashtrimet përbëjnë një pjesë shumë të vogël të trafikut, zakonisht nën një të qindtën,
-      gjë që i bën metrikat e zakonshme si saktësia praktikisht të pakuptimta [@he2009],
-      [@branco2016]. E dyta është vonesa e etiketave. Një transaksion konfirmohet si mashtrues
+      gjë që i bën metrikat e zakonshme si saktësia praktikisht të pakuptimta [@saito2015].
+      E dyta është vonesa e etiketave. Një transaksion konfirmohet si mashtrues
       vetëm pasi mbajtësi i kartës e konteston ose pasi analisti e verifikon, dhe kjo zgjat
       ditë ose javë; në momentin kur duhet marrë vendimi, etiketa thjesht nuk ekziston
       [@dalpozzolo2018]. E treta është kufiri kohor: një vendim që mbërrin pas autorizimit nuk

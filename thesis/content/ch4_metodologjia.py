@@ -142,8 +142,8 @@ _PROTOKOLLI = [
       zhurmshëm, dhe nga një ndarje e vetme nuk mund të dallohet nëse renditja e algoritmeve
       është e qëndrueshme apo artefakt i pikës së prerjes. Prandaj vlerësimi përsëritet në tetë
       pika të njëpasnjëshme prerjeje me dritare trajnimi që zgjerohet, sipas skemës
-      rolling-origin të konsoliduar në literaturën e parashikimit [@tashman2000],
-      [@bergmeir2012] dhe të vlerësimit prekuencial [@gama2013]."""),
+      rolling-origin të konsoliduar në literaturën e parashikimit [@bergmeir2012] dhe të
+      vlerësimit prekuencial [@gama2013]."""),
     eq("Fold i:  trajnim [0, c_i),   testim [c_i, c_{i+1})"),
     p("""Pikat e prerjes c_i ndajnë pjesën e rrjedhës pas 40 për qindëshit fillestar në tetë
       blloqe të barabarta sipas numrit të rreshtave. Çdo fold rindërton nga fillimi të gjithë
@@ -368,9 +368,7 @@ _PRAGU = [
     p("""Rruga e parë është validimi i brendshëm kohor. Dritarja e trajnimit ndahet përsëri sipas
       kohës, kandidatët përshtaten mbi 75 për qindëshin e parë dhe renditen sipas Average
       Precision në 25 për qindëshin e fundit. Kërkimi kryhet me Optuna duke përdorur mostruesin
-      TPE [@akiba2019]; edhe një kërkim thjesht i rastësishëm do të ishte alternativë e
-      arsyeshme, sepse mbi hapësira me pak dimensione efektive ai është konkurrues me kërkimin
-      sistematik në rrjetë [@bergstra2012]. Kandidatët përshtaten mbi një nën-mostër me seed të
+      TPE [@akiba2019]. Kandidatët përshtaten mbi një nën-mostër me seed të
       fiksuar, që kërkimi të përfundojë në minuta e jo në orë, dhe konfigurimi fitues
       ripërshtatet pastaj mbi dritaren e plotë."""),
     p("""Rruga e dytë nuk përdor fare etiketa. Kriteret Excess-Mass dhe Mass-Volume vlerësojnë sa
@@ -521,8 +519,8 @@ _ARKITEKTURA = [
         font_size=9.5,
     ),
     p("""Implementimi mbështetet në një grumbull softuerësh të lirë: scikit-learn për modelet
-      klasike dhe metrikat [@pedregosa2011], PyTorch për Autoencoder-in [@paszke2019], NumPy për
-      llogaritjen numerike [@harris2020] dhe Matplotlib për figurat [@hunter2007]. Versionet e
+      klasike dhe metrikat [@pedregosa2011], PyTorch për Autoencoder-in [@paszke2019], si dhe
+      NumPy për llogaritjen numerike dhe Matplotlib për figurat. Versionet e
       sakta janë pjesë e çdo manifesti ekzekutimi. Të gjitha modelet trajnohen dhe ekzekutohen
       në CPU, gjë që është zgjedhje e qëllimshme dhe jo kufizim i pashmangshëm: modelet janë të
       vogla, dhe matja e kostos operacionale mbi CPU është më e afërt me realitetin e shumicës

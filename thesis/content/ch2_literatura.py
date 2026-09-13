@@ -46,17 +46,14 @@ _HYRJE = [
       njëjtin mekanizëm dhe të kenë të njëjtat dobësi. Rishikimi i Pang-ut dhe bashkautorëve
       mbi metodat e thella ndjek një logjikë të ngjashme organizimi [@pang2021]."""),
     p("""Peizazhi i plotë i mekanizmave është dukshëm më i gjerë se tri familjet e këtij
-      studimi. Metodat e bazuara në densitet, ku përfaqësuesi më i cituar është Local Outlier
-      Factor, e vlerësojnë densitetin lokal rreth një pike dhe e shpallin atë anomali kur
-      densiteti i saj është dukshëm më i ulët se ai i fqinjëve [@breunig2000]. Metodat e
-      bazuara në distancë e reduktojnë vendimin te largësia nga fqinji i k-të [@ramaswamy2000].
-      Metodat statistikore me histograme ose me kopula e supozojnë pavarësinë e veçorive dhe e
-      fitojnë shpejtësinë prej saj [@goldstein2012], [@li2020copod], [@li2022ecod]. Projeksionet
-      e rastësishme me histograme një-dimensionale ndjekin një logjikë të ngjashme por me
-      ansambël [@pevny2016]. Vlerësimi robust i kovariancës me përcaktor minimal e modelon
-      normalitetin si një eliprsoid të vetëm [@rousseeuw1999]. Bashkësia e këtyre metodave është
-      e disponueshme në biblioteka të unifikuara si PyOD [@zhao2019pyod], çka e bën testimin e
-      dhjetëra detektorëve teknikisht të lehtë."""),
+      studimi. Metodat e bazuara në densitet dhe në distancë, ku përfaqësuesi më i cituar është
+      Local Outlier Factor, e vlerësojnë densitetin lokal rreth një pike ose largësinë e saj
+      nga fqinjët më të afërt, dhe e shpallin atë anomali kur ajo është dukshëm më e izoluar
+      sesa fqinjësia e vet [@breunig2000]. Metodat statistikore me histograme ose me kopula e
+      supozojnë pavarësinë e veçorive dhe e fitojnë shpejtësinë prej saj [@li2022ecod], ndërsa
+      vlerësimi robust i kovariancës e modelon normalitetin si një elipsoid të vetëm.
+      Bashkësia e këtyre metodave është e disponueshme në biblioteka të unifikuara si PyOD
+      [@zhao2019pyod], çka e bën testimin e dhjetëra detektorëve teknikisht të lehtë."""),
     p("""Pikërisht kjo lehtësi teknike përbën një rrezik metodologjik. Krahasimi i dhjetëra
       detektorëve mbi një dataset të vetëm e shumëfishon numrin e testeve statistikore, e
       dobëson korrigjimin për krahasime të shumëfishta deri në pikën ku asnjë dallim nuk mbetet
@@ -135,9 +132,9 @@ _ALGORITMET = [
       trajnimit."""),
     p("""Variantet probabilistike shkojnë më tej. Autoencoder-i variacional rregullon kodimin
       latent drejt një shpërndarjeje të njohur dhe lejon pikëzim me kufirin e poshtëm të
-      evidencës ose me probabilitetin e rindërtimit [@kingma2014], [@an2015]. Modelet hibride
-      si DAGMM mësojnë njëkohësisht ngjeshjen dhe një model densiteti mbi hapësirën latente
-      [@zong2018]. Këto variante nuk janë pjesë e krahasimit kryesor të këtij punimi, sepse
+      evidencës ose me probabilitetin e rindërtimit [@kingma2014]; modelet hibride e shtojnë
+      mbi hapësirën latente edhe një model densiteti të mësuar njëkohësisht me ngjeshjen.
+      Këto variante nuk janë pjesë e krahasimit kryesor të këtij punimi, sepse
       propozimi emërton autoencoder-in standard, por përmenden si drejtime të natyrshme
       zgjerimi."""),
     h3("2.3.3", "Lidhja me analizën e komponentëve kryesorë"),
@@ -178,10 +175,9 @@ _ALGORITMET = [
       me Regresion Logjistik. Këto dy kërkesa janë në kundërshtim, sepse regresioni logjistik
       ka nevojë për etiketa. Literatura e zgjidh këtë kundërshti duke e trajtuar modelin e
       mbikëqyrur si kufi të sipërm të arritshëm nën disponueshmëri etiketash dhe jo si
-      konkurrent të barabartë. Bhattacharyya dhe bashkautorët bënë një krahasim të hershëm
-      mes metodave të mbikëqyrura mbi këtë problem [@bhattacharyya2011], ndërsa Makki dhe
-      bashkautorët treguan se disa teknika për trajtimin e çekuilibrit prodhojnë rezultate
-      mashtruese kur vlerësimi bëhet gabim [@makki2019]."""),
+      konkurrent të barabartë. Bhattacharyya dhe bashkautorët bënë një krahasim të hershëm e
+      sistematik mes metodave të mbikëqyrura mbi këtë problem, mbi të dhëna reale
+      transaksionesh [@bhattacharyya2011]."""),
     p("""Ky punim e ndjek të njëjtën logjikë. Regresioni logjistik trajnohet mbi të gjithë
       dritaren e trajnimit me etiketat e saj dhe raportohet gjithmonë i shënuar si referencë e
       mbikëqyrur. Roli i tij nuk është të konkurrojë, por të kuantifikojë vlerën e etiketave
@@ -200,10 +196,9 @@ _DOMENI = [
       kohës."""),
     p("""Në një punim të mëvonshëm, të njëjtët autorë propozojnë një modelim realist që e merr
       parasysh vonesën e verifikimit dhe tregojnë se vlerësimi që e injoron atë e mbivlerëson
-      performancën [@dalpozzolo2018]. Ata kanë treguar gjithashtu se nën-mostrimi i klasës
-      shumicë, teknikë e zakonshme kundër çekuilibrit, i shtrembëron probabilitetet e
-      prodhuara dhe kërkon rikalibrim [@dalpozzolo2015], gjë që përbën një arsye më shumë pse
-      ky punim nuk përdor ri-mostrim fare."""),
+      performancën [@dalpozzolo2018]. Ky punim nuk përdor ri-mostrim fare,
+      zgjedhje që e mban të paprekur shpërndarjen e vëzhguar dhe që e bën pragun e alarmit të
+      interpretueshëm drejtpërdrejt mbi trafikun real."""),
     p("""Një drejtim i rëndësishëm i punës aplikative është inxhinieria e veçorive përmes
       agregimit. Whitrow dhe bashkautorët treguan se agregimi i transaksioneve për llogari mbi
       dritare kohore e përmirëson ndjeshëm zbulimin [@whitrow2009], dhe Bahnsen me
@@ -251,11 +246,9 @@ _DOMENI = [
       mirëmbajtur, arsye për të cilën u zgjodh këtu."""),
     h3("2.7.2", "Platformat alternative dhe modelet e përpunimit"),
     p("""Apache Flink ofron një motor të unifikuar për përpunim rrjedhash dhe grupesh me
-      semantikë të fortë kohore [@carbone2015], ndërsa Spark Streaming përdor modelin e
-      rrjedhave të diskretizuara, ku rrjedha trajtohet si një sekuencë mikro-grupesh
-      [@zaharia2013]. Modeli Dataflow i Akidau-t dhe bashkautorëve dha kornizën konceptuale
-      për të arsyetuar mbi kohën e ngjarjes kundrejt kohës së përpunimit dhe mbi kompromiset
-      mes korrektësisë, vonesës dhe kostos [@akidau2015]. Ky dallim ka rëndësi edhe në një
+      semantikë të fortë kohore, i ndërtuar rreth dallimit mes kohës së ngjarjes dhe kohës së
+      përpunimit [@carbone2015], ndërsa Spark Streaming e trajton rrjedhën si një sekuencë
+      mikro-grupesh të diskretizuara. Ky dallim ka rëndësi edhe në një
       prototip: koha e ngjarjes këtu është kolona Time e dataset-it, ndërsa koha e përpunimit
       është ora e murit gjatë riprodhimit, dhe të dyja masin gjëra të ndryshme."""),
     p("""Për zbulimin e mashtrimeve në rrjedhë, puna më e afërt me këtë punim është SCARFF e
@@ -267,10 +260,9 @@ _DOMENI = [
     p("""Literatura e mësimit mbi rrjedha ka zhvilluar një traditë të veçantë vlerësimi. Gama,
       Sebastião dhe Rodrigues argumentojnë se për të dhëna që mbërrijnë me radhë, vlerësimi
       prekuencial, pra testo-pastaj-trajno, është protokolli i duhur, sepse riprodhon rendin
-      në të cilin informacioni bëhet i disponueshëm [@gama2013]. Platforma MOA e bëri këtë
-      praktikë të arritshme [@bifet2010]. Protokolli rolling-origin i përdorur në këtë punim
-      është variant i së njëjtës ide, i përshtatur për modele që trajnohen në grup dhe jo në
-      mënyrë inkrementale."""),
+      në të cilin informacioni bëhet i disponueshëm [@gama2013]. Protokolli rolling-origin i
+      përdorur në këtë punim është variant i së njëjtës ide, i përshtatur për modele që
+      trajnohen në grup dhe jo në mënyrë inkrementale."""),
 ]
 
 _METODOLOGJIA = [
@@ -285,23 +277,22 @@ _METODOLOGJIA = [
       empirikisht se ROC jep një pamje tepër optimiste në dataset-e të çekuilibruara, sepse
       norma e pozitivëve të rremë ka në emërues numrin e madh të negativëve dhe mbetet e vogël
       edhe kur alarmet e rreme janë shumë më të shumta se ato të vërteta [@saito2015]."""),
-    p("""Rezultatet e këtij punimi e ilustrojnë këtë në mënyrë të mprehtë. Hand ka argumentuar
-      edhe më tej se AUC-ja ka një mangësi konceptuale, sepse peshon në mënyrë implicite
-      kostot e gabimeve ndryshe për modele të ndryshme [@hand2009]. Për këto arsye Average
+    p("""Rezultatet e këtij punimi e ilustrojnë këtë në mënyrë të mprehtë. Për këto arsye Average
       Precision është metrika kryesore këtu, ndërsa ROC raportohet vetëm për krahasueshmëri me
       literaturën ekzistuese."""),
     p("""Një kritikë e dytë, më pak e diskutuar, është se as Average Precision nuk pasqyron
       mënyrën si përdoret vërtet një detektor. Asnjë ekip hetimi nuk shqyrton një renditje të
       plotë; ai shqyrton alarmet që kapaciteti i tij i lejon. Prandaj në këtë punim raportohen
-      edhe metrikat në buxhet fiks alarmesh dhe kursimet neto sipas një modeli kostoje, në
-      traditën e mësimit të ndjeshëm ndaj kostos të formalizuar nga Elkan [@elkan2001]."""),
+      edhe metrikat në buxhet fiks alarmesh dhe kursimet neto sipas një modeli kostoje, sepse
+      vetëm ashtu një përmirësim në renditje kthehet në një madhësi që ekipi operacional e
+      njeh."""),
     h3("2.8.2", "Ndarja kohore dhe rrjedhja e informacionit"),
     p("""Bergmeir dhe Benítez analizuan përdorimin e vleftësimit të kryqëzuar për të dhëna me
       strukturë kohore dhe treguan se ndarja e rastësishme prodhon vlerësime të anshme, sepse
       modeli trajnohet me të dhëna që në realitet do të vinin pas atyre të testimit
-      [@bergmeir2012]. Tashman, në rishikimin e tij mbi testet jashtë-mostrës për parashikim,
-      kishte konsoliduar shumë më herët praktikën e origjinës rrotulluese si standard
-      [@tashman2000]."""),
+      [@bergmeir2012]. Origjina rrotulluese, ku modeli ritrajnohet në pika të njëpasnjëshme
+      prerjeje dhe testohet gjithmonë mbi të ardhmen e tyre, është përgjigjja e drejtpërdrejtë
+      ndaj kësaj anshmërie dhe protokolli që ndjek ky punim."""),
     p("""Në kontekstin e zbulimit të mashtrimeve, rrjedhja mund të ndodhë në tri forma të
       dallueshme, dhe të treja janë trajtuar shprehimisht në implementimin e këtij punimi. E
       para është rrjedhja përmes ndarjes, ku përzierja e rastësishme lejon që transaksione nga
@@ -329,13 +320,10 @@ _METODOLOGJIA = [
       [@goix2016]. Vështirësia praktike është vlerësimi i masës Lebesgue në dimension të
       lartë; zgjidhja e rekomanduar është mesatarizimi mbi nënhapësira të rastësishme me
       dimension të ulët, e cila zbatohet edhe këtu."""),
-    p("""Campos dhe bashkautorët, në një studim të gjerë mbi vlerësimin e zbulimit të
-      jashtëzakonshmërive, treguan se rezultatet varen ndjeshëm nga zgjedhja e
-      hiperparametrave dhe nga mënyra e normalizimit të pikëve, dhe bënë thirrje për
-      protokolle më të standardizuara [@campos2016]. Emmott dhe bashkautorët kishin ngritur më
-      herët problemin e ndërtimit sistematik të benchmark-eve [@emmott2013], ndërsa benchmark-u
-      i gjerë ADBench tregoi se asnjë metodë e vetme nuk dominon mbi dhjetëra dataset-e
-      [@han2022]."""),
+    p("""Kufizimi i këtyre kritereve është se ato masin përqendrimin e masës dhe jo dobinë
+      operacionale, dhe se vlera e tyre absolute nuk krahasohet mes dataset-eve. Prandaj këtu
+      ato nuk e zëvendësojnë kriterin me etiketa, por përdoren si kontroll i pavarur mbi një
+      pyetje të vetme: a do ta zgjidhte një kriter pa etiketa të njëjtin konfigurim."""),
     h3("2.8.5", "Krahasimi statistikor i algoritmeve"),
     p("""Demšar-i dha protokollin që mbetet standard për krahasimin e disa algoritmeve mbi disa
       bashkësi të dhënash: testi jo-parametrik i Friedman-it mbi matricën e rangjeve, i
@@ -373,12 +361,11 @@ _METODOLOGJIA = [
     h2("2.10", "Zhvendosja e konceptit"),
     p("""Rishikimi i Gama-s dhe bashkautorëve mbi përshtatjen ndaj zhvendosjes së konceptit
       dallon mes zhvendosjes së shpërndarjes së hyrjeve dhe zhvendosjes së varësisë mes
-      hyrjeve dhe daljes [@gama2014], ndërsa Lu dhe bashkautorët e zgjerojnë klasifikimin dhe
-      rishikojnë metodat e zbulimit [@lu2019]. ADWIN-i i Bifet-it dhe Gavaldà-s mban një
-      dritare me gjatësi të ndryshueshme dhe e ndan atë kur dy nënpjesë ndryshojnë në mënyrë
-      statistikisht domethënëse [@bifet2007]; testi i Page-it, shumë më i hershëm dhe shumë më
-      i lirë, akumulon devijimet nga mesatarja rrjedhëse dhe sinjalizon kur akumulimi kalon një
-      prag [@page1954]."""),
+      hyrjeve dhe daljes, dhe përmbledh familjen e detektorëve që e sinjalizojnë atë në kohë
+      reale [@gama2014]. Ndër ta, skema e inspektimit të vazhdueshëm e Page-it akumulon
+      devijimet nga mesatarja rrjedhëse dhe sinjalizon kur akumulimi kalon një prag
+      [@page1954]; varianti Page-Hinkley i saj është monitoruesi i zhvendosjes që përdoret në
+      Kapitullin 5."""),
     p("""Dallimi që ka rëndësi praktike, dhe që në literaturën e aplikuar shpesh përzihet,
       është ai mes zhvendosjes në popullatën normale dhe zhvendosjes në popullatën e
       anomalive. I pari e vjetërsohet modelin e normalitetit dhe zgjidhet me ritrajnim mbi të
@@ -391,22 +378,18 @@ _METODOLOGJIA = [
       diversiteti kur nuk ka etiketa për të matur gabimin [@zimek2014]. Aggarwal dhe Sathe
       dhanë një trajtim teorik të kompromisit anshmëri-variancë për ansamblet e
       jashtëzakonshmërive dhe treguan se mesatarizimi e zvogëlon variancën vetëm kur anëtarët
-      gabojnë ndryshe [@aggarwal2015]. Kuncheva dhe Whitaker kishin treguar më herët, në
-      kontekstin e klasifikimit, se masat e diversitetit lidhen me saktësinë e ansamblit në
-      mënyra jo gjithnjë intuitive [@kuncheva2003]."""),
+      gabojnë ndryshe [@aggarwal2015]."""),
     p("""Rayana dhe Akoglu argumentuan me titullin e tyre se më pak është më shumë, pra se
       përzgjedhja selektive e anëtarëve e tejkalon kombinimin e verbër të gjithçkaje
-      [@rayana2016], duke ndjekur idenë e përzgjedhjes së ansambleve nga një bibliotekë
-      modelesh të Caruana-s dhe bashkautorëve [@caruana2004]. LSCP shkon më tej me kombinim
-      lokalisht selektiv [@zhao2019lscp]. Rezultati i këtij punimi shkon në të njëjtin drejtim
+      [@rayana2016]. Rezultati i këtij punimi shkon në të njëjtin drejtim
       por me përfundim më të matur, dhe analiza e gabimeve në nivel transaksioni tregon
       drejtpërdrejt pse."""),
     h2("2.12", "Interpretueshmëria e vendimeve"),
     p("""SHAP-i i Lundberg-ut dhe Lee-së ofron një kornizë unifikuese për atribuimin e
       kontributit të veçorive, me bazë në vlerat e Shapley-t nga teoria e lojërave
-      [@lundberg2017], ndërsa LIME e afron problemin me përafrim lokal linear [@ribeiro2016].
-      Rëndësia me permutim, e prezantuar nga Breiman në kontekstin e pyjeve të rastësishme,
-      mbetet metoda më e thjeshtë dhe më e përgjithshme [@breiman2001]."""),
+      [@lundberg2017]. Rëndësia e matur me permutimin e një veçorie të vetme, e prezantuar
+      nga Breiman në kontekstin e pyjeve të rastësishme, mbetet alternativa më e thjeshtë dhe
+      më e pavarur nga modeli [@breiman2001]."""),
     p("""Në rastin e veçorive të anonimizuara me PCA, interpretueshmëria semantike është e
       pamundur. Nuk ka kuptim të thuhet se modeli i kushton vëmendje shpeshtësisë së
       transaksioneve, sepse komponentët nuk kanë emra. Megjithatë mbetet një pyetje

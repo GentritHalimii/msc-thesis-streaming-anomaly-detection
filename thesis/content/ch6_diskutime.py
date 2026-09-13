@@ -290,7 +290,7 @@ _SINTEZA = [
             "Kërkim i përbashkët mbi hapësirën e paraprocesimit dhe atë të hiperparametrave. Meqë "
             "të dyja ndikojnë ndjeshëm dhe ndërveprojnë, optimizimi i tyre veçmas nuk e gjen "
             "domosdoshmërisht konfigurimin më të mirë.",
-            "Zgjerimi i familjes së detektorëve me metoda deep one-class si Deep SVDD [@ruff2018] "
+            "Zgjerimi i familjes së detektorëve me metoda deep one-class "
             "ose me modele gjenerative të thella, të vlerësuara nën të njëjtin protokoll dhe me të "
             "njëjtin karakterizim gjeometrik paraprak.",
             "Ritrajnim inkremental me dritare rrëshqitëse dhe krahasim i drejtpërdrejtë me "
