@@ -63,6 +63,62 @@ def feature_drift(
     return pd.DataFrame(rows)
 
 
+def mean_psi(reference: np.ndarray, current: np.ndarray) -> float:
+    """PSI averaged over the columns of two aligned matrices."""
+    return float(
+        np.mean(
+            [
+                population_stability_index(reference[:, j], current[:, j])
+                for j in range(reference.shape[1])
+            ]
+        )
+    )
+
+
+def psi_permutation_null(
+    reference: pd.DataFrame,
+    current: pd.DataFrame,
+    feature_columns: list[str],
+    n_permutations: int = 100,
+    max_rows: int = 20000,
+    seed: int = 42,
+) -> dict:
+    """How large the mean PSI gets when nothing has moved.
+
+    PSI is biased upwards in small samples: with ten reference-quantile bins
+    and a current sample of thirteen frauds, several bins are empty by chance,
+    and each empty bin adds about 0.1 · ln(0.1 / ε) to the index. A raw PSI of
+    four can therefore be mostly sampling noise. Under the null hypothesis of
+    no shift the two samples are exchangeable, so pooling them and splitting
+    the pool at random, with the original sizes, samples the PSI that noise
+    alone produces. The observed value is read against that distribution.
+
+    Large populations are subsampled to `max_rows` per side, which keeps the
+    permutation affordable and leaves the null essentially at zero, as it
+    should be for samples of that size.
+    """
+    rng = np.random.default_rng(seed)
+    A = reference[feature_columns].to_numpy()
+    B = current[feature_columns].to_numpy()
+    if len(A) > max_rows:
+        A = A[rng.choice(len(A), size=max_rows, replace=False)]
+    if len(B) > max_rows:
+        B = B[rng.choice(len(B), size=max_rows, replace=False)]
+    observed = mean_psi(A, B)
+    pool = np.vstack([A, B])
+    null = np.empty(n_permutations)
+    for k in range(n_permutations):
+        order = rng.permutation(len(pool))
+        null[k] = mean_psi(pool[order[: len(A)]], pool[order[len(A) :]])
+    return {
+        "observed": observed,
+        "null_mean": float(null.mean()),
+        "null_p95": float(np.quantile(null, 0.95)),
+        "excess": observed - float(null.mean()),
+        "p_value": float((np.sum(null >= observed) + 1) / (n_permutations + 1)),
+    }
+
+
 def separability(
     reference_normal: pd.DataFrame, current: pd.DataFrame, feature_columns: list[str]
 ) -> dict:

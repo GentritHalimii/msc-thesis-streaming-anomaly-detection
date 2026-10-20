@@ -9,6 +9,7 @@ from src.evaluation.drift import (
     feature_drift,
     page_hinkley,
     population_stability_index,
+    psi_permutation_null,
     separability,
 )
 
@@ -32,6 +33,30 @@ def test_psi_grows_with_the_size_of_the_shift():
 def test_psi_handles_empty_and_degenerate_input():
     assert np.isnan(population_stability_index(np.array([]), np.arange(10.0)))
     assert population_stability_index(np.ones(100), np.ones(100)) == 0.0
+
+
+def test_psi_null_absorbs_the_small_sample_bias():
+    """Thirteen draws from the reference distribution give a large raw PSI
+    purely by chance; the permutation null must be of the same size, so the
+    excess stays near zero and the test does not reject."""
+    rng = np.random.default_rng(3)
+    cols = ["a", "b", "c"]
+    ref = pd.DataFrame(rng.normal(size=(400, 3)), columns=cols)
+    cur = pd.DataFrame(rng.normal(size=(13, 3)), columns=cols)
+    out = psi_permutation_null(ref, cur, cols, n_permutations=60, seed=0)
+    assert out["observed"] > 1.0, "the raw index is inflated at this sample size"
+    assert out["null_mean"] > 1.0
+    assert out["p_value"] > 0.05
+
+
+def test_psi_null_still_detects_a_real_shift_in_a_small_sample():
+    rng = np.random.default_rng(4)
+    cols = ["a", "b"]
+    ref = pd.DataFrame(rng.normal(size=(400, 2)), columns=cols)
+    cur = pd.DataFrame(rng.normal(3.0, 1.0, size=(13, 2)), columns=cols)
+    out = psi_permutation_null(ref, cur, cols, n_permutations=60, seed=0)
+    assert out["excess"] > 1.0
+    assert out["p_value"] < 0.05
 
 
 def test_feature_drift_flags_the_shifted_column_only():

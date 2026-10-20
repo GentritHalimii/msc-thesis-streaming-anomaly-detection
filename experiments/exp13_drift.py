@@ -6,8 +6,10 @@ is exactly the operational one: at the moment of deployment, how different is
 what comes next from what the model was fitted on?
 """
 
+import matplotlib as mpl
 import numpy as np
 import pandas as pd
+from matplotlib.patches import Patch
 
 from src.config import REPO_ROOT, load_config
 from src.data.load import FEATURE_COLUMNS, load_transactions
@@ -15,13 +17,105 @@ from src.evaluation.drift import (
     calibrate_page_hinkley,
     feature_drift,
     page_hinkley,
+    psi_permutation_null,
     separability,
 )
 from src.evaluation.manifest import write_manifest
 from src.evaluation.protocol import load_folds, rolling_origin_folds
-from src.evaluation.report import AX, MODEL_LABELS, new_figure, save_figure, save_table
+from src.evaluation.report import (
+    BASELINE,
+    CLASS_COLORS,
+    CM,
+    FULL_WIDTH,
+    INK_2,
+    MODEL_LABELS,
+    MUTED,
+    legend_above,
+    new_figure,
+    save_figure,
+    save_table,
+    value_grid,
+)
 
 PSI_MODERATE, PSI_MAJOR = 0.10, 0.25
+
+
+def figures(cfg, drift: pd.DataFrame) -> None:
+    # --- The decomposition, read against what noise alone produces --------
+    # Logarithmic, because the two populations differ by more than an order
+    # of magnitude; the shaded band is the range of the mean PSI under random
+    # relabelling (null mean to its 95th percentile), so each point can be
+    # read as "this much above chance".
+    fig, ax = new_figure(figsize=(FULL_WIDTH, 7.0 * CM))
+    x = drift["fold"].to_numpy()
+    for prefix, label, color, marker in (
+        ("psi_normals", "Transaksionet legjitime", CLASS_COLORS[0], "o"),
+        ("psi_frauds", "Mashtrimet", CLASS_COLORS[1], "s"),
+    ):
+        ax.fill_between(
+            x,
+            drift[f"{prefix}_null_mean"],
+            drift[f"{prefix}_null_p95"],
+            color=color,
+            alpha=0.15,
+            linewidth=0,
+        )
+        ax.plot(x, drift[f"{prefix}_null_mean"], color=color, lw=0.8, ls=(0, (2, 2)))
+        ax.plot(
+            x,
+            drift[f"{prefix}_mean"],
+            color=color,
+            marker=marker,
+            markersize=5,
+            markeredgecolor="#ffffff",
+            markeredgewidth=0.7,
+            label=label,
+        )
+    for level, text in ((PSI_MODERATE, "0.10 moderuar"), (PSI_MAJOR, "0.25 e madhe")):
+        ax.axhline(level, color=BASELINE, lw=0.8, zorder=1)
+        ax.text(x[-1] + 0.15, level, text, fontsize=7, color=MUTED, va="center")
+    ax.set_yscale("log")
+    ax.yaxis.set_major_formatter(mpl.ticker.FuncFormatter(lambda v, _: f"{v:g}"))
+    ax.set_xticks(x, [f"{f}\n({n})" for f, n in zip(x, drift["test_frauds"], strict=True)])
+    ax.set_xlim(x[0] - 0.3, x[-1] + 1.3)
+    ax.set_xlabel("Fold (në kllapa: mashtrimet në bllokun e testimit)")
+    ax.set_ylabel("PSI mesatar mbi 29 veçori")
+    value_grid(ax, "y")
+    handles, labels = ax.get_legend_handles_labels()
+    handles.append(Patch(facecolor=INK_2, alpha=0.15))
+    labels.append("Zhurma e pritur (permutacione)")
+    legend_above(ax, handles=handles, labels=labels)
+    save_figure(fig, REPO_ROOT / cfg.results_dir, "drift_psi_decomposition")
+
+    # --- Model-free separability, training window against test block -----
+    fig, ax = new_figure(figsize=(FULL_WIDTH, 6.2 * CM))
+    ax.plot(
+        x,
+        drift["train_ap_distance"],
+        marker="o",
+        markersize=5,
+        color=INK_2,
+        markeredgecolor="#ffffff",
+        markeredgewidth=0.7,
+        label="Brenda dritares së trajnimit",
+    )
+    ax.plot(
+        x,
+        drift["test_ap_distance"],
+        marker="s",
+        markersize=5,
+        color="#eb6834",
+        markeredgecolor="#ffffff",
+        markeredgewidth=0.7,
+        label="Në bllokun e testimit",
+    )
+    ax.set_xticks(x, [f"{f}\n({n})" for f, n in zip(x, drift["test_frauds"], strict=True)])
+    ax.set_xlabel("Fold (në kllapa: mashtrimet në bllokun e testimit)")
+    ax.set_ylabel("AP e detektorit të distancës")
+    ax.set_ylim(0, None)
+    value_grid(ax, "y")
+    legend_above(ax)
+    save_figure(fig, REPO_ROOT / cfg.results_dir, "drift_separability")
 
 
 def main(cfg=None):
@@ -50,6 +144,12 @@ def main(cfg=None):
 
         sep_test = separability(train_normal, test, FEATURE_COLUMNS)
         sep_train = separability(train_normal, train, FEATURE_COLUMNS)
+        null_normal = psi_permutation_null(
+            train_normal, test_normal, FEATURE_COLUMNS, n_permutations=40, seed=cfg.seed
+        )
+        null_fraud = psi_permutation_null(
+            train[train["Class"] == 1], test_fraud, FEATURE_COLUMNS, seed=cfg.seed
+        )
         drift_rows.append(
             {
                 "fold": f.index,
@@ -59,6 +159,14 @@ def main(cfg=None):
                 "psi_frauds_mean": float(d_fraud["psi"].mean()),
                 "psi_frauds_max": float(d_fraud["psi"].max()),
                 "psi_frauds_over_moderate": int((d_fraud["psi"] > PSI_MODERATE).sum()),
+                "test_frauds": len(test_fraud),
+                "psi_normals_null_mean": null_normal["null_mean"],
+                "psi_normals_null_p95": null_normal["null_p95"],
+                "psi_normals_p": null_normal["p_value"],
+                "psi_frauds_null_mean": null_fraud["null_mean"],
+                "psi_frauds_null_p95": null_fraud["null_p95"],
+                "psi_frauds_excess": null_fraud["excess"],
+                "psi_frauds_p": null_fraud["p_value"],
                 "ks_normals_median": float(d_normal["ks_stat"].median()),
                 "ks_frauds_median": float(d_fraud["ks_stat"].median()),
                 "train_ap_distance": sep_train.get("ap_distance_detector", np.nan),
@@ -79,57 +187,7 @@ def main(cfg=None):
     )
     print(drift.to_string(index=False))
 
-    # --- Figure: the decomposition, in one picture -----------------------
-    fig, ax = new_figure(figsize=(6.8, 4.2))
-    ax.plot(
-        drift["fold"],
-        drift["psi_normals_mean"],
-        marker="o",
-        markersize=4,
-        color="#2a78d6",
-        label="Normalet: trajnim vs test (zhvendosje kovariatësh)",
-    )
-    ax.plot(
-        drift["fold"],
-        drift["psi_frauds_mean"],
-        marker="s",
-        markersize=4,
-        color="#e34948",
-        label="Mashtrimet: trajnim vs test (zhvendosje koncepti)",
-    )
-    ax.axhline(PSI_MODERATE, color="#c3c2b7", lw=1)
-    ax.text(
-        0.02, PSI_MODERATE * 1.08, "PSI = 0.10 (zhvendosje e moderuar)", fontsize=8, color="#898781"
-    )
-    ax.axhline(PSI_MAJOR, color="#c3c2b7", lw=1, ls=":")
-    ax.text(0.02, PSI_MAJOR * 1.05, "PSI = 0.25 (zhvendosje e madhe)", fontsize=8, color="#898781")
-    ax.set_xlabel(AX["fold"])
-    ax.set_ylabel("PSI mesatar mbi 29 veçoritë")
-    ax.legend(loc="upper left", fontsize=8.5)
-    save_figure(fig, REPO_ROOT / cfg.results_dir, "drift_psi_decomposition")
-
-    # --- Figure: model-free separability collapses over time -------------
-    fig, ax = new_figure(figsize=(6.8, 4.0))
-    ax.plot(
-        drift["fold"],
-        drift["train_ap_distance"],
-        marker="o",
-        markersize=4,
-        color="#4a3aa7",
-        label="Brenda dritares së trajnimit",
-    )
-    ax.plot(
-        drift["fold"],
-        drift["test_ap_distance"],
-        marker="s",
-        markersize=4,
-        color="#eb6834",
-        label="Në bllokun e testimit",
-    )
-    ax.set_xlabel(AX["fold"])
-    ax.set_ylabel("AP e detektorit pa model (norma ‖z‖)")
-    ax.legend()
-    save_figure(fig, REPO_ROOT / cfg.results_dir, "drift_separability")
+    figures(cfg, drift)
 
     # --- Unsupervised monitoring: could a change detector have noticed? ---
     # The threshold is calibrated per fold and per model against a reference
@@ -183,23 +241,30 @@ def main(cfg=None):
     n_features = per_feature["feature"].nunique()
     over_n = float(drift["psi_normals_over_moderate"].mean())
     over_f = float(drift["psi_frauds_over_moderate"].mean())
+    psi_f_null = float(drift["psi_frauds_null_mean"].mean())
+    significant = int((drift["psi_frauds_p"] < 0.05).sum())
+    normals_significant = int((drift["psi_normals_p"] < 0.05).sum())
+    noise_share = psi_f_null / psi_f
     verdict = (
         f"Zhvendosja nuk prek të dyja popullatat njësoj. Indeksi PSI për transaksionet "
-        f"legjitime është mesatarisht {psi_n:.3f}, pra nën pragun e zakonshëm prej 0.1 deri "
-        f"0.25 që tregon zhvendosje të moderuar, ndërsa për mashtrimet ai është {psi_f:.3f}, "
-        f"pra një rend madhësie më i lartë. Mesatarisht {over_n:.0f} nga {n_features} veçori "
-        f"e kalojnë pragun e moderuar te popullata legjitime kundrejt {over_f:.0f} nga "
-        f"{n_features} te ajo e mashtrimeve. Kjo do të thotë se ajo që ndryshon me kohën nuk "
-        f"është përkufizimi i normalitetit, mbi të cilin janë trajnuar modelet, por sjellja e "
-        f"vetë mashtruesve. Pasoja praktike është e drejtpërdrejtë: ritrajnimi mbi të dhëna "
-        f"më të freskëta normale nuk e zgjidh problemin, sepse modeli i normalitetit nuk "
-        f"është vjetëruar. Aftësia ndarëse e matur pa model e mbështet të njëjtin lexim, "
-        f"sepse ajo bie nga {drift['train_ap_distance'].mean():.3f} në dritaren e trajnimit "
-        f"në {drift['test_ap_distance'].mean():.3f} në atë të testimit. "
-        f"Monitorimi me Page-Hinkley, me prag të kalibruar veç e veç për çdo fold dhe model "
-        f"me permutacione, jep sinjal zhvendosjeje në {int(detected.sum())} nga "
-        f"{len(monitor)} kombinime fold-model, pra zhvendosja është e pranishme por jo e "
-        f"vazhdueshme."
+        f"legjitime është mesatarisht {psi_n:.3f}, pra brenda intervalit 0.10 deri 0.25 që "
+        f"zakonisht lexohet si zhvendosje e moderuar, ndërsa për mashtrimet ai është "
+        f"{psi_f:.3f}. Numri i vogël i mashtrimeve për bllok e fryn këtë të fundit: me "
+        f"permutacione të etiketave të dritares, vetëm zhurma e mostrimit jep mesatarisht "
+        f"{psi_f_null:.3f}, pra rreth {100 * noise_share:.0f} për qind e vlerës së vëzhguar. "
+        f"Megjithatë PSI e vëzhguar e tejkalon atë të zhurmës në {significant} nga "
+        f"{len(drift)} fold-e (p < 0.05), dhe teprica mesatare mbi zhurmën është "
+        f"{float(drift['psi_frauds_excess'].mean()):.3f}, një rend madhësie mbi PSI-në e "
+        f"popullatës legjitime. Edhe zhvendosja e legjitimeve është reale, sepse e kalon "
+        f"zhurmën në {normals_significant} nga {len(drift)} fold-e, por është e vogël. "
+        f"Mesatarisht {over_n:.0f} nga {n_features} veçori e kalojnë pragun e moderuar te "
+        f"popullata legjitime kundrejt {over_f:.0f} nga {n_features} te ajo e mashtrimeve, "
+        f"por numri i dytë nuk është i interpretueshëm pa korrigjimin për zhurmën. "
+        f"Aftësia ndarëse e matur pa model bie nga {drift['train_ap_distance'].mean():.3f} "
+        f"në dritaren e trajnimit në {drift['test_ap_distance'].mean():.3f} në atë të "
+        f"testimit. Monitorimi me Page-Hinkley, me prag të kalibruar veç e veç për çdo fold "
+        f"dhe model me permutacione, jep sinjal zhvendosjeje në {int(detected.sum())} nga "
+        f"{len(monitor)} kombinime fold-model."
     )
     (results_dir / "drift_verdict.txt").write_text(verdict + "\n")
     print("\n" + verdict)
