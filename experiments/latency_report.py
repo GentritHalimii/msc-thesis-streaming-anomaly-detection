@@ -8,19 +8,88 @@ rate column and the thesis text qualifies every claim with it.
 
 import json
 
+import matplotlib as mpl
+import numpy as np
 import pandas as pd
-from matplotlib.lines import Line2D
 
 from src.config import REPO_ROOT, load_config
 from src.evaluation.manifest import write_manifest
 from src.evaluation.report import (
     AX,
+    CM,
+    FULL_WIDTH,
+    INK_2,
     MODEL_LABELS,
-    model_plot_kwargs,
+    MODEL_MARKERS,
+    legend_above,
+    model_color,
     new_figure,
+    ordered_models,
     save_figure,
     save_table,
+    value_grid,
 )
+
+
+def figure(table: pd.DataFrame, cfg) -> None:
+    """Latency distribution per model and arrival rate, against the target.
+
+    Each model is a dot at its mean with a line from the median to the 99th
+    percentile, grouped by arrival rate. The one-second target is drawn on the
+    same logarithmic axis, which is what makes the margin visible: on a linear
+    axis either the target or the measurements would be squashed flat.
+    """
+    static = table[~table["prag_adaptiv"]]
+    rates = sorted(static["rate_msg_s"].unique())
+    models = ordered_models(static["model_key"].unique())
+    offsets = np.linspace(-0.27, 0.27, len(models))
+
+    fig, ax = new_figure(figsize=(FULL_WIDTH, 7.0 * CM))
+    for offset, model in zip(offsets, models, strict=True):
+        sub = static[static["model_key"] == model].set_index("rate_msg_s").loc[rates]
+        x = np.arange(len(rates)) + offset
+        color = model_color(model)
+        ax.vlines(x, sub["e2e_ms_p50"], sub["e2e_ms_p99"], color=color, linewidth=1.6)
+        ax.plot(
+            x,
+            sub["e2e_ms_mean"],
+            linestyle="none",
+            marker=MODEL_MARKERS.get(model, "o"),
+            markersize=5,
+            color=color,
+            markeredgecolor="#ffffff",
+            markeredgewidth=0.7,
+            label=MODEL_LABELS.get(model, model),
+        )
+    ax.axhline(1000, color="#e34948", linewidth=1.0)
+    ax.text(
+        len(rates) - 0.5,
+        1000 * 0.86,
+        "objektivi: 1 sekondë",
+        ha="right",
+        va="top",
+        fontsize=7.5,
+        color="#b3352c",
+    )
+    ax.text(
+        -0.5,
+        560,
+        "pika: mesatarja; vija: nga p50 deri te p99",
+        ha="left",
+        va="center",
+        fontsize=7.5,
+        color=INK_2,
+    )
+    ax.set_yscale("log")
+    ax.set_ylim(10, 1500)
+    ax.yaxis.set_major_formatter(mpl.ticker.FuncFormatter(lambda v, _: f"{v:g}"))
+    ax.set_xticks(range(len(rates)), [f"{int(r):,}".replace(",", " ") for r in rates])
+    ax.set_xlim(-0.6, len(rates) - 0.4)
+    ax.set_xlabel(AX["rate"])
+    ax.set_ylabel(AX["latency_ms"])
+    value_grid(ax, "y")
+    legend_above(ax)
+    save_figure(fig, REPO_ROOT / cfg.results_dir, "latency_vs_rate")
 
 
 def main(cfg=None):
@@ -66,42 +135,7 @@ def main(cfg=None):
     save_table(table.drop(columns=["model_key"]), REPO_ROOT / cfg.results_dir, "latency_summary")
     print(table.drop(columns=["model_key"]).to_string(index=False))
 
-    fig, ax = new_figure()
-    for model in table["model_key"].unique():
-        sub = table[(table["model_key"] == model) & (~table["prag_adaptiv"])].sort_values(
-            "rate_msg_s"
-        )
-        if sub.empty:
-            continue
-        kw = model_plot_kwargs(model)
-        ax.plot(sub["rate_msg_s"], sub["e2e_ms_p99"], marker="o", markersize=4, **kw)
-        kw_p50 = {**kw, "alpha": 0.45, "label": None}
-        ax.plot(sub["rate_msg_s"], sub["e2e_ms_p50"], marker="o", markersize=3, **kw_p50)
-    ax.set_xscale("log")
-    ax.set_yscale("log")
-    ax.set_xlabel(AX["rate"] + " (mbërritje sintetike konstante)")
-    ax.set_ylabel(AX["latency_ms"])
-    ax.axhline(1000, color="#c3c2b7", linewidth=1)
-    # Headroom above the target line, otherwise its label is clipped by the
-    # top of the axes and the reader cannot see how far below the line the
-    # measurements sit.
-    ax.set_ylim(top=2000)
-    ax.annotate(
-        "objektivi prej 1 sekonde",
-        xy=(0.02, 0.985),
-        xycoords="axes fraction",
-        fontsize=8,
-        color="#898781",
-        va="top",
-    )
-    # Two series per model, so the legend has to say which is which.
-    handles, labels = ax.get_legend_handles_labels()
-    style = [
-        Line2D([], [], color="#52514e", lw=1.6, marker="o", markersize=4, label="p99"),
-        Line2D([], [], color="#52514e", lw=1.6, alpha=0.45, marker="o", markersize=3, label="p50"),
-    ]
-    ax.legend(handles + style, labels + [h.get_label() for h in style], fontsize=8)
-    save_figure(fig, REPO_ROOT / cfg.results_dir, "latency_vs_rate")
+    figure(table, cfg)
     write_manifest(REPO_ROOT / cfg.results_dir, "latency_report", cfg.raw)
 
 

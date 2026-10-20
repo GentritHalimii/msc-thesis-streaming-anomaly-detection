@@ -5,6 +5,7 @@ model. Produces the per-fold metric matrix that the significance tests, the
 ensemble study and the thesis tables all build on.
 """
 
+import matplotlib as mpl
 import numpy as np
 import pandas as pd
 
@@ -19,11 +20,20 @@ from src.evaluation.operational import (
 from src.evaluation.protocol import load_folds
 from src.evaluation.report import (
     AX,
+    CM,
+    FULL_WIDTH,
+    INK_2,
     MODEL_LABELS,
+    MODEL_MARKERS,
+    MUTED,
+    legend_above,
     model_color,
+    model_plot_kwargs,
     new_figure,
+    ordered_models,
     save_figure,
     save_table,
+    value_grid,
 )
 from src.models.build import FAMILY_OF
 
@@ -99,49 +109,66 @@ def summarise(per_fold: pd.DataFrame) -> pd.DataFrame:
 
 
 def figure_ap_per_fold(per_fold: pd.DataFrame, cfg):
-    """One line per detector across folds; colour = family. The legend is by
-    family because fourteen individual entries would swamp the plot."""
-    fig, ax = new_figure(figsize=(7.0, 4.4))
+    """One line per detector across folds, on a log scale because the folds
+    differ by more than an order of magnitude in difficulty. The fraud count
+    of each test block sits under its fold number, since it explains most of
+    the shape."""
+    fig, ax = new_figure(figsize=(FULL_WIDTH, 7.0 * CM))
     wide = per_fold.pivot(index="fold", columns="model", values="ap")
-    for name in wide.columns:
-        ax.plot(
-            wide.index,
-            wide[name],
-            color=model_color(name),
-            linestyle="-." if name == "logreg" else "-",
-            linewidth=2.0 if name == "logreg" else 1.4,
-            marker="o",
-            markersize=3.5,
-            alpha=0.95 if name == "logreg" else 0.8,
-            label=MODEL_LABELS.get(name, name),
-        )
-    ax.set_xlabel(AX["fold"])
-    ax.set_ylabel(AX["ap"])
+    frauds = per_fold.groupby("fold")["test_frauds"].first()
+    for name in ordered_models(wide.columns):
+        ax.plot(wide.index, wide[name], **model_plot_kwargs(name, markers=True))
     ax.set_yscale("log")
-    ax.legend(loc="center left", bbox_to_anchor=(1.01, 0.5), fontsize=8.5)
+    ax.yaxis.set_major_formatter(mpl.ticker.FuncFormatter(lambda v, _: f"{v:g}"))
+    ax.set_xticks(wide.index, [f"{i}\n({frauds.loc[i]})" for i in wide.index])
+    ax.set_xlabel("Fold (në kllapa: mashtrimet në bllokun e testimit)")
+    ax.set_ylabel(AX["ap"] + ", shkallë log")
+    value_grid(ax, "y")
+    legend_above(ax)
     save_figure(fig, REPO_ROOT / cfg.results_dir, "benchmark_ap_per_fold")
 
 
-def figure_ap_ranking(summary: pd.DataFrame, cfg):
-    """Mean AP with the across-fold spread, sorted. Horizontal bars keep the
-    fourteen labels readable."""
-    fig, ax = new_figure(figsize=(6.6, 5.2))
-    d = summary.sort_values("ap_mean")
-    ypos = np.arange(len(d))
-    ax.barh(
-        ypos,
-        d["ap_mean"],
-        xerr=d["ap_std"].fillna(0.0),
-        color=[model_color(m) for m in d["model"]],
-        height=0.62,
-        error_kw={"ecolor": "#898781", "elinewidth": 1, "capsize": 2},
-    )
-    ax.set_yticks(ypos, [MODEL_LABELS.get(m, m) for m in d["model"]])
-    ax.set_xlabel(AX["ap"] + ", mesatare mbi 8 fold-e (±1 s.d.)")
-    ax.grid(axis="y", visible=False)
-    for y, v in zip(ypos, d["ap_mean"], strict=True):
-        ax.text(v + 0.008, y, f"{v:.3f}", va="center", fontsize=8, color="#52514e")
-    ax.set_xlim(0, float(d["ap_mean"].max()) * 1.18)
+def figure_ap_ranking(per_fold: pd.DataFrame, summary: pd.DataFrame, cfg):
+    """Each detector's eight fold values, with the mean marked.
+
+    The fold values are drawn instead of a ±1 s.d. bar: AP is bounded at zero
+    and very skewed across folds, so a symmetric bar would run below zero and
+    hide the fact that one fold (the one with the fraud cluster) pulls every
+    mean upwards.
+    """
+    order = summary.sort_values("ap_mean")["model"].tolist()
+    fig, ax = new_figure(figsize=(FULL_WIDTH, 6.2 * CM))
+    for y, name in enumerate(order):
+        values = per_fold.loc[per_fold["model"] == name, "ap"].to_numpy()
+        color = model_color(name)
+        ax.hlines(y, values.min(), values.max(), color=color, alpha=0.35, linewidth=1.2)
+        ax.scatter(values, np.full(len(values), y), s=16, color=color, alpha=0.75, linewidths=0)
+        mean = float(values.mean())
+        ax.plot(
+            [mean],
+            [y],
+            marker="D",
+            markersize=7,
+            color=color,
+            markeredgecolor="#ffffff",
+            markeredgewidth=0.9,
+            zorder=4,
+        )
+        ax.annotate(
+            f"{mean:.3f}",
+            (mean, y),
+            xytext=(0, 7),
+            textcoords="offset points",
+            ha="center",
+            fontsize=7.5,
+            color=INK_2,
+        )
+    ax.set_yticks(range(len(order)), [MODEL_LABELS.get(m, m) for m in order])
+    ax.tick_params(axis="y", length=0)
+    ax.set_ylim(-0.6, len(order) - 0.3)
+    ax.set_xlim(0, 1)
+    ax.set_xlabel(AX["ap"] + " në secilin fold (rombi: mesatarja)")
+    value_grid(ax, "x")
     save_figure(fig, REPO_ROOT / cfg.results_dir, "benchmark_ap_ranking")
 
 
@@ -149,42 +176,46 @@ def figure_quality_cost(summary: pd.DataFrame, cfg):
     """The trade-off RQ2 actually asks about: detection quality against the
     cost of producing one score. Both axes matter on a stream, and the
     picture is more informative than either column alone."""
-    fig, ax = new_figure(figsize=(6.8, 4.6))
+    fig, ax = new_figure(figsize=(FULL_WIDTH, 6.8 * CM))
     for row in summary.itertuples(index=False):
         name = row.model
-        ax.scatter(
+        ax.plot(
             row.score_us_per_tx,
             row.ap_mean,
-            s=90,
+            marker=MODEL_MARKERS.get(name, "o"),
+            markersize=8,
             color=model_color(name),
-            alpha=0.85,
-            edgecolor="white",
-            linewidth=1.2,
+            markeredgecolor="#ffffff",
+            markeredgewidth=1.0,
+            linestyle="none",
             zorder=3,
-            marker="D" if name == "logreg" else "o",
         )
         ax.annotate(
             MODEL_LABELS.get(name, name),
             (row.score_us_per_tx, row.ap_mean),
-            fontsize=7.8,
-            color="#52514e",
-            xytext=(7, 3),
+            xytext=(8, 0),
             textcoords="offset points",
+            va="center",
+            fontsize=8,
+            color=INK_2,
         )
     ax.set_xscale("log")
+    ax.xaxis.set_major_formatter(mpl.ticker.FuncFormatter(lambda v, _: f"{v:g}"))
+    ax.set_xlim(0.05, 500)
+    ax.set_ylim(0, 0.85)
     ax.set_xlabel("Kosto e pikëzimit (mikrosekonda për transaksion, shkallë log)")
-    ax.set_ylabel(AX["ap"] + ", mesatare mbi 8 fold-e")
-    ax.set_xlim(0.03, 200)
-    best = summary.loc[summary["model"] != "logreg"].nlargest(1, "ap_mean").iloc[0]
-    ax.annotate(
-        "kompromisi më i mirë unsupervised",
-        xy=(best.score_us_per_tx, best.ap_mean),
-        xytext=(0.30, 0.62),
-        textcoords="axes fraction",
-        fontsize=8.2,
-        color="#52514e",
-        arrowprops={"arrowstyle": "->", "color": "#898781", "linewidth": 1},
+    ax.set_ylabel(AX["ap"] + ", mesatare")
+    ax.text(
+        0.012,
+        0.97,
+        "më mirë: lart majtas",
+        transform=ax.transAxes,
+        ha="left",
+        va="top",
+        fontsize=7.5,
+        color=MUTED,
     )
+    value_grid(ax, "both")
     save_figure(fig, REPO_ROOT / cfg.results_dir, "benchmark_quality_cost")
 
 
@@ -203,7 +234,7 @@ def main(cfg=None):
     save_table(summary_out, results_dir, "benchmark_summary")
 
     figure_ap_per_fold(per_fold, cfg)
-    figure_ap_ranking(summary, cfg)
+    figure_ap_ranking(per_fold, summary, cfg)
     figure_quality_cost(summary, cfg)
 
     write_manifest(results_dir, "exp10_benchmark", cfg.raw)

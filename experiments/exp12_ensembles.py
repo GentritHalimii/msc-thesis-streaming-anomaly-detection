@@ -14,6 +14,7 @@ full pool.
 
 import argparse
 
+import numpy as np
 import pandas as pd
 from sklearn.metrics import average_precision_score
 
@@ -26,7 +27,18 @@ from src.evaluation.combination import (
 )
 from src.evaluation.manifest import write_manifest
 from src.evaluation.protocol import load_folds
-from src.evaluation.report import AX, MODEL_LABELS, new_figure, save_figure, save_table
+from src.evaluation.report import (
+    CM,
+    FULL_WIDTH,
+    INK,
+    INK_2,
+    MODEL_LABELS,
+    new_figure,
+    save_figure,
+    save_table,
+    strip,
+    value_grid,
+)
 from src.models.build import UNSUPERVISED
 
 PROPOSAL_TRIO = ["iforest", "autoencoder", "ocsvm"]
@@ -165,7 +177,28 @@ def main(cfg=None, tuned: bool = False):
     (results_dir / f"ensemble_verdict{suffix}.txt").write_text(verdict + "\n")
     print("\n" + verdict)
 
-    corr = pairwise_rank_correlation(folds[-1], pool_full)
+    # Rank agreement in every fold, not just the last one: the claim that the
+    # members rank transactions alike has to hold across the whole stream.
+    corr_rows = []
+    for i, f in enumerate(folds):
+        matrix = pairwise_rank_correlation(f, pool_full)
+        for a in range(len(pool_full)):
+            for b in range(a + 1, len(pool_full)):
+                corr_rows.append(
+                    {
+                        "fold": i,
+                        "model_a": pool_full[a],
+                        "model_b": pool_full[b],
+                        "spearman": float(matrix[a, b]),
+                    }
+                )
+    corr_per_fold = pd.DataFrame(corr_rows)
+    save_table(corr_per_fold, results_dir, f"ensemble_rank_correlation_per_fold{suffix}")
+    mean_corr = corr_per_fold.groupby(["model_a", "model_b"])["spearman"].mean()
+    corr = np.eye(len(pool_full))
+    for (a, b), value in mean_corr.items():
+        i, j = pool_full.index(a), pool_full.index(b)
+        corr[i, j] = corr[j, i] = value
     corr_df = pd.DataFrame(
         corr,
         index=[MODEL_LABELS.get(m, m) for m in pool_full],
@@ -179,7 +212,7 @@ def main(cfg=None, tuned: bool = False):
     )
 
     if not tuned:
-        _figures(cfg, corr, pool_full, ens, best_single, best_single_per_fold)
+        _figures(cfg, corr_per_fold, ens, best_single, best_single_per_fold)
     write_manifest(results_dir, f"exp12_ensembles{suffix}", cfg.raw)
 
 
@@ -197,52 +230,96 @@ def _per_fold_ap(folds) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def _figures(cfg, corr, pool_full, ens, best_single, best_single_per_fold):
-    labels = [MODEL_LABELS.get(m, m) for m in pool_full]
-    fig, ax = new_figure(figsize=(6.6, 5.4))
-    im = ax.imshow(corr, cmap="Blues", vmin=0, vmax=1)
-    ax.set_xticks(range(len(labels)), labels, rotation=55, ha="right", fontsize=8)
-    ax.set_yticks(range(len(labels)), labels, fontsize=8)
-    for a in range(len(labels)):
-        for b in range(len(labels)):
-            ax.text(
-                b,
-                a,
-                f"{corr[a, b]:.2f}",
-                ha="center",
-                va="center",
-                fontsize=6.5,
-                color="#ffffff" if corr[a, b] > 0.6 else "#0b0b0b",
-            )
-    ax.grid(visible=False)
-    fig.colorbar(im, ax=ax, shrink=0.75, label="Korrelacioni i Spearman-it i rangjeve")
-    save_figure(fig, REPO_ROOT / cfg.results_dir, "ensemble_rank_correlation")
+COMBINER_LABELS = {
+    ("greedy", "rank_avg"): "Përzgjedhje lakmitare, mesatare rangjesh",
+    ("trio i propozimit", "z_avg"): "Mesatare e z-pikëve",
+    ("trio i propozimit", "median"): "Mediana e rangjeve",
+    ("trio i propozimit", "rank_avg"): "Mesatare e rangjeve",
+    ("trio i propozimit", "max"): "Maksimumi i rangjeve",
+    ("trio i propozimit", "vote"): "Votim me shumicë",
+}
+ENSEMBLE_COLOR = "#e34948"
 
-    fig, ax = new_figure(figsize=(6.8, 4.2))
-    for (pool, comb), grp in ens.groupby(["pool", "combiner"]):
-        if comb not in ("rank_avg", "max"):
-            continue
-        ax.plot(
-            grp["fold"],
-            grp["ap"],
-            marker="o",
-            markersize=3.5,
-            linewidth=1.4,
-            label=f"{pool} / {comb}",
-        )
-    ax.plot(
-        best_single_per_fold.index,
-        best_single_per_fold.to_numpy(),
-        color="#0b0b0b",
-        linewidth=2.2,
-        marker="s",
-        markersize=4,
-        label=f"më i miri individual: {MODEL_LABELS.get(best_single['model'])}",
+
+def _figures(cfg, corr_per_fold, ens, best_single, best_single_per_fold):
+    # --- Each ensemble against its best member, fold by fold --------------
+    # A paired difference is what the hypothesis is about, so that is what is
+    # drawn: a variant helps only if its dots sit right of zero.
+    order = (
+        ens.groupby(["pool", "combiner"])["ap"].mean().sort_values(ascending=True).index.tolist()
     )
-    ax.set_xlabel(AX["fold"])
-    ax.set_ylabel(AX["ap"])
-    ax.legend(loc="center left", bbox_to_anchor=(1.01, 0.5))
+    fig, ax = new_figure(figsize=(FULL_WIDTH, 7.0 * CM))
+    for y, key in enumerate(order):
+        sub = ens[(ens["pool"] == key[0]) & (ens["combiner"] == key[1])].set_index("fold")["ap"]
+        delta = (sub - best_single_per_fold.reindex(sub.index)).to_numpy()
+        strip(ax, y, delta, ENSEMBLE_COLOR, jitter=0.1, seed=y)
+        ax.plot(
+            [delta.mean()],
+            [y],
+            marker="D",
+            markersize=6.5,
+            color=ENSEMBLE_COLOR,
+            markeredgecolor="#ffffff",
+            markeredgewidth=0.9,
+            zorder=4,
+        )
+        ax.annotate(
+            f"{delta.mean():+.3f}",
+            (delta.mean(), y),
+            xytext=(0, 7),
+            textcoords="offset points",
+            ha="center",
+            fontsize=7.5,
+            color=INK_2,
+        )
+    ax.axvline(0, color=INK_2, lw=0.9, zorder=1)
+    best_name = MODEL_LABELS.get(best_single["model"], best_single["model"])
+    ax.set_yticks(
+        range(len(order)), [COMBINER_LABELS.get(key, f"{key[0]} / {key[1]}") for key in order]
+    )
+    ax.tick_params(axis="y", length=0)
+    ax.set_ylim(-0.6, len(order) - 0.3)
+    ax.set_xlabel(f"Diferenca e AP-së ndaj {best_name}-it, për fold")
+    value_grid(ax, "x")
     save_figure(fig, REPO_ROOT / cfg.results_dir, "ensemble_vs_single")
+
+    # --- How alike the members rank the transactions ----------------------
+    pairs = corr_per_fold.groupby(["model_a", "model_b"])["spearman"].mean().sort_values()
+    fig, ax = new_figure(figsize=(FULL_WIDTH, 4.8 * CM))
+    for y, (pair, mean) in enumerate(pairs.items()):
+        values = corr_per_fold[
+            (corr_per_fold["model_a"] == pair[0]) & (corr_per_fold["model_b"] == pair[1])
+        ]["spearman"].to_numpy()
+        strip(ax, y, values, INK_2, jitter=0.1, seed=y)
+        ax.plot(
+            [mean],
+            [y],
+            marker="D",
+            markersize=6.5,
+            color=INK,
+            markeredgecolor="#ffffff",
+            markeredgewidth=0.9,
+            zorder=4,
+        )
+        ax.annotate(
+            f"{mean:.2f}",
+            (mean, y),
+            xytext=(0, 7),
+            textcoords="offset points",
+            ha="center",
+            fontsize=7.5,
+            color=INK_2,
+        )
+    ax.set_yticks(
+        range(len(pairs)),
+        [f"{MODEL_LABELS.get(a, a)} dhe {MODEL_LABELS.get(b, b)}" for a, b in pairs.index],
+    )
+    ax.tick_params(axis="y", length=0)
+    ax.set_ylim(-0.6, len(pairs) - 0.3)
+    ax.set_xlim(0, 1)
+    ax.set_xlabel("Korrelacioni i Spearman-it mes renditjeve, për fold")
+    value_grid(ax, "x")
+    save_figure(fig, REPO_ROOT / cfg.results_dir, "ensemble_rank_correlation")
 
 
 if __name__ == "__main__":
