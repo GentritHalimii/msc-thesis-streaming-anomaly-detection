@@ -202,13 +202,13 @@ BLOCKS = [
         fmt={"frac_replicates_positive": ".1%"},
         font_size=9.0,
     ),
-    p("""Kolona e fundit e tabelës së dytë tregon në sa pjesë të mostrave bootstrap diferenca e ruan
-      shenjën. Krahasimi i saj me testet e Kapitullit 5 tregon një dallim që shpesh ngatërrohet. Në
-      prerjen e vetme, diferenca mes Autoencoder-it dhe One-Class SVM-së e ruan shenjën në të gjitha
-      mostrat, pra brenda asaj periudhe ajo është e sigurt. Në tetë fold-e i njëjti krahasim nuk
-      është domethënës, sepse aty pyetja është nëse diferenca mbetet nga një periudhë në tjetrën. Të
-      dyja janë të vërteta dhe masin gjëra të ndryshme; nëse do të raportohej vetëm e para,
-      qëndrueshmëria e renditjes do të mbivlerësohej."""),
+    p("""Kolona e fundit e tabelës së diferencave tregon në sa pjesë të mostrave bootstrap diferenca
+      e ruan shenjën. Krahasimi i saj me testet e Kapitullit 5 tregon një dallim që shpesh
+      ngatërrohet. Në prerjen e vetme, diferenca mes Autoencoder-it dhe One-Class SVM-së e ruan
+      shenjën në të gjitha mostrat, pra brenda asaj periudhe ajo është e sigurt. Në tetë fold-e i
+      njëjti krahasim nuk është domethënës, sepse aty pyetja është nëse diferenca mbetet nga një
+      periudhë në tjetrën. Të dyja janë të vërteta dhe masin gjëra të ndryshme; nëse do të
+      raportohej vetëm e para, qëndrueshmëria e renditjes do të mbivlerësohej."""),
     h2("8.5", "Shtojca E: sipërfaqja e plotë e Isolation Forest-it"),
     p("""Kapitulli 5 e paraqet hapësirën e hiperparametrave si figurë. Tabela më poshtë jep vlerat e
       sakta, që të shihet ku ndodhet maksimumi dhe sa i sheshtë është rajoni rreth tij."""),
