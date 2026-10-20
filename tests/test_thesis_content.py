@@ -112,9 +112,15 @@ def test_every_referenced_table_exists_with_its_columns():
             if not path.exists():
                 problems.append(f"{block[1]}: file missing")
                 continue
-            columns = set(pd.read_csv(path, nrows=1).columns)
             options = block[3]
-            for key in ("columns", "rename", "round", "fmt"):
+            if "pivot" in options:
+                # A pivoted table gets one column per value of the pivot column.
+                spec = options["pivot"]
+                data = pd.read_csv(path)
+                columns = {spec["index"], *data[spec["columns"]].astype(str)}
+            else:
+                columns = set(pd.read_csv(path, nrows=1).columns)
+            for key in ("columns", "rename", "round", "fmt", "replace"):
                 wanted = options.get(key) or []
                 missing = set(wanted) - columns
                 if missing:
@@ -244,3 +250,22 @@ def test_list_of_figures_entries_are_not_cut():
     figures, tables = _scan_captions(list(all_chapters().values()))
     cut = [caption for caption in figures + tables if _shorten(caption).endswith("…")]
     assert not cut, f"first sentence too long for the list: {cut}"
+
+
+def test_table_numbers_print_with_fixed_decimals():
+    """A column of numbers keeps one number of decimals, p-values keep two
+    significant digits, and large counts are grouped in thousands."""
+    import pandas as pd
+    from build_thesis import _decimals, _fixed, _group_thousands, _p_value
+
+    values = pd.Series([0.1886, 0.169, 0.0043])
+    assert list(_fixed(values, _decimals(values))) == ["0.1886", "0.1690", "0.0043"]
+    assert _decimals(pd.Series([58.8483, 24.287])) == 2
+    assert [_p_value(p) for p in (0.0078125, 0.000151, 2.6e-06, 1.0)] == [
+        "0.0078",
+        "0.00015",
+        "< 0.0001",
+        "1.0",
+    ]
+    grouped = _group_thousands(pd.Series([6415, 17327, "n/a"], dtype=object))
+    assert list(grouped) == ["6\u00a0415", "17\u00a0327", "n/a"]

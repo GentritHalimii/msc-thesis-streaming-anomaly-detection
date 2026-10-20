@@ -12,6 +12,8 @@ page-number fields, per-section numbering formats, and the table-of-contents
 field that Word populates when the file is opened.
 """
 
+import functools
+import numbers
 import re
 from pathlib import Path
 
@@ -50,6 +52,20 @@ REFERENCE_NUM_ID = 100
 # "end-to-end") must not end a line, so it is written as Word's non-breaking
 # hyphen. Longer compounds such as "rolling-origin" may still break.
 NOBREAK_HYPHEN_RE = re.compile(r"(?<=\w)-(?=[a-zëç]{1,4}\b)")
+# Table cells are measured to size their columns. Word's default cell margin
+# is 0.19 cm a side; the rest of the padding absorbs rounding in the layout.
+CELL_PADDING_CM = 0.42
+# A table whose content is narrow is centred at its natural width, but never
+# narrower than this share of the text block, so it does not look lost under
+# a long caption.
+MIN_TABLE_SHARE = 0.35
+# A table up to this many rows is kept on one page; a longer one may break,
+# and its header row then repeats on the next page.
+KEEP_TOGETHER_ROWS = 25
+# A cell that holds a number, a ratio such as "7/8", or the missing-value mark.
+NUMBER_RE = re.compile(
+    r"^[<>≤≥]? ?[−+-]?\d[\d\u00a0 ]*(\.\d+)?(e[−+-]?\d+)?%?$|^\d+ ?/ ?\d+$|^n/a$"
+)
 
 
 # --------------------------------------------------------------------------
@@ -462,13 +478,24 @@ def add_table(
     col_widths: list[float] | None = None,
     max_rows: int | None = None,
 ):
-    """Table with its numbered title above it, as the template illustrates."""
+    """Table with its numbered title above it, as the template illustrates.
+
+    Numeric columns are right-aligned so their decimal points line up. Column
+    widths come from the cell text unless `col_widths` gives proportions; in
+    both cases no column is narrower than its longest unbreakable piece, so a
+    number never wraps inside its cell and a word is never split.
+    """
     add_caption(doc, f"Tabela {number}. {caption}", above=True)
     df = dataframe if max_rows is None else dataframe.head(max_rows)
+    df = df.map(_display_text)
+    numeric = [all(_is_number(value) for value in df[name]) for name in df.columns]
     table = doc.add_table(rows=1, cols=len(df.columns))
     table.style = "Table Grid"
     table.alignment = WD_TABLE_ALIGNMENT.CENTER
 
+    # The header row repeats on every page a long table runs onto, and no row
+    # is split across a page break.
+    _row_properties(table.rows[0], header=True)
     for cell, name in zip(table.rows[0].cells, df.columns, strict=True):
         cell.text = ""
         para = cell.paragraphs[0]
@@ -482,24 +509,133 @@ def add_table(
         run.font.size = Pt(font_size)
 
     for _, row in df.iterrows():
-        cells = table.add_row().cells
-        for cell, value in zip(cells, row, strict=True):
+        table_row = table.add_row()
+        _row_properties(table_row, header=False)
+        for cell, value, is_number in zip(table_row.cells, row, numeric, strict=True):
             cell.text = ""
             para = cell.paragraphs[0]
-            para.alignment = (
-                WD_ALIGN_PARAGRAPH.LEFT if isinstance(value, str) else WD_ALIGN_PARAGRAPH.RIGHT
-            )
+            para.alignment = WD_ALIGN_PARAGRAPH.RIGHT if is_number else WD_ALIGN_PARAGRAPH.LEFT
             para.paragraph_format.line_spacing = 1.0
             para.paragraph_format.space_after = Pt(1)
-            run = para.add_run(str(value))
+            run = para.add_run(value)
             _keep_hyphens(run)
             run.font.name = BODY_FONT
             run.font.size = Pt(font_size)
 
-    if col_widths:
-        _apply_column_widths(table, col_widths)
+    if len(df) <= KEEP_TOGETHER_ROWS:
+        for table_row in table.rows[:-1]:
+            for cell in table_row.cells:
+                cell.paragraphs[0].paragraph_format.keep_with_next = True
+    widths = column_widths(df, font_size, numeric, col_widths)
+    if sum(widths) > TEXT_WIDTH_CM + 1e-6:
+        print(f"kujdes: tabela {number} nuk nxë në faqe pa thyer numra ose fjalë")
+    _apply_column_widths(table, widths)
     doc.add_paragraph().paragraph_format.space_after = Pt(6)
     return table
+
+
+def _display_text(value) -> str:
+    text = str(value)
+    if _is_number(text) and text.startswith("-"):
+        return "\u2212" + text[1:]  # a minus sign, not a hyphen
+    return text
+
+
+def _row_properties(row, header: bool) -> None:
+    tr_pr = row._tr.get_or_add_trPr()
+    tr_pr.append(OxmlElement("w:cantSplit"))
+    if header:
+        tr_pr.append(OxmlElement("w:tblHeader"))
+
+
+def _is_number(value) -> bool:
+    if isinstance(value, numbers.Number) and not isinstance(value, bool):
+        return True
+    return bool(NUMBER_RE.match(str(value).strip()))
+
+
+@functools.cache
+def _measuring_font(bold: bool):
+    """The body font at 1000 units, or None when no metric twin is installed."""
+    from matplotlib import font_manager
+    from PIL import ImageFont
+
+    weight = "bold" if bold else "normal"
+    for family in (BODY_FONT, "Liberation Serif"):
+        prop = font_manager.FontProperties(family=family, weight=weight)
+        try:
+            path = font_manager.findfont(prop, fallback_to_default=False)
+        except ValueError:
+            continue
+        return ImageFont.truetype(path, 1000)
+    return None
+
+
+def _text_cm(text: str, size_pt: float, bold: bool = False) -> float:
+    """Printed width of `text` in centimetres."""
+    font = _measuring_font(bold)
+    em = font.getlength(text) / 1000 if font else 0.5 * len(text)
+    return em * size_pt / 72 * 2.54
+
+
+def column_widths(df, font_size: float, numeric: list[bool], preferred=None) -> list[float]:
+    """Column widths in centimetres.
+
+    Each column has three widths: a floor, its longest piece that cannot
+    wrap (the whole value in a numeric column, the longest word elsewhere,
+    header words included); the width at which no body cell wraps; and the
+    width at which the header does not wrap either. The table gets the
+    widest level that fits the text block, and the space above that level is
+    shared in proportion to what each column still needs, as browsers lay out
+    tables: headers wrap before body cells, and a short text column is not
+    squeezed to a word per line next to a long one. A table with little
+    content keeps its natural width instead of being stretched. With
+    `preferred`, the width is shared in those proportions instead, never
+    below the floors.
+    """
+    floors, body, full = [], [], []
+    for name, is_number in zip(df.columns, numeric, strict=True):
+        cells = [str(value) for value in df[name]]
+        title = str(name)
+        title_words = [_text_cm(word, font_size, bold=True) for word in title.split()]
+        if is_number:
+            pieces = [_text_cm(cell, font_size) for cell in cells]
+        else:
+            pieces = [_text_cm(word, font_size) for cell in cells for word in cell.split()]
+        floor = max([0.0, *title_words, *pieces]) + CELL_PADDING_CM
+        widest = max([0.0, *(_text_cm(cell, font_size) for cell in cells)]) + CELL_PADDING_CM
+        floors.append(floor)
+        body.append(max(floor, widest))
+        full.append(max(floor, widest, _text_cm(title, font_size, bold=True) + CELL_PADDING_CM))
+
+    if preferred:
+        return _share(floors, list(preferred), TEXT_WIDTH_CM)
+    if sum(full) <= TEXT_WIDTH_CM:
+        total = min(TEXT_WIDTH_CM, max(1.15 * sum(full), MIN_TABLE_SHARE * TEXT_WIDTH_CM))
+        extra = (total - sum(full)) / len(full)
+        return [width + extra for width in full]
+    lower, upper = (body, full) if sum(body) <= TEXT_WIDTH_CM else (floors, body)
+    spare = TEXT_WIDTH_CM - sum(lower)
+    if spare <= 0:
+        return floors
+    need = [high - low for low, high in zip(lower, upper, strict=True)]
+    return [low + spare * n / sum(need) for low, n in zip(lower, need, strict=True)]
+
+
+def _share(floors: list[float], weights: list[float], total: float) -> list[float]:
+    """Share `total` in proportion to `weights`, holding columns at their floors."""
+    fixed = [False] * len(floors)
+    while True:
+        free = [i for i, done in enumerate(fixed) if not done]
+        if not free:
+            return floors
+        room = total - sum(floors[i] for i, done in enumerate(fixed) if done)
+        scale = room / sum(weights[i] for i in free)
+        short = [i for i in free if weights[i] * scale < floors[i]]
+        if not short:
+            return [floors[i] if fixed[i] else weights[i] * scale for i in range(len(floors))]
+        for i in short:
+            fixed[i] = True
 
 
 def add_toc_field(doc: Document, instruction: str, placeholder: str):
@@ -582,17 +718,21 @@ def _apply_column_widths(table, col_widths: list[float]) -> None:
     every cell in a column must carry the same width. Setting only cell widths
     — the obvious approach — leaves the renderer free to re-balance the
     columns, which is what squeezed a long detector name into a two-character
-    column in an earlier draft. Widths are rescaled to the printable width so
-    a grid that overshoots the margin cannot trigger re-balancing either.
+    column in an earlier draft. A grid wider than the printable width is
+    scaled down so it cannot trigger re-balancing either, and the table width
+    is stated so a narrow table keeps its size.
     """
-    scale = TEXT_WIDTH_CM / sum(col_widths)
+    scale = min(1.0, TEXT_WIDTH_CM / sum(col_widths))
     scaled = [Cm(w * scale) for w in col_widths]
 
-    table.autofit = False
+    table.autofit = False  # writes <w:tblLayout w:type="fixed"/> in schema order
     tbl_pr = table._tbl.tblPr
-    layout = OxmlElement("w:tblLayout")
-    layout.set(qn("w:type"), "fixed")
-    tbl_pr.append(layout)
+    tbl_w = tbl_pr.find(qn("w:tblW"))
+    if tbl_w is None:
+        tbl_w = OxmlElement("w:tblW")
+        tbl_pr.append(tbl_w)
+    tbl_w.set(qn("w:type"), "dxa")
+    tbl_w.set(qn("w:w"), str(sum(int(width.twips) for width in scaled)))
 
     grid = table._tbl.find(qn("w:tblGrid"))
     if grid is not None:

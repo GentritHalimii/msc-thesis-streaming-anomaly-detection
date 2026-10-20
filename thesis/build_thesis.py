@@ -12,6 +12,8 @@ everywhere.
 """
 
 import argparse
+import ast
+import numbers
 import re
 import subprocess
 import sys
@@ -119,55 +121,136 @@ def resolve_citations(text: str, numbering: Numbering) -> str:
 
 
 def load_table(csv_name: str, options: dict) -> pd.DataFrame:
+    """Read a results table and prepare it for print.
+
+    Options, all optional: query, pivot ({index, columns, values}), columns,
+    replace ({column: {value: shown}}), sort and ascending, round ({column:
+    decimals}), fmt ({column: format spec}), rename, max_rows, and transpose
+    (the header of the first column once the table is turned on its side).
+
+    Numbers that round and fmt do not cover still print with fixed decimals:
+    three in a float column, four when it holds values below 0.01, fewer as
+    its magnitude grows, and two significant digits for a p-value. Whole
+    numbers print as integers, grouped in thousands once a column reaches
+    five digits.
+    """
     df = pd.read_csv(RESULTS / f"{csv_name}.csv")
     if "query" in options:
         df = df.query(options["query"])
+    if "pivot" in options:
+        spec = options["pivot"]
+        df = df.pivot(index=spec["index"], columns=spec["columns"], values=spec["values"])
+        df = df.reset_index()
+        df.columns.name = None
     if "columns" in options:
         df = df[options["columns"]]
+    for col in df.columns:
+        if df[col].dtype == bool:
+            df[col] = df[col].map({True: "Po", False: "Jo"})
+        elif df[col].dtype == object or pd.api.types.is_string_dtype(df[col]):
+            df[col] = df[col].map(_readable_config)
+    for col, mapping in options.get("replace", {}).items():
+        df[col] = df[col].map(lambda v, m=mapping: m.get(v, v))
     if "sort" in options:
         df = df.sort_values(options["sort"], ascending=options.get("ascending", True))
-    if "round" in options:
-        for col, digits in options["round"].items():
-            if col not in df.columns:
-                continue
-            values = df[col].astype(float).round(digits)
-            if digits > 0:
-                # Fixed decimals, so a column does not mix "0.29" with "0.449".
-                df[col] = values.map(lambda v, d=digits: MISSING if pd.isna(v) else f"{v:.{d}f}")
-            else:
-                df[col] = values
-    if "fmt" in options:
-        for col, spec in options["fmt"].items():
-            if col in df.columns:
-                df[col] = df[col].map(lambda v, s=spec: format(v, s))
+    for col, digits in options.get("round", {}).items():
+        if col in df.columns:
+            df[col] = _fixed(df[col].astype(float), digits)
+    for col, spec in options.get("fmt", {}).items():
+        if col in df.columns:
+            df[col] = df[col].map(lambda v, s=spec: MISSING if pd.isna(v) else format(v, s))
+    for col in df.columns:
+        if df[col].dtype.kind != "f":
+            continue
+        values, present = df[col], df[col].dropna()
+        if _is_p_column(col):
+            df[col] = values.map(_p_value)
+        elif ((present - present.round()).abs() < 1e-9).all():
+            df[col] = _fixed(values, 0)
+        else:
+            df[col] = _fixed(values, _decimals(values))
     if "rename" in options:
         df = df.rename(columns=options["rename"])
     if "max_rows" in options:
         df = df.head(options["max_rows"])
-    df = _tidy_integers(df.reset_index(drop=True), options.get("round", {}))
     # A missing value is meaningful in some tables (a detector with no
     # hyperparameters cannot have a tuning delta) but "nan" reads as a bug in a
-    # printed thesis; an em dash says the same thing without alarming anyone.
-    return df.astype(object).where(df.notna(), MISSING)
-
-
-def _tidy_integers(df: pd.DataFrame, rounded: dict) -> pd.DataFrame:
-    """Render whole numbers as whole numbers.
-
-    Counts survive the CSV round trip as floats, so a fold index prints as
-    "0.0" and a row count as "113922.0". Any numeric column whose values are
-    all integral, and which was not explicitly asked to keep decimals, is
-    converted back to an integer.
-    """
-    for col in df.columns:
-        if col in rounded and rounded[col] > 0:
-            continue
-        series = df[col]
-        if series.dtype.kind != "f" or series.isna().any():
-            continue
-        if ((series - series.round()).abs() < 1e-9).all():
-            df[col] = series.round().astype("int64")
+    # printed thesis; "n/a" says the same thing without alarming anyone.
+    df = df.reset_index(drop=True)
+    df = df.astype(object).where(df.notna(), MISSING)
+    df = df.apply(_group_thousands)
+    if "transpose" in options:
+        # A table with a few rows and many columns reads better on its side:
+        # one row per quantity, one column per window or detector.
+        df = df.set_index(df.columns[0]).T
+        df.columns = [str(name)[:1].upper() + str(name)[1:] for name in df.columns]
+        df = df.reset_index(names=options["transpose"])
     return df
+
+
+def _fixed(values: pd.Series, digits: int) -> pd.Series:
+    """Fixed decimals, so a column does not mix "0.29" with "0.449"."""
+    values = values.astype(float).round(digits)
+    if digits == 0:
+        return values.map(lambda v: MISSING if pd.isna(v) else int(v))
+    return values.map(lambda v: MISSING if pd.isna(v) else f"{v:.{digits}f}")
+
+
+def _decimals(values: pd.Series) -> int:
+    magnitude = values.abs().dropna()
+    if magnitude.max() >= 1000:
+        return 0
+    if magnitude.max() >= 100:
+        return 1
+    if magnitude.max() >= 10:
+        return 2
+    return 4 if ((magnitude > 0) & (magnitude < 0.01)).any() else 3
+
+
+def _is_p_column(name) -> bool:
+    name = str(name).lower()
+    return (
+        name == "p"
+        or name.startswith(("p_", "p "))
+        or name.endswith("_p")
+        or "p_value" in name
+        or "pvalue" in name
+    )
+
+
+def _p_value(p) -> str:
+    """Two significant digits, which is all the precision a p-value carries."""
+    if pd.isna(p):
+        return MISSING
+    if p < 1e-4:
+        return "< 0.0001"
+    text = format(p, ".2g")
+    return text if "." in text else f"{text}.0"
+
+
+def _group_thousands(column: pd.Series) -> pd.Series:
+    """Group thousands with a non-breaking space once a column reaches five
+    digits, and then in every number of the column, so they still line up."""
+
+    def whole(v) -> bool:
+        return isinstance(v, numbers.Integral) and not isinstance(v, bool)
+
+    if max((abs(v) for v in column if whole(v)), default=0) < 10_000:
+        return column
+    return column.map(lambda v: f"{v:,}".replace(",", "\u00a0") if whole(v) else v)
+
+
+def _readable_config(value):
+    """A configuration saved as a dict literal, written as key=value pairs."""
+    if not (isinstance(value, str) and value.startswith("{") and value.endswith("}")):
+        return value
+    try:
+        parsed = ast.literal_eval(value)
+    except (ValueError, SyntaxError):
+        return value
+    if not isinstance(parsed, dict):
+        return value
+    return ", ".join(f"{key}={val}" for key, val in parsed.items())
 
 
 def collect_outline(chapters: list[list]) -> list[tuple[int, str]]:
