@@ -156,5 +156,5 @@ BLOCKS = [
       Kapitulli 5 paraqet rezultatet sipas tri pyetjeve hulumtuese, të ndjekura nga studimet e
       thelluara për secilin algoritëm. Kapitulli 6 i diskuton rezultatet, i krahason me literaturën,
       paraqet kufizimet dhe drejtimet për punë të mëtejshme. Shtojcat përmbajnë hollësitë e
-      riprodhimit, hiperparametrat dhe tabelat shtesë."""),
+      riprodhimit, strukturën e kodit, tabelat e plota të rezultateve dhe testet automatike."""),
 ]

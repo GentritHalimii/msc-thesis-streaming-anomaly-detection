@@ -76,12 +76,7 @@ BLOCKS = [
             "thesis/, kodi që gjeneron këtë dokument nga rezultatet e ruajtura.",
         ]
     ),
-    h2("8.3", "Shtojca C: hiperparametrat dhe mekanizmat"),
-    p("""Tabela më poshtë jep mekanizmin e pikëzimit, koston asimptotike të trajnimit dhe
-      hiperparametrat bazë të secilit detektor. Vlerat lexohen nga skedari i konfigurimit, përmes
-      regjistrit të modeleve, në momentin kur gjenerohet dokumenti."""),
-    tab("model_zoo", "Hiperparametrat dhe karakteristikat e detektorëve.", font_size=7.5),
-    h2("8.4", "Shtojca D: rezultatet e plota për fold"),
+    h2("8.3", "Shtojca C: rezultatet e plota për fold"),
     p("""Tabela kryesore e Kapitullit 5 jep mesataret mbi fold-et. Këtu jepen vlerat për çdo fold,
       që lexuesi të shohë vetë shpërndarjen dhe qëndrueshmërinë e rezultateve."""),
     tab(
@@ -109,6 +104,14 @@ BLOCKS = [
             "f1_thr": "F1",
             "recall_at_100": "Recall@100",
         },
+        replace={
+            "model": {
+                "iforest": "Isolation Forest",
+                "autoencoder": "Autoencoder",
+                "ocsvm": "One-Class SVM",
+                "logreg": "LR (referencë)",
+            }
+        },
         sort=["model", "fold"],
         round={
             "ap": 4,
@@ -120,7 +123,7 @@ BLOCKS = [
         },
         font_size=8.0,
     ),
-    h2("8.5", "Shtojca E: rezultatet e ndarjes së vetme 70/30"),
+    h2("8.4", "Shtojca D: rezultatet e ndarjes së vetme 70/30"),
     p("""Për krahasim me literaturën dhe me protokollin e projekt-propozimit, tabela më poshtë jep
       rezultatet e ndarjes së vetme kronologjike 70/30. Kolonat e pragut orakull janë kufi i sipërm
       që nuk arrihet në praktikë dhe nuk duhen krahasuar me ato të pragut nga trajnimi."""),
@@ -187,7 +190,16 @@ BLOCKS = [
             "delta_ci95_high": "Kufiri i sipërm",
             "frac_replicates_positive": "Pjesa pozitive",
         },
+        replace={
+            "comparison": {
+                "Autoencoder - One-Class SVM": "Autoencoder − One-Class SVM",
+                "Autoencoder - Isolation Forest": "Autoencoder − Isolation Forest",
+                "Autoencoder - Ansambël (mesatare z)": "Autoencoder − Ansambël (mesatare z)",
+                "Ansambël (mesatare z) - One-Class SVM": "Ansambël (mesatare z) − One-Class SVM",
+            }
+        },
         round={"delta_ap_mean": 4, "delta_ci95_low": 4, "delta_ci95_high": 4},
+        fmt={"frac_replicates_positive": ".1%"},
         font_size=9.0,
     ),
     p("""Kolona e fundit e tabelës së dytë tregon në sa pjesë të mostrave bootstrap diferenca e ruan
@@ -197,16 +209,16 @@ BLOCKS = [
       është domethënës, sepse aty pyetja është nëse diferenca mbetet nga një periudhë në tjetrën. Të
       dyja janë të vërteta dhe masin gjëra të ndryshme; nëse do të raportohej vetëm e para,
       qëndrueshmëria e renditjes do të mbivlerësohej."""),
-    h2("8.6", "Shtojca F: sipërfaqja e plotë e Isolation Forest-it"),
+    h2("8.5", "Shtojca E: sipërfaqja e plotë e Isolation Forest-it"),
     p("""Kapitulli 5 e paraqet hapësirën e hiperparametrave si figurë. Tabela më poshtë jep vlerat e
       sakta, që të shihet ku ndodhet maksimumi dhe sa i sheshtë është rajoni rreth tij."""),
     tab(
         "iforest_surface",
         "AP mesatare 8-fold e Isolation Forest-it sipas numrit të pemëve dhe nën-mostrës.",
-        rename={"n_estimators": "Pemë"},
+        rename={"n_estimators": "Pemë / nën-mostër"},
         font_size=9.0,
     ),
-    h2("8.7", "Shtojca G: testet automatike"),
+    h2("8.6", "Shtojca F: testet automatike"),
     p("""Masat metodologjike të Kapitullit 4 janë të koduara edhe në teste që ekzekutohen me çdo
       ndryshim të kodit. Grupet kryesore janë këto:"""),
     bullets(
@@ -237,13 +249,4 @@ BLOCKS = [
             "rreshtash dhe vlera të paprekura.",
         ]
     ),
-    h2("8.8", "Shtojca H: mjedisi eksperimental"),
-    tab(
-        "environment",
-        "Mjedisi harduerik dhe softuerik i të gjitha matjeve.",
-        font_size=9.5,
-    ),
-    p("""Të gjitha matjet operacionale u bënë në këtë mjedis, me producer-in dhe consumer-in në të
-      njëjtin host. Vonesat e matura nuk vlejnë drejtpërsëdrejti për një sistem të shpërndarë, ku
-      kalimi nëpër rrjet do të shtonte vonesë."""),
 ]

@@ -42,15 +42,16 @@ _GJEOMETRIA = [
             "dritarja": "Dritarja",
             "rreshta": "Rreshta",
             "mashtrime": "Mashtrime",
-            "id_mle_normale": "ID (MLE)",
-            "id_twonn_normale": "ID (TwoNN)",
-            "knn_distanca_normale": "kNN legjitime",
-            "knn_distanca_mashtrime": "kNN mashtrime",
-            "raporti_distancave": "Raporti",
-            "ap_vetem_distance": "AP (vetëm distancë)",
-            "rangu_median_i_mashtrimit": "Rangu median",
-            "mashtrime_ne_top100": "Në top-100",
+            "id_mle_normale": "Dimensioni i brendshëm (MLE)",
+            "id_twonn_normale": "Dimensioni i brendshëm (TwoNN)",
+            "knn_distanca_normale": "Distanca kNN e legjitimeve",
+            "knn_distanca_mashtrime": "Distanca kNN e mashtrimeve",
+            "raporti_distancave": "Raporti i distancave",
+            "ap_vetem_distance": "AP vetëm me distancë",
+            "rangu_median_i_mashtrimit": "Rangu median i mashtrimit",
+            "mashtrime_ne_top100": "Mashtrime në 100 të parët",
         },
+        transpose="Madhësia",
         round={
             "id_mle_normale": 2,
             "id_twonn_normale": 2,
@@ -60,7 +61,7 @@ _GJEOMETRIA = [
             "ap_vetem_distance": 3,
             "rangu_median_i_mashtrimit": 0,
         },
-        font_size=8.5,
+        font_size=9.5,
     ),
     p("""Supozimi gjeometrik vlen. Distanca mediane e një mashtrimi nga dhjetë fqinjët e tij
       legjitimë më të afërt është 7.9 herë më e madhe se ajo e një transaksioni tipik legjitim, dhe
@@ -135,14 +136,13 @@ _PH1 = [
             "e2e_ms_p50": "p50",
             "e2e_ms_p95": "p95",
             "e2e_ms_p99": "p99",
-            "infer_ms_mean": "Inferenca (ms)",
+            "infer_ms_mean": "Inf. (ms)",
             "batch_size_mean": "Grupi",
             "throughput_msg_s": "msg/s",
             "cpu_percent_mean": "CPU %",
             "rss_peak_mb": "RSS (MB)",
             "throughput_ratio": "Raporti",
         },
-        widths=[2.7, 1.0, 1.25, 0.95, 0.95, 0.95, 1.25, 1.15, 1.05, 0.95, 1.0, 1.05],
         round={
             "e2e_ms_mean": 1,
             "e2e_ms_p50": 1,
@@ -303,7 +303,6 @@ _PH2 = [
             "nemenyi_CD": "CD",
             "range_i_rangjeve": "Gjerësia e rangjeve",
         },
-        fmt={"p_value": ".2e"},
         round={"friedman_chi2": 2, "nemenyi_CD": 2, "range_i_rangjeve": 2},
         font_size=9.5,
     ),
@@ -492,17 +491,13 @@ _THELLIMI = [
       përqendruar në pak dimensione, vjen nga zgjedhja e rastësishme e dimensionit të ndarjes. Kjo
       hipotezë përmendet shpesh në literaturë, por matet rrallë. Këtu testohet me tri prova të
       pavarura, pasi të jetë kontrolluar shpjegimi tjetër i mundshëm: akordimi i dobët."""),
-    tab(
-        "iforest_surface",
-        "AP mesatare 8-fold e Isolation Forest-it sipas numrit të pemëve dhe nën-mostrës.",
-        font_size=9.0,
-    ),
     p("""Hapësira e hiperparametrave nuk është e sheshtë, kështu që shpjegimi me akordim nuk mund të
       hidhet poshtë menjëherë (Figura [[fig:iforest_surface]]). Konfigurimi bazë, me 200 pemë dhe
       nën-mostër 256, jep 0.091, ndërsa më i miri, me 800 pemë dhe nën-mostër 16 384, jep 0.151, pra
       66% më shumë. Rezultatin e lëviz madhësia e nën-mostrës, me një diferencë prej 0.070, ndërsa
       numri i pemëve e lëviz vetëm 0.009. Vlera klasike 256 për nën-mostrën rezulton e
-      papërshtatshme për këtë dataset, gjë që është vetë një gjetje praktike."""),
+      papërshtatshme për këtë dataset, gjë që është vetë një gjetje praktike. Vlerat e sakta për çdo
+      kombinim jepen në Shtojcën E."""),
     fig(
         "iforest_surface",
         "Hapësira e hiperparametrave të Isolation Forest-it. Korniza me vija shënon konfigurimin "
@@ -533,7 +528,11 @@ _THELLIMI = [
     tab(
         "iforest_rotation",
         "AP e çdo fold-i në hapësirën origjinale dhe në atë të rrotulluar.",
-        font_size=9.0,
+        pivot={"index": "fold", "columns": "hapësira", "values": "ap"},
+        columns=["fold", "origjinal", "i rrotulluar"],
+        rename={"fold": "Fold", "origjinal": "Origjinale", "i rrotulluar": "E rrotulluar"},
+        round={"origjinal": 3, "i rrotulluar": 3},
+        font_size=9.5,
     ),
     p("""Prova e tretë është më e forta, sepse ndërhyn në vend që të vëzhgojë. Nëse kapaciteti
       shpenzohet mbi kolona pa sinjal, atëherë pemët që shohin më pak kolona duhet të japin detektor
@@ -551,7 +550,7 @@ _THELLIMI = [
             "fitore_ndaj_1.0": "Fitore ndaj 1.0",
             "vs_1.0": "Δ ndaj 1.0",
         },
-        round={"ap_mean": 4, "ap_std": 4, "vs_1.0": 4},
+        round={"max_features": 2, "ap_mean": 4, "ap_std": 4, "vs_1.0": 4},
         font_size=9.5,
     ),
     p("""Të tri provat tregojnë në të njëjtin drejtim dhe secila plotëson një dobësi të tjetrës:
@@ -649,6 +648,8 @@ _THELLIMI = [
             "us_per_tx": "µs/tx",
             "support_vectors": "Vektorë mbështetës",
         },
+        replace={"kernel": {"rbf": "RBF", "poly": "polinomial"}},
+        round={"us_per_tx": 1, "support_vectors": 0},
         font_size=9.5,
     ),
     p("""Kerneli RBF është qartë më i miri, me 0.151, i ndjekur nga ai sigmoid me 0.053 dhe ai
@@ -659,6 +660,8 @@ _THELLIMI = [
     tab(
         "ocsvm_surface",
         "AP mesatare 8-fold e One-Class SVM-së me kernel RBF sipas nu dhe gamma.",
+        rename={"nu": "ν / γ"},
+        fmt={"nu": "g"},
         font_size=9.5,
     ),
     p("""Maksimumi i hapësirës nu–gamma, 0.163, arrihet me nu 0.001 dhe me gamma "scale", që për
@@ -690,6 +693,7 @@ _THELLIMI = [
             "us_per_tx": "µs/tx",
             "support_vectors": "Vektorë mbështetës",
         },
+        round={"ap_mean": 3, "ap_std": 3, "fit_s": 3, "us_per_tx": 1, "support_vectors": 0},
         font_size=9.5,
     ),
     fig(
@@ -825,6 +829,7 @@ _KAUZALITETI = [
         "feature_selection_agreement",
         "Mbivendosja mes renditjes me etiketa dhe asaj sipas kurtozës, sipas k.",
         rename={"k": "k", "mbivendosja": "Mbivendosja"},
+        fmt={"mbivendosja": ".0%"},
         font_size=9.5,
     ),
     p("""Me renditjen pa etiketa përfitimet janë shumë më të vogla. Autoencoder-i fiton 0.122 me 16
@@ -981,6 +986,7 @@ _ANALIZAT = [
             "AP_i_perzier": "AP e përzier",
             "fryrja": "Fryrja",
         },
+        round={"fryrja": 2},
         font_size=9.5,
     ),
     p("""Referenca e mbikëqyrur sillet përsëri ndryshe: për të ndarja e rastësishme sjell një rënie
@@ -1074,8 +1080,26 @@ _ANALIZAT = [
       por jo e vazhdueshme."""),
     tab(
         "drift_page_hinkley",
-        "Pikat e ndryshimit sipas testit Page-Hinkley mbi pikët e anomalisë.",
-        font_size=8.0,
+        "Pikat e ndryshimit sipas testit Page-Hinkley mbi pikët e anomalisë. Kolona e fundit "
+        "tregon sa ishte përpunuar nga blloku kur u dha sinjali i parë.",
+        columns=[
+            "fold",
+            "model",
+            "threshold",
+            "n_change_points",
+            "first_change_index",
+            "detected_at_fraction",
+        ],
+        rename={
+            "fold": "Fold",
+            "model": "Detektori",
+            "threshold": "Pragu",
+            "n_change_points": "Sinjale",
+            "first_change_index": "Mesazhi i sinjalit të parë",
+            "detected_at_fraction": "Pjesa e bllokut",
+        },
+        round={"threshold": 1, "detected_at_fraction": 2},
+        font_size=9.0,
     ),
     h2("5.12", "Ku e drejtojnë vëmendjen detektorët"),
     p("""Nënkapitulli 5.5.1 mati shpërndarjen e ndarjeve brenda Isolation Forest-it. Këtu e njëjta
@@ -1088,10 +1112,21 @@ _ANALIZAT = [
         "Përputhja mes atribuimit të çdo detektori dhe sinjalit të kolonave (Spearman).",
         rename={
             "atribuimi": "Atribuimi",
-            "spearman_vs_auc_gap": "Spearman rho",
+            "spearman_vs_auc_gap": "ρ (Spearman)",
             "p_value": "p",
             "top3": "Tri kolonat kryesore",
         },
+        replace={
+            "atribuimi": {
+                "autoencoder (gabim rindërtimi)": "Autoencoder (gabim rindërtimi)",
+                "autoencoder (permutim)": "Autoencoder (permutim)",
+                "isolation forest (SHAP)": "Isolation Forest (SHAP)",
+                "isolation forest (permutim)": "Isolation Forest (permutim)",
+                "one-class SVM (permutim)": "One-Class SVM (permutim)",
+                "sinjali univariat (referencë)": "Sinjali njëvariablësh (referencë)",
+            }
+        },
+        round={"spearman_vs_auc_gap": 2},
         font_size=9.5,
     ),
     p("""Krahasimi i drejtë përdor të njëjtën masë për të tre, rëndësinë me permutim (Figura
@@ -1140,8 +1175,10 @@ _ANALIZAT = [
             "precision": "Precision",
             "recall": "Recall",
             "f1": "F1",
-            "alerts_per_block": "Alarme/bllok",
+            "alerts_per_block": "Alarme për bllok",
         },
+        fmt={"alert_rate": ".2%", "worst_slice_rate": ".1%"},
+        round={"alert_rate_cv": 2, "precision": 3, "recall": 3, "f1": 3, "alerts_per_block": 1},
         font_size=9.0,
     ),
     p("""Qëllimi kryesor arrihet. Koeficienti i variacionit të normës së alarmeve bie nga 0.84 në
@@ -1183,6 +1220,8 @@ _ANALIZAT = [
             "norma_z_mediane": "‖z‖ mediane",
             "pjesa": "Pjesa",
         },
+        round={"shuma_mesatare": 2, "norma_z_mediane": 1},
+        fmt={"pjesa": ".0%"},
         font_size=9.5,
     ),
     p("""Nga 251 mashtrimet e tetë blloqeve të testimit, 93 (37%) nuk i arrin asnjë detektor, ndërsa
@@ -1216,6 +1255,8 @@ _ANALIZAT = [
             "norma_z_mediane": "‖z‖ mediane",
             "kapur_nga_LR": "Kapur nga referenca",
         },
+        round={"shuma_mediane": 2, "norma_z_mediane": 1},
+        fmt={"kapur_nga_LR": ".0%"},
         font_size=9.5,
     ),
     p("""Mashtrimet e paarritura nuk janë transaksione të vogla që humbasin në zhurmë: shuma e tyre
@@ -1230,7 +1271,22 @@ _ANALIZAT = [
     tab(
         "unsupervised_selection",
         "Konfigurimi i zgjedhur nga kriteret pa etiketa dhe ai i zgjedhur me etiketa.",
-        font_size=8.0,
+        rename={
+            "Konfigurime": "Konfigurime në rrjetë",
+            "EM përputhet": "EM përputhet me AP",
+            "MV përputhet": "MV përputhet me AP",
+            "Humbja e AP me EM": "Humbja e AP-së me EM",
+            "rho(AP, EM)": "ρ(AP, EM)",
+            "rho(AP, −MV)": "ρ(AP, −MV)",
+        },
+        round={
+            "Humbja e AP me EM": 3,
+            "Humbja relative": 2,
+            "rho(AP, EM)": 2,
+            "rho(AP, −MV)": 2,
+        },
+        transpose="",
+        font_size=8.5,
     ),
     p("""Rezultati është kryesisht negativ. Excess-Mass zgjedh të njëjtin konfigurim si kriteri me
       etiketa për zero nga tre detektorë, dhe Mass-Volume për një nga tre. Kur zgjedhjet ndryshojnë,
@@ -1260,7 +1316,27 @@ _ANALIZAT = [
     tab(
         "best_effort",
         "AP mesatare 8-fold në katër qelizat e dizajnit 2×2.",
-        font_size=9.0,
+        columns=[
+            "model",
+            "parazgjedhur / standard",
+            "parazgjedhur / më i miri",
+            "i akorduar / standard",
+            "i akorduar / më i miri",
+        ],
+        rename={
+            "model": "Detektori",
+            "parazgjedhur / standard": "Bazë",
+            "parazgjedhur / më i miri": "Vetëm paraprocesimi",
+            "i akorduar / standard": "Vetëm akordimi",
+            "i akorduar / më i miri": "Të dyja",
+        },
+        round={
+            "parazgjedhur / standard": 3,
+            "parazgjedhur / më i miri": 3,
+            "i akorduar / standard": 3,
+            "i akorduar / më i miri": 3,
+        },
+        font_size=9.5,
     ),
     p("""Në qelizën e tij më të mirë, One-Class SVM arrin 0.368 me transformim kuantil dhe
       hiperparametra bazë, Autoencoder-i 0.335 me akordim dhe StandardScaler, dhe Isolation Forest-i
@@ -1281,16 +1357,26 @@ _ANALIZAT = [
         "Kontributi i paraprocesimit, i akordimit dhe ndërveprimi mes tyre për çdo detektor.",
         rename={
             "Detektori": "Detektori",
-            "bazë": "Bazë",
-            "vetëm paraprocesim": "Vetëm paraprocesim",
-            "vetëm akordim": "Vetëm akordim",
-            "të dyja": "Të dyja",
-            "shuma e efekteve": "Shuma e efekteve",
+            "bazë": "AP bazë",
+            "vetëm paraprocesim": "Efekti i paraprocesimit",
+            "vetëm akordim": "Efekti i akordimit",
+            "të dyja": "Efekti i të dyjave",
+            "shuma e efekteve": "Shuma e dy efekteve",
             "ndërveprimi": "Ndërveprimi",
             "qeliza më e mirë": "Qeliza më e mirë",
-            "AP më i mirë i arritshëm": "AP më e mirë",
+            "AP më i mirë i arritshëm": "AP në qelizën më të mirë",
         },
-        font_size=8.0,
+        round={
+            "bazë": 3,
+            "vetëm paraprocesim": 3,
+            "vetëm akordim": 3,
+            "të dyja": 3,
+            "shuma e efekteve": 3,
+            "ndërveprimi": 3,
+            "AP më i mirë i arritshëm": 3,
+        },
+        transpose="",
+        font_size=9.0,
     ),
     p("""Dy ndërhyrjet nuk mblidhen. Për Autoencoder-in ndërveprimi është −0.208 dhe për One-Class
       SVM −0.156, kështu që për të dy kombinimi i të dyjave jep më pak se ndërhyrja e vetme më e
