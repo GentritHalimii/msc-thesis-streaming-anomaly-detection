@@ -29,7 +29,19 @@ from src.data.load import load_transactions
 from src.data.scale import fit_scaler, transform
 from src.evaluation.manifest import write_manifest
 from src.evaluation.protocol import rolling_origin_folds
-from src.evaluation.report import AX, MODEL_LABELS, model_color, new_figure, save_figure, save_table
+from src.evaluation.report import (
+    AX,
+    CM,
+    FULL_WIDTH,
+    MODEL_LABELS,
+    fig_legend_above,
+    model_plot_kwargs,
+    new_figure,
+    ordered_models,
+    save_figure,
+    save_table,
+    value_grid,
+)
 from src.models.build import ALL_MODELS, build_model
 
 K_VALUES = [3, 5, 8, 12, 16, 20, 29]
@@ -103,7 +115,12 @@ def main(cfg=None):
 
     per_fold = pd.DataFrame(rows)
     save_table(per_fold, results_dir, "feature_selection_per_fold", float_fmt="%.5f")
+    agreement = pd.DataFrame(agreement_rows).groupby("k")["mbivendosja"].mean().reset_index()
+    save_table(agreement, results_dir, "feature_selection_agreement", float_fmt="%.3f")
+    summarise(cfg, results_dir, per_fold, agreement)
 
+
+def summarise(cfg, results_dir, per_fold: pd.DataFrame, agreement: pd.DataFrame) -> None:
     summary = (
         per_fold.groupby(["renditja", "model", "k"])["ap"]
         .agg(ap_mean="mean", ap_std="std")
@@ -117,9 +134,6 @@ def main(cfg=None):
     out["model"] = out["model"].map(lambda m: MODEL_LABELS.get(m, m))
     save_table(out, results_dir, "feature_selection", float_fmt="%.4f")
 
-    agreement = pd.DataFrame(agreement_rows).groupby("k")["mbivendosja"].mean().reset_index()
-    save_table(agreement, results_dir, "feature_selection_agreement", float_fmt="%.3f")
-
     print("\n=== fitimi maksimal nga përzgjedhja e veçorive ===")
     gains = (
         summary[summary["renditja"] == "sinjali (me etiketa)"]
@@ -128,52 +142,67 @@ def main(cfg=None):
     )
     print(gains[["model", "k", "ap_mean", "vs_te_gjitha"]].to_string(index=False))
 
-    # --- Figure: quality against the number of components kept ------------
-    fig, axes = new_figure(ncols=2, figsize=(7.6, 4.0), sharey=True)
-    for ax, (label, _) in zip(axes, RANKINGS.items(), strict=True):
-        subset = summary[summary["renditja"] == label]
-        for name in ALL_MODELS:
-            curve = subset[subset["model"] == name].sort_values("k")
-            ax.errorbar(
-                curve["k"],
-                curve["ap_mean"],
-                yerr=curve["ap_std"],
-                marker="o",
-                markersize=4,
-                capsize=2,
-                linewidth=1.5,
-                color=model_color(name),
-                label=MODEL_LABELS.get(name, name),
-            )
-        ax.set_xlabel("Numri i komponentëve të ruajtur (k)")
-        ax.set_title(label, fontsize=10)
-    axes[0].set_ylabel(AX["ap"])
-    axes[1].legend(loc="center left", bbox_to_anchor=(1.02, 0.5), fontsize=8.5)
-    save_figure(fig, REPO_ROOT / cfg.results_dir, "feature_selection")
+    figure(cfg, summary)
 
     signal_gains = summary[summary["renditja"] == "sinjali (me etiketa)"]
     best_gain = signal_gains.loc[signal_gains.groupby("model")["vs_te_gjitha"].idxmax()]
-    parts = []
-    for _, r in best_gain.iterrows():
-        parts.append(
-            f"{MODEL_LABELS.get(r['model'], r['model'])} {r['vs_te_gjitha']:+.3f} "
-            f"njësi AP në k={int(r['k'])}"
-        )
+    parts = [
+        f"{MODEL_LABELS.get(r['model'], r['model'])} {r['vs_te_gjitha']:+.3f} "
+        f"njësi AP në k={int(r['k'])}"
+        for _, r in best_gain.iterrows()
+    ]
     unsup_gain = best_gain[best_gain["model"] != "logreg"].set_index("model")["vs_te_gjitha"]
+    leader = unsup_gain.idxmax()
     verdict = (
-        "Kufizimi i hyrjes te komponentët informativë e ndryshon ndjeshëm renditjen. "
-        f"Fitimet maksimale: {', '.join(parts)}. Isolation Forest fiton "
-        f"{unsup_gain.get('iforest', float('nan')):+.3f} njësi AP, dukshëm më shumë se "
-        f"Autoencoder ({unsup_gain.get('autoencoder', float('nan')):+.3f}) dhe One-Class "
-        f"SVM ({unsup_gain.get('ocsvm', float('nan')):+.3f}), çka konfirmon në mënyrë "
-        f"kauzale se shpërndarja e ndarjeve mbi kolona pa sinjal është mekanizmi i "
-        f"dobësisë së tij. Renditja pa etiketa me kurtozë përputhet me atë me etiketa në "
-        f"rreth {100 * agreement['mbivendosja'].mean():.0f}% të rasteve mesatarisht."
+        f"Fitimet maksimale nga kufizimi i hyrjes te komponentët informativë: "
+        f"{', '.join(parts)}. Fitimi më i madh mes detektorëve unsupervised i takon "
+        f"{MODEL_LABELS[leader]}-it ({unsup_gain[leader]:+.3f}). Renditja pa etiketa me "
+        f"kurtozë përputhet me atë me etiketa mesatarisht në "
+        f"{100 * agreement['mbivendosja'].mean():.0f}% të komponentëve."
     )
     (results_dir / "feature_selection_verdict.txt").write_text(verdict + "\n")
     print("\n" + verdict)
     write_manifest(results_dir, "exp25_feature_selection", cfg.raw)
 
 
+def figure(cfg, summary: pd.DataFrame) -> None:
+    fig, axes = new_figure(ncols=2, figsize=(FULL_WIDTH, 6.8 * CM), sharey=True)
+    titles = {
+        "sinjali (me etiketa)": "Renditja sipas sinjalit (me etiketa)",
+        "kurtoza (pa etiketa)": "Renditja sipas kurtozës (pa etiketa)",
+    }
+    for ax, label in zip(axes, RANKINGS, strict=True):
+        subset = summary[summary["renditja"] == label]
+        for name in ordered_models(subset["model"].unique()):
+            curve = subset[subset["model"] == name].sort_values("k")
+            ax.plot(curve["k"], curve["ap_mean"], **model_plot_kwargs(name, markers=True))
+        ax.set_xticks(K_VALUES)
+        ax.set_xlabel("Komponentë të mbajtur (k)")
+        ax.set_title(titles[label], loc="left", fontsize=8.5)
+        value_grid(ax, "y")
+    axes[0].set_ylabel(AX["ap"] + ", mesatare")
+    axes[0].set_ylim(0, 0.8)
+    handles, labels = axes[0].get_legend_handles_labels()
+    fig_legend_above(fig, handles, labels)
+    save_figure(fig, REPO_ROOT / cfg.results_dir, "feature_selection")
+
+
+def main_from_saved(cfg=None):
+    cfg = cfg or load_config()
+    results_dir = REPO_ROOT / cfg.results_dir
+    summarise(
+        cfg,
+        results_dir,
+        pd.read_csv(results_dir / "feature_selection_per_fold.csv"),
+        pd.read_csv(results_dir / "feature_selection_agreement.csv"),
+    )
+
+
 if __name__ == "__main__":
-    main()
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--from-saved", action="store_true", help="rebuild from feature_selection_per_fold.csv"
+    )
+    main_from_saved() if parser.parse_args().from_saved else main()

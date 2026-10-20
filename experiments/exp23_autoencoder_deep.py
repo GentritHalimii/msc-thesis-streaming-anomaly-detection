@@ -22,6 +22,7 @@ over the full rolling-origin protocol:
 import argparse
 import sys
 
+import matplotlib as mpl
 import numpy as np
 import pandas as pd
 from sklearn.metrics import average_precision_score
@@ -31,7 +32,23 @@ from src.data.load import load_transactions
 from src.data.scale import fit_scaler, transform
 from src.evaluation.manifest import write_manifest
 from src.evaluation.protocol import rolling_origin_folds
-from src.evaluation.report import AX, new_figure, save_figure, save_table
+from src.evaluation.report import (
+    AX,
+    CM,
+    FULL_WIDTH,
+    INK,
+    INK_2,
+    MUTED,
+    annotate_cells,
+    legend_above,
+    model_color,
+    model_plot_kwargs,
+    new_figure,
+    outline_cell,
+    save_figure,
+    save_table,
+    value_grid,
+)
 from src.models.autoencoder import AutoencoderModel
 from src.models.build import build_model
 
@@ -43,7 +60,6 @@ DROPOUTS = [0.0, 0.1, 0.2, 0.3]
 WEIGHT_DECAYS = [0.0, 1e-6, 1e-4, 1e-2]
 NOISE_LEVELS = [0.0, 0.1, 0.25, 0.5]
 EPOCH_COUNTS = [5, 10, 20, 40, 60]
-GREEN, GREY = "#1baf7a", "#898781"
 
 
 def fold_matrices(cfg, df, fold):
@@ -170,130 +186,161 @@ def summarise(cfg, results_dir, df, folds, table):
     save_table(flat, results_dir, "autoencoder_studies", float_fmt="%.4f")
     save_table(tidy_summary(summaries), results_dir, "autoencoder_studies_tidy", float_fmt="%.4f")
 
-    # ---- figure: architecture surface -----------------------------------
+    figures(cfg, results_dir, df, folds, table)
     arch = table[table["study"] == "arkitektura"]
+    _write_verdict(results_dir, summaries, arch, table)
+    write_manifest(results_dir, "exp23_autoencoder_deep", cfg.raw)
+
+
+def figures(cfg, results_dir, df, folds, table):
+    """The three Autoencoder figures from the per-fold record.
+
+    The training curve is the only one that needs a model; its loss history
+    is cached the first time, so a restyle never refits.
+    """
+    arch = table[table["study"] == "arkitektura"]
+    color = model_color("autoencoder")
+
+    # ---- architecture surface -------------------------------------------
     grid = arch.groupby(["hidden_dim", "latent_dim"])["ap"].mean().unstack()
-    fig, ax = new_figure(figsize=(6.6, 3.4))
-    im = ax.imshow(grid.to_numpy(), cmap="Greens", aspect="auto", origin="lower")
+    fig, ax = new_figure(figsize=(FULL_WIDTH, 5.2 * CM))
+    image = ax.imshow(grid.to_numpy(), cmap="Greens", aspect="auto", origin="lower")
     ax.set_xticks(range(len(grid.columns)), [f"{int(c)}" for c in grid.columns])
     ax.set_yticks(range(len(grid.index)), [f"{int(i)}" for i in grid.index])
     ax.set_xlabel(AX["latent"])
-    ax.set_ylabel("Gjerësia e shtresës së fshehur")
-    for i in range(grid.shape[0]):
-        for j in range(grid.shape[1]):
-            value = grid.iat[i, j]
-            if np.isfinite(value):
-                ax.text(
-                    j,
-                    i,
-                    f"{value:.3f}",
-                    ha="center",
-                    va="center",
-                    fontsize=7.5,
-                    color="#ffffff" if value > np.nanmean(grid.to_numpy()) else "#0b0b0b",
-                )
-    ax.grid(visible=False)
-    fig.colorbar(im, ax=ax, shrink=0.85, label=AX["ap"])
+    ax.set_ylabel("Gjerësia e shtresës\nsë fshehur")
+    ax.tick_params(length=0)
+    for side in ("left", "bottom"):
+        ax.spines[side].set_visible(False)
+    ax.grid(False)
+    values = grid.to_numpy()
+    annotate_cells(ax, values, image)
+    for i, j in zip(*np.where(~np.isfinite(values)), strict=True):
+        # A latent layer at least as wide as the hidden one is not a
+        # bottleneck, so those cells were never fitted.
+        ax.text(j, i, "pa ngushticë", ha="center", va="center", fontsize=7, color=MUTED)
+    default = (list(grid.index).index(16), list(grid.columns).index(8))
+    best = np.unravel_index(np.nanargmax(values), values.shape)
+    outline_cell(ax, *default, color=INK, lw=1.2, ls=(0, (2, 1.5)))
+    outline_cell(ax, *best, color=INK, lw=1.6)
+    bar = fig.colorbar(image, ax=ax, shrink=0.9, pad=0.02)
+    bar.set_label("AP")
+    bar.outline.set_visible(False)
     save_figure(fig, REPO_ROOT / cfg.results_dir, "autoencoder_architecture")
 
-    # ---- figure: non-linear encoder against the linear floor -------------
-    fig, ax = new_figure(figsize=(6.6, 4.0))
+    # ---- non-linear encoder against the linear floor ---------------------
     # The widest hidden layer, matching the verdict. At hidden_dim=16 the
     # encoder cannot reach the larger latent widths at all, so the curve
     # stopped short of the linear one and the two were not comparable over
     # the same range.
     widest = arch["hidden_dim"].max()
-    ae_curve = arch[arch["hidden_dim"] == widest].groupby("latent_dim")["ap"].agg(["mean", "std"])
-    pca_curve = (
-        table[table["study"] == "PCA lineare"].groupby("latent_dim")["ap"].agg(["mean", "std"])
-    )
-    ax.errorbar(
-        ae_curve.index,
-        ae_curve["mean"],
-        yerr=ae_curve["std"],
-        marker="o",
-        markersize=4,
-        color=GREEN,
-        capsize=2,
-        label=f"Autoencoder jolinear (gjerësia {int(widest)})",
-    )
-    ax.errorbar(
-        pca_curve.index,
-        pca_curve["mean"],
-        yerr=pca_curve["std"],
-        marker="s",
-        markersize=4,
-        color="#008300",
-        linestyle=":",
-        capsize=2,
-        label="PCA lineare (ablacion)",
-    )
-    intrinsic = _intrinsic_dimension(results_dir)
-    if intrinsic is not None:
-        ax.axvline(intrinsic, color=GREY, lw=1.2, ls="--")
-        # Anchored near the floor in axes coordinates so the rotated label
-        # grows upward from there instead of running under the legend.
+    ae_curve = arch[arch["hidden_dim"] == widest].groupby("latent_dim")["ap"].mean()
+    pca_curve = table[table["study"] == "PCA lineare"].groupby("latent_dim")["ap"].mean()
+    fig, ax = new_figure(figsize=(FULL_WIDTH, 6.4 * CM))
+    geometry = _geometry(results_dir)
+    if geometry is not None:
+        low, high = sorted(geometry)
+        ax.axvspan(low, high, color="#f1f0eb", zorder=0, linewidth=0)
         ax.text(
-            intrinsic,
-            0.02,
-            f" dimensioni i brendshëm ≈ {intrinsic:.1f}",
+            (low + high) / 2,
+            0.98,
+            "dimensioni i brendshëm\n(TwoNN deri MLE)",
             transform=ax.get_xaxis_transform(),
-            fontsize=8,
-            color=GREY,
-            rotation=90,
-            va="bottom",
+            ha="center",
+            va="top",
+            fontsize=7,
+            color=MUTED,
         )
-    ax.set_xlabel(AX["latent"])
-    ax.set_ylabel(AX["ap"])
-    ax.legend(loc="upper left", fontsize=8.5)
+    ax.plot(
+        ae_curve.index,
+        ae_curve.to_numpy(),
+        label=f"Autoencoder (gjerësia {int(widest)})",
+        **model_plot_kwargs("autoencoder", with_label=False, markers=True),
+    )
+    ax.plot(
+        pca_curve.index,
+        pca_curve.to_numpy(),
+        label="Rindërtim linear me PCA",
+        **model_plot_kwargs("pca_recon", with_label=False, markers=True),
+    )
+    ax.set_xticks(sorted(set(ae_curve.index) | set(pca_curve.index)))
+    ax.set_xlabel(AX["latent"] + " (për PCA: numri i komponentëve)")
+    ax.set_ylabel(AX["ap"] + ", mesatare")
+    ax.set_ylim(0, None)
+    value_grid(ax, "y")
+    legend_above(ax)
     save_figure(fig, REPO_ROOT / cfg.results_dir, "autoencoder_vs_linear")
 
-    # ---- figure: training dynamics --------------------------------------
-    X_norm, X_test, y_test = fold_matrices(cfg, df, folds[-1])
-    long_run = AutoencoderModel(epochs=max(EPOCH_COUNTS), seed=cfg.seed).fit(X_norm)
-    epochs_tab = table[table["study"] == "epoka"].groupby("epochs")["ap"].agg(["mean", "std"])
-    fig, ax1 = new_figure(figsize=(6.8, 4.0))
-    ax1.plot(
-        range(1, len(long_run.history) + 1),
-        long_run.history,
-        color=GREY,
-        linewidth=1.6,
-        label="Humbja e trajnimit (majtas)",
+    # ---- training dynamics ------------------------------------------------
+    # Two panels on one epoch axis rather than one panel with two y-scales:
+    # the alignment of two scales is arbitrary and would invent a crossing.
+    history_path = results_dir / "autoencoder_training_history.csv"
+    if history_path.exists():
+        history = pd.read_csv(history_path)["loss"].to_numpy()
+    else:
+        X_norm, _, _ = fold_matrices(cfg, df, folds[-1])
+        long_run = AutoencoderModel(epochs=max(EPOCH_COUNTS), seed=cfg.seed).fit(X_norm)
+        history = np.asarray(long_run.history)
+        save_table(
+            pd.DataFrame({"epoch": np.arange(1, len(history) + 1), "loss": history}),
+            results_dir,
+            "autoencoder_training_history",
+            float_fmt="%.6f",
+        )
+    epochs_tab = table[table["study"] == "epoka"]
+    fig, (ax1, ax2) = new_figure(nrows=2, sharex=True, figsize=(FULL_WIDTH, 8.0 * CM))
+    ax1.plot(np.arange(1, len(history) + 1), history, color=INK_2, linewidth=1.4)
+    ax1.set_ylabel("Humbja e trajnimit\n(fold-i i fundit)")
+    value_grid(ax1, "y")
+    # One faint line per fold, so the reader can see that the folds do not
+    # move together: the mean falls only because of the fold with the cluster.
+    per_fold = epochs_tab.pivot(index="fold", columns="epochs", values="ap")
+    drop = per_fold[per_fold.columns.max()] - per_fold[per_fold.columns[per_fold.mean().argmax()]]
+    for _, row in per_fold.iterrows():
+        ax2.plot(row.index, row.to_numpy(), color=color, alpha=0.3, linewidth=0.9)
+    worst = int(drop.idxmin())
+    ax2.annotate(
+        f"fold {worst}",
+        (per_fold.columns[-1], per_fold.loc[worst].iloc[-1]),
+        xytext=(4, 0),
+        textcoords="offset points",
+        fontsize=7,
+        color=INK_2,
+        va="center",
     )
-    ax1.set_xlabel(AX["epochs"])
-    ax1.set_ylabel("Humbja e rindërtimit (trajnim)")
-    ax2 = ax1.twinx()
-    ax2.errorbar(
-        epochs_tab.index,
-        epochs_tab["mean"],
-        yerr=epochs_tab["std"],
-        marker="o",
+    mean = per_fold.mean()
+    ax2.plot(
+        mean.index,
+        mean.to_numpy(),
+        color=color,
+        linewidth=1.8,
+        marker="D",
         markersize=5,
-        color=GREEN,
-        capsize=2,
-        label="Cilësia e zbulimit (djathtas)",
+        markeredgecolor="#ffffff",
+        markeredgewidth=0.8,
+        zorder=4,
+        label="mesatarja mbi fold-e",
     )
-    ax2.set_ylabel(AX["ap"] + " në blloqet e testimit")
-    ax2.grid(visible=False)
-    # An errorbar's labelled artist is the container, not its first Line2D;
-    # taking the line gave a legend entry reading "_nolegend_".
-    handles = [*ax1.get_legend_handles_labels()[0], *ax2.get_legend_handles_labels()[0]]
-    labels = [*ax1.get_legend_handles_labels()[1], *ax2.get_legend_handles_labels()[1]]
-    # Above the axes: the curves cross the middle of the panel, so any
-    # in-frame position sits on top of data.
-    ax1.legend(
-        handles,
-        labels,
-        loc="lower center",
-        bbox_to_anchor=(0.5, 1.01),
-        ncol=2,
-        frameon=False,
-        fontsize=8.5,
-    )
+    ax2.legend(loc="lower left", frameon=False)
+    ax2.set_yscale("log")
+    ax2.yaxis.set_major_formatter(mpl.ticker.FuncFormatter(lambda v, _: f"{v:g}"))
+    ax2.set_ylabel("AP në blloqet e testimit\n(shkallë log)")
+    ax2.set_xlabel(AX["epochs"])
+    ax2.set_xticks([1, 5, 10, 20, 40, 60])
+    ax2.set_xlim(0, 66)
+    value_grid(ax2, "y")
     save_figure(fig, REPO_ROOT / cfg.results_dir, "autoencoder_training")
 
-    _write_verdict(results_dir, summaries, arch, table)
-    write_manifest(results_dir, "exp23_autoencoder_deep", cfg.raw)
+
+def _geometry(results_dir):
+    """Both intrinsic-dimension estimates of the normal class, if measured."""
+    path = results_dir / "geometry_summary.csv"
+    if not path.exists():
+        return None
+    row = pd.read_csv(path).query("dritarja == 'trajnim'")
+    if row.empty:
+        return None
+    return float(row["id_twonn_normale"].iloc[0]), float(row["id_mle_normale"].iloc[0])
 
 
 def _intrinsic_dimension(results_dir):
@@ -388,12 +435,23 @@ def _write_verdict(results_dir, summaries, arch, table):
 
     epochs = summaries["epoka"].set_index("epochs")["ap_mean"]
     peak = int(epochs.idxmax())
-    if peak < int(epochs.index.max()):
+    last = int(epochs.index.max())
+    if peak < last:
+        # The mean can fall because of a single fold; the claim that longer
+        # training hurts is only made if the folds agree on it.
+        per_fold = table[table["study"] == "epoka"].pivot(
+            index="fold", columns="epochs", values="ap"
+        )
+        diff = per_fold[last] - per_fold[peak]
+        worse = int((diff < 0).sum())
+        biggest = int(diff.idxmin())
+        mean_without = float(diff.drop(biggest).mean())
         lines.append(
-            f"Trajnimi kulmon në {peak} epoka (AP {float(epochs.loc[peak]):.4f}) dhe bie në "
-            f"{float(epochs.loc[epochs.index.max()]):.4f} me "
-            f"{int(epochs.index.max())} epoka, çka përputhet me mekanizmin ku rrjeti i "
-            f"mbitrajnuar fillon t'i rindërtojë mirë edhe anomalitë."
+            f"Mesatarja kulmon në {peak} epoka (AP {float(epochs.loc[peak]):.4f}) dhe bie në "
+            f"{float(epochs.loc[last]):.4f} me {last} epoka, por rënia nuk është e njëtrajtshme: "
+            f"trajnimi më i gjatë e ul AP-në në {worse} nga {len(diff)} fold-e, rënia më e madhe "
+            f"është në fold-in {biggest} ({float(diff.loc[biggest]):+.4f}), dhe pa atë fold "
+            f"ndryshimi mesatar është {mean_without:+.4f}."
         )
 
     (results_dir / "autoencoder_verdict.txt").write_text("\n".join(lines) + "\n")

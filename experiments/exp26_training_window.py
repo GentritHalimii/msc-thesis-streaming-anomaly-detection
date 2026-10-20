@@ -13,6 +13,7 @@ different reason: if quality saturates well below the full window, the
 quadratic training cost of the kernel method stops being a limitation.
 """
 
+import matplotlib as mpl
 import pandas as pd
 from sklearn.metrics import average_precision_score
 
@@ -21,10 +22,86 @@ from src.data.load import load_transactions
 from src.data.scale import fit_scaler, transform
 from src.evaluation.manifest import write_manifest
 from src.evaluation.protocol import rolling_origin_folds
-from src.evaluation.report import AX, MODEL_LABELS, model_color, new_figure, save_figure, save_table
+from src.evaluation.report import (
+    AX,
+    BASELINE,
+    CM,
+    FULL_WIDTH,
+    MODEL_LABELS,
+    legend_above,
+    model_plot_kwargs,
+    new_figure,
+    ordered_models,
+    save_figure,
+    save_table,
+    value_grid,
+)
 from src.models.build import ALL_MODELS, build_model
 
 WINDOW_SIZES = [10000, 25000, 50000, 100000, 200000]
+
+
+def figure(cfg, curve: pd.DataFrame, expanding: pd.DataFrame) -> None:
+    """Sliding windows of growing length, with the expanding window at the end.
+
+    The longest window exists only in the last folds, so its point is drawn
+    hollow: it is an average over a different, easier set of blocks and
+    should not be read as a continuation of the curve.
+    """
+    complete = curve.groupby("madhesia")["n"].min()
+    full_n = complete.max()
+    expanding_x = 4.0e5
+    fig, ax = new_figure(figsize=(FULL_WIDTH, 6.8 * CM))
+    for name in ordered_models(curve["model"].unique()):
+        sub = curve[curve["model"] == name].sort_values("madhesia")
+        kw = model_plot_kwargs(name, markers=True)
+        whole = sub[sub["n"] == full_n]
+        partial = sub[sub["n"] < full_n]
+        ax.plot(whole["madhesia"], whole["ap_mean"], **kw)
+        if len(partial):
+            ax.plot(
+                [whole["madhesia"].iloc[-1], *partial["madhesia"]],
+                [whole["ap_mean"].iloc[-1], *partial["ap_mean"]],
+                color=kw["color"],
+                linestyle=(0, (2, 2)),
+                linewidth=1.0,
+            )
+            ax.plot(
+                partial["madhesia"],
+                partial["ap_mean"],
+                linestyle="none",
+                marker=kw["marker"],
+                markersize=5,
+                markerfacecolor="#ffffff",
+                markeredgecolor=kw["color"],
+                markeredgewidth=1.1,
+            )
+        reference = expanding.loc[expanding["model"] == name, "ap_mean"].iloc[0]
+        ax.plot(
+            [expanding_x],
+            [reference],
+            linestyle="none",
+            marker=kw["marker"],
+            markersize=6,
+            color=kw["color"],
+            markeredgecolor="#ffffff",
+            markeredgewidth=0.8,
+        )
+    ax.axvline(2.8e5, color=BASELINE, lw=0.8)
+    sizes = sorted(curve["madhesia"].unique())
+    ax.set_xscale("log")
+    ax.set_xticks(
+        [*sizes, expanding_x],
+        [f"{int(v / 1000)} mijë" for v in sizes] + ["gjithë\nhistoriku"],
+    )
+    ax.xaxis.set_minor_locator(mpl.ticker.NullLocator())
+    ax.set_xlim(7e3, 5.5e5)
+    ax.set_ylim(0, 0.85)
+    ax.set_xlabel("Gjatësia e dritares së trajnimit (transaksione)")
+    ax.set_ylabel(AX["ap"] + ", mesatare")
+    value_grid(ax, "y")
+    legend_above(ax)
+    save_figure(fig, REPO_ROOT / cfg.results_dir, "training_window")
 
 
 def main(cfg=None):
@@ -75,6 +152,10 @@ def main(cfg=None):
 
     per_fold = pd.DataFrame(rows)
     save_table(per_fold, results_dir, "training_window_per_fold", float_fmt="%.5f")
+    summarise(cfg, results_dir, per_fold)
+
+
+def summarise(cfg, results_dir, per_fold: pd.DataFrame) -> None:
 
     sliding = per_fold[per_fold["eshte_rreshqitese"]]
     curve = (
@@ -98,36 +179,7 @@ def main(cfg=None):
     print("\n=== dritare që zgjerohet ===")
     print(exp_out.to_string(index=False))
 
-    # --- Figure: learning curve against the expanding-window baseline -----
-    fig, ax = new_figure(figsize=(7.0, 4.2))
-    for name in ALL_MODELS:
-        sub = curve[curve["model"] == name].sort_values("madhesia")
-        ax.errorbar(
-            sub["madhesia"],
-            sub["ap_mean"],
-            yerr=sub["ap_std"],
-            marker="o",
-            markersize=4,
-            capsize=2,
-            linewidth=1.5,
-            color=model_color(name),
-            label=MODEL_LABELS.get(name, name),
-        )
-        reference = expanding.loc[expanding["model"] == name, "ap_mean"].iloc[0]
-        ax.axhline(reference, color=model_color(name), lw=1, ls=":", alpha=0.7)
-    ax.set_xscale("log")
-    ax.set_xlabel(AX["train_size"] + " në një dritare rrëshqitëse")
-    ax.set_ylabel(AX["ap"])
-    ax.text(
-        0.02,
-        0.02,
-        "vijat me pika: dritarja që zgjerohet (gjithë historiku)",
-        transform=ax.transAxes,
-        fontsize=8,
-        color="#898781",
-    )
-    ax.legend(loc="center left", bbox_to_anchor=(1.02, 0.5), fontsize=8.5)
-    save_figure(fig, REPO_ROOT / cfg.results_dir, "training_window")
+    figure(cfg, curve, expanding)
 
     # --- verdict ----------------------------------------------------------
     best_sliding = curve.loc[curve.groupby("model")["ap_mean"].idxmax()].set_index("model")
@@ -182,5 +234,17 @@ def main(cfg=None):
     write_manifest(results_dir, "exp26_training_window", cfg.raw)
 
 
+def main_from_saved(cfg=None):
+    cfg = cfg or load_config()
+    results_dir = REPO_ROOT / cfg.results_dir
+    summarise(cfg, results_dir, pd.read_csv(results_dir / "training_window_per_fold.csv"))
+
+
 if __name__ == "__main__":
-    main()
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--from-saved", action="store_true", help="rebuild from training_window_per_fold.csv"
+    )
+    main_from_saved() if parser.parse_args().from_saved else main()

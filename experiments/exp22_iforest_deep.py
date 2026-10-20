@@ -24,9 +24,12 @@ Does adding trees ever converge: quality is tracked against the number of
 estimators to separate "under-trained" from "structurally limited".
 """
 
+import argparse
+
+import matplotlib as mpl
 import numpy as np
 import pandas as pd
-from scipy.stats import ortho_group
+from scipy.stats import ortho_group, spearmanr
 from sklearn.metrics import average_precision_score, roc_auc_score
 
 from src.config import REPO_ROOT, load_config
@@ -34,13 +37,27 @@ from src.data.load import FEATURE_COLUMNS, load_transactions
 from src.data.scale import fit_scaler, transform
 from src.evaluation.manifest import write_manifest
 from src.evaluation.protocol import rolling_origin_folds
-from src.evaluation.report import AX, new_figure, save_figure, save_table
+from src.evaluation.report import (
+    AX,
+    CM,
+    FULL_WIDTH,
+    INK,
+    INK_2,
+    annotate_cells,
+    fig_legend_above,
+    model_color,
+    new_figure,
+    outline_cell,
+    save_figure,
+    save_table,
+    strip_vertical,
+    value_grid,
+)
 from src.models.build import build_model
 
 N_ESTIMATORS = [50, 100, 200, 400, 800]
 MAX_SAMPLES = [64, 128, 256, 512, 1024, 4096, 16384]
 MAX_FEATURES = [0.1, 0.2, 0.35, 0.5, 0.75, 1.0]
-BLUE, RED, GREY = "#2a78d6", "#e34948", "#898781"
 
 
 def fold_data(cfg, df, fold):
@@ -70,6 +87,108 @@ def split_feature_usage(model, n_features: int) -> np.ndarray:
         internal = used[used >= 0]
         counts += np.bincount(np.asarray(features)[internal], minlength=n_features)
     return counts
+
+
+def figures(cfg):
+    """The two Isolation Forest figures, from the tables `main` saves."""
+    results_dir = REPO_ROOT / cfg.results_dir
+    surface = pd.read_csv(results_dir / "iforest_surface_per_fold.csv")
+    grid = surface.groupby(["n_estimators", "max_samples"])["ap"].mean().unstack()
+
+    # --- Response surface: trees x subsample ------------------------------
+    fig, ax = new_figure(figsize=(FULL_WIDTH, 7.2 * CM))
+    image = ax.imshow(grid.to_numpy(), cmap="Blues", aspect="auto", origin="lower")
+    ax.set_xticks(range(len(grid.columns)), [str(c) for c in grid.columns])
+    ax.set_yticks(range(len(grid.index)), [str(i) for i in grid.index])
+    ax.set_xlabel("max_samples (madhësia e nën-mostrës për pemë)")
+    ax.set_ylabel("n_estimators (pemë)")
+    ax.tick_params(length=0)
+    for side in ("left", "bottom"):
+        ax.spines[side].set_visible(False)
+    ax.grid(False)
+    annotate_cells(ax, grid.to_numpy(), image)
+    default = (list(grid.index).index(200), list(grid.columns).index(256))
+    best = np.unravel_index(np.nanargmax(grid.to_numpy()), grid.shape)
+    outline_cell(ax, *default, color=INK, lw=1.2, ls=(0, (2, 1.5)))
+    outline_cell(ax, *best, color=INK, lw=1.6)
+    bar = fig.colorbar(image, ax=ax, shrink=0.85, pad=0.02)
+    bar.set_label(AX["ap"])
+    bar.outline.set_visible(False)
+    save_figure(fig, REPO_ROOT / cfg.results_dir, "iforest_surface")
+
+    # --- Where the capacity goes ------------------------------------------
+    max_features_tab = pd.read_csv(results_dir / "iforest_max_features.csv")
+    splits = pd.read_csv(results_dir / "iforest_split_usage.csv")
+    pivot = max_features_tab.pivot(index="fold", columns="max_features", values="ap")
+    delta = pivot.sub(pivot[1.0], axis=0)
+
+    fig, (ax1, ax2) = new_figure(ncols=2, figsize=(FULL_WIDTH, 6.6 * CM))
+    color = model_color("iforest")
+    for mf in delta.columns:
+        strip_vertical(ax1, mf, delta[mf].to_numpy(), color)
+    ax1.plot(
+        delta.columns,
+        delta.mean(),
+        color=color,
+        linewidth=1.5,
+        marker="D",
+        markersize=5,
+        markeredgecolor="#ffffff",
+        markeredgewidth=0.8,
+        zorder=4,
+    )
+    ax1.axhline(0, color=INK_2, lw=0.8, zorder=1)
+    ax1.set_xticks(delta.columns, [f"{v:g}" for v in delta.columns])
+    ax1.set_xlabel("max_features (pjesa e kolonave për pemë)")
+    ax1.set_ylabel("Δ AP ndaj max_features = 1")
+    value_grid(ax1, "y")
+
+    share, signal = splits["pjesa_e_ndarjeve"], splits["fuqia_e_sinjalit"]
+    top = splits.nlargest(5, "fuqia_e_sinjalit").index
+    rest = splits.index.difference(top)
+    ax2.scatter(
+        signal[rest],
+        share[rest],
+        s=22,
+        color=color,
+        alpha=0.55,
+        edgecolor="#ffffff",
+        linewidth=0.6,
+        zorder=3,
+        label="veçoritë e tjera",
+    )
+    ax2.scatter(
+        signal[top],
+        share[top],
+        s=26,
+        color=INK,
+        edgecolor="#ffffff",
+        linewidth=0.6,
+        zorder=4,
+        label="pesë më informativet",
+    )
+    uniform = 1 / len(splits)
+    ax2.axhline(
+        uniform, color=INK_2, lw=0.8, ls=(0, (4, 2)), zorder=1, label="pjesa e pritur nga rastësia"
+    )
+    rho = spearmanr(share, signal).statistic
+    ax2.text(
+        0.98,
+        0.97,
+        f"Spearman ρ = {rho:.2f}",
+        transform=ax2.transAxes,
+        ha="right",
+        va="top",
+        fontsize=7.5,
+        color=INK_2,
+    )
+    ax2.set_xlabel("Fuqia diskriminuese |AUC − 0.5|")
+    ax2.set_ylabel("Pjesa e ndarjeve")
+    ax2.yaxis.set_major_formatter(mpl.ticker.PercentFormatter(xmax=1.0, decimals=1))
+    value_grid(ax2, "both")
+    handles, labels = ax2.get_legend_handles_labels()
+    fig_legend_above(fig, handles, labels)
+    save_figure(fig, REPO_ROOT / cfg.results_dir, "iforest_capacity")
 
 
 def main(cfg=None):
@@ -106,28 +225,6 @@ def main(cfg=None):
         f"AP={grid.loc[best[0], best[1]]:.4f}"
     )
 
-    fig, ax = new_figure(figsize=(6.6, 4.2))
-    im = ax.imshow(grid.to_numpy(), cmap="Blues", aspect="auto", origin="lower")
-    ax.set_xticks(range(len(grid.columns)), [str(c) for c in grid.columns])
-    ax.set_yticks(range(len(grid.index)), [str(i) for i in grid.index])
-    ax.set_xlabel("max_samples (madhësia e nën-mostrës për pemë)")
-    ax.set_ylabel("n_estimators (numri i pemëve)")
-    for i in range(grid.shape[0]):
-        for j in range(grid.shape[1]):
-            value = grid.iat[i, j]
-            ax.text(
-                j,
-                i,
-                f"{value:.3f}",
-                ha="center",
-                va="center",
-                fontsize=7,
-                color="#ffffff" if value > grid.to_numpy().mean() else "#0b0b0b",
-            )
-    ax.grid(visible=False)
-    fig.colorbar(im, ax=ax, shrink=0.8, label=AX["ap"])
-    save_figure(fig, REPO_ROOT / cfg.results_dir, "iforest_surface")
-
     # ---- 2. how many columns may each tree cut on -----------------------
     feature_rows = []
     for fold in folds:
@@ -146,7 +243,10 @@ def main(cfg=None):
     save_table(max_features_tab, results_dir, "iforest_max_features", float_fmt="%.5f")
 
     # ---- 3. where do the splits go --------------------------------------
-    fold = folds[3]  # the fold whose training window matches the 70/30 cut
+    # One mid-stream fold is enough here: the question is where the splits
+    # of a fitted forest go, not how that varies over time. Fold 3 trains on
+    # the first 62.5 per cent of the stream.
+    fold = folds[3]
     X_norm, X_test, y_test, X_train_all, y_train_all = fold_data(cfg, df, fold)
     model = build_model("iforest", cfg)
     model.fit(X_norm)
@@ -172,8 +272,6 @@ def main(cfg=None):
 
     share_top5 = float(usage_share[top5].sum())
     uniform_share = 5 / len(FEATURE_COLUMNS)
-    from scipy.stats import spearmanr
-
     rho_usage, p_usage = spearmanr(usage_share, signal)
 
     # ---- 4. does the axis alignment matter ------------------------------
@@ -200,57 +298,7 @@ def main(cfg=None):
     save_table(rotation_tab, results_dir, "iforest_rotation", float_fmt="%.5f")
     rot_summary = rotation_tab.groupby("hapësira")["ap"].agg(["mean", "std"])
 
-    # ---- figures ---------------------------------------------------------
-    fig, (ax1, ax2) = new_figure(ncols=2, figsize=(8.6, 3.8))
-    mf = max_features_tab.groupby("max_features")["ap"].agg(["mean", "std"])
-    ax1.errorbar(
-        mf.index,
-        mf["mean"],
-        yerr=mf["std"],
-        marker="o",
-        markersize=4,
-        color=BLUE,
-        capsize=2,
-        linewidth=1.6,
-    )
-    ax1.set_xlabel("max_features (pjesa e kolonave për pemë)")
-    ax1.set_ylabel(AX["ap"])
-    ax1.set_ylim(bottom=min(0.0, float((mf["mean"] - mf["std"]).min())))
-
-    ax2.scatter(signal, usage_share, s=40, color=BLUE, alpha=0.8, edgecolor="white", linewidth=0.8)
-    ax2.axhline(1 / len(FEATURE_COLUMNS), color=GREY, lw=1, ls=":")
-    # Left-anchored and just under the line, so it clears both the cloud of
-    # points on the right and the feature labels.
-    ax2.text(
-        signal.min(),
-        1 / len(FEATURE_COLUMNS) * 0.985,
-        "pjesa e pritur nëse ndarjet janë uniforme",
-        fontsize=7.5,
-        color=GREY,
-        va="top",
-    )
-    for j in top5:
-        ax2.annotate(
-            FEATURE_COLUMNS[j],
-            (signal[j], usage_share[j]),
-            fontsize=7.5,
-            color="#52514e",
-            xytext=(5, 3),
-            textcoords="offset points",
-        )
-    ax2.set_xlabel("Fuqia diskriminuese e veçorisë |AUC − 0.5|")
-    ax2.set_ylabel("Pjesa e ndarjeve që merr veçoria")
-    ax2.text(
-        0.03,
-        0.95,
-        f"Spearman ρ = {rho_usage:.2f}",
-        transform=ax2.transAxes,
-        fontsize=8.5,
-        color="#52514e",
-        va="top",
-    )
-    fig.tight_layout(w_pad=2.5)
-    save_figure(fig, REPO_ROOT / cfg.results_dir, "iforest_capacity")
+    figures(cfg)
 
     default_ap = float(grid.loc[200, 256])
     best_ap = float(grid.loc[best[0], best[1]])
@@ -314,4 +362,9 @@ def main(cfg=None):
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--figures-only", action="store_true", help="redraw the figures from the saved tables"
+    )
+    args = parser.parse_args()
+    figures(load_config()) if args.figures_only else main()
