@@ -148,6 +148,15 @@ def main(cfg=None, tuned: bool = False):
         wins.append(int((sub > best_single_per_fold.reindex(sub.index)).sum()))
     summary["fold_wins_vs_best_single"] = wins
     summary["n_folds"] = len(folds)
+    # A readable name for the document; the code names stay for the panel.
+    summary.insert(
+        0,
+        "varianti",
+        [
+            COMBINER_LABELS.get((pool, comb), f"{pool} / {comb}")
+            for pool, comb in zip(summary["pool"], summary["combiner"], strict=True)
+        ],
+    )
     save_table(summary, results_dir, f"ensemble_summary{suffix}")
 
     regime = "hiperparametra të akorduar" if tuned else "hiperparametra të parazgjedhur"

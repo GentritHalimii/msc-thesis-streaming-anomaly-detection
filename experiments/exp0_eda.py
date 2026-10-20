@@ -31,14 +31,20 @@ from src.evaluation.report import (
 )
 
 
+def _thousands(value: float, decimals: int = 0) -> str:
+    """Albanian grouping: a non-breaking space between thousands, a point for
+    decimals, so the figure matches the decimal point used everywhere else."""
+    return f"{value:,.{decimals}f}".replace(",", "\u00a0")
+
+
 def overview_table(df: pd.DataFrame) -> pd.DataFrame:
     fraud = df[df["Class"] == 1]
     legit = df[df["Class"] == 0]
     f_amt, l_amt = fraud["Amount"], legit["Amount"]
     return pd.DataFrame(
         [
-            {"treguesi": "Transaksione gjithsej", "vlera": f"{len(df):,}"},
-            {"treguesi": "Mashtrime", "vlera": f"{len(fraud):,}"},
+            {"treguesi": "Transaksione gjithsej", "vlera": _thousands(len(df))},
+            {"treguesi": "Mashtrime", "vlera": _thousands(len(fraud))},
             {"treguesi": "Norma e mashtrimit", "vlera": f"{100 * df['Class'].mean():.3f}%"},
             {
                 "treguesi": "Raporti legjitime:mashtrime",
@@ -52,8 +58,11 @@ def overview_table(df: pd.DataFrame) -> pd.DataFrame:
             {"treguesi": "Shuma mesatare (mashtrime)", "vlera": f"{f_amt.mean():.2f} EUR"},
             {"treguesi": "Mediana e shumës (legjitime)", "vlera": f"{l_amt.median():.2f} EUR"},
             {"treguesi": "Mediana e shumës (mashtrime)", "vlera": f"{f_amt.median():.2f} EUR"},
-            {"treguesi": "Vlera totale e mashtrimeve", "vlera": f"{f_amt.sum():,.0f} EUR"},
-            {"treguesi": "Vlera maksimale e një mashtrimi", "vlera": f"{f_amt.max():,.2f} EUR"},
+            {"treguesi": "Vlera totale e mashtrimeve", "vlera": f"{_thousands(f_amt.sum())} EUR"},
+            {
+                "treguesi": "Vlera maksimale e një mashtrimi",
+                "vlera": f"{_thousands(f_amt.max(), 2)} EUR",
+            },
             {"treguesi": "Mashtrime me shumë zero", "vlera": f"{int((f_amt == 0).sum())}"},
         ]
     )
