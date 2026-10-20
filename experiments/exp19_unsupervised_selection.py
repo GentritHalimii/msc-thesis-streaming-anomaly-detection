@@ -32,7 +32,18 @@ from src.evaluation.model_selection import (
     inner_temporal_split,
     inner_validation_ap,
 )
-from src.evaluation.report import MODEL_LABELS, new_figure, save_figure, save_table
+from src.evaluation.report import (
+    BASELINE,
+    CM,
+    FULL_WIDTH,
+    MODEL_LABELS,
+    model_color,
+    new_figure,
+    ordered_models,
+    save_figure,
+    save_table,
+    value_grid,
+)
 from src.models.base import subsample_for_fit
 from src.models.build import build_model
 
@@ -58,6 +69,58 @@ GRIDS = {
     "autoencoder": [{"latent_dim": ld, "epochs": 10} for ld in (2, 3, 4)],
 }
 FIT_SUBSAMPLE = 25000
+
+
+def figure(cfg, table: pd.DataFrame, summary: pd.DataFrame) -> None:
+    """Rank agreement inside each detector's own grid, one panel each.
+
+    Ranks are taken within a detector's grid so that the three panels share
+    a scale; 1 is the best configuration under either criterion, and a
+    criterion that agreed with the labels would put every point on the
+    diagonal.
+    """
+    names = ordered_models(table["model"].unique())
+    fig, axes = new_figure(ncols=len(names), figsize=(FULL_WIDTH, 5.8 * CM))
+    rho = summary.set_index("Detektori")["rho(AP, EM)"]
+    for ax, name in zip(axes, names, strict=True):
+        grp = table[table["model"] == name]
+        ap_rank = grp["inner_ap"].rank(ascending=False, method="average")
+        em_rank = grp["em_auc"].rank(ascending=False, method="average")
+        n = len(grp)
+        ax.plot([0.5, n + 0.5], [0.5, n + 0.5], color=BASELINE, lw=0.9, zorder=1)
+        ax.scatter(
+            ap_rank,
+            em_rank,
+            s=34,
+            color=model_color(name),
+            edgecolor="#ffffff",
+            linewidth=0.7,
+            zorder=3,
+        )
+        ax.set_xlim(0.5, n + 0.5)
+        ax.set_ylim(0.5, n + 0.5)
+        ax.set_xticks(range(1, n + 1))
+        ax.set_yticks(range(1, n + 1))
+        ax.invert_xaxis()
+        ax.invert_yaxis()
+        ax.set_aspect("equal")
+        label = MODEL_LABELS[name]
+        value = f"{rho.get(label, float('nan')):.2f}".replace("-", "−")
+        ax.set_title(f"{label}\nρ = {value}", loc="left", fontsize=8.2)
+        ax.set_xlabel("Rangu sipas AP-së")
+        value_grid(ax, "both")
+    axes[0].set_ylabel("Rangu sipas Excess-Mass")
+    save_figure(fig, REPO_ROOT / cfg.results_dir, "unsupervised_selection")
+
+
+def figures_from_saved(cfg=None):
+    cfg = cfg or load_config()
+    results_dir = REPO_ROOT / cfg.results_dir
+    figure(
+        cfg,
+        pd.read_csv(results_dir / "unsupervised_selection_grid.csv"),
+        pd.read_csv(results_dir / "unsupervised_selection.csv"),
+    )
 
 
 def main(cfg=None):
@@ -171,30 +234,16 @@ def main(cfg=None):
     (results_dir / "unsupervised_selection_verdict.txt").write_text(verdict + "\n")
     print("\n" + verdict)
 
-    # --- Figure: agreement, detector by detector --------------------------
-    fig, ax = new_figure(figsize=(6.8, 4.4))
-    for name, grp in table.groupby("model"):
-        ap = grp["inner_ap"].to_numpy()
-        em = grp["em_auc"].to_numpy()
-        # rank within the detector's own grid, so different scales can share axes
-        ax.scatter(
-            pd.Series(ap).rank(),
-            pd.Series(em).rank(),
-            s=48,
-            alpha=0.8,
-            label=MODEL_LABELS.get(name, name),
-            edgecolor="white",
-            linewidth=0.8,
-        )
-    lim = table.groupby("model").size().max() + 0.5
-    ax.plot([0.5, lim], [0.5, lim], color="#898781", lw=1, ls=":")
-    ax.set_xlabel("Rangu i konfigurimit sipas AP-së në validimin e brendshëm")
-    ax.set_ylabel("Rangu i konfigurimit sipas kriterit Excess-Mass")
-    ax.legend(loc="upper left", fontsize=8)
-    save_figure(fig, REPO_ROOT / cfg.results_dir, "unsupervised_selection")
+    figure(cfg, table, summary)
 
     write_manifest(results_dir, "exp19_unsupervised_selection", cfg.raw)
 
 
 if __name__ == "__main__":
-    main()
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--figures-only", action="store_true", help="redraw the figure from the saved tables"
+    )
+    figures_from_saved() if parser.parse_args().figures_only else main()

@@ -17,6 +17,7 @@ discriminative power measured in the exploratory analysis:
   moves.
 """
 
+import matplotlib as mpl
 import numpy as np
 import pandas as pd
 import torch
@@ -27,11 +28,22 @@ from src.data.load import FEATURE_COLUMNS, load_transactions
 from src.data.scale import load_scaler, transform
 from src.data.split import chronological_split
 from src.evaluation.manifest import write_manifest
-from src.evaluation.report import MODEL_LABELS, new_figure, save_figure, save_table
+from src.evaluation.report import (
+    CM,
+    FULL_WIDTH,
+    INK,
+    INK_2,
+    MODEL_KEYS,
+    MODEL_LABELS,
+    model_color,
+    new_figure,
+    save_figure,
+    save_table,
+    value_grid,
+)
 from src.models.build import artifacts_dir, load_model
 
 SAMPLE_NORMALS = 4000
-BLUE, RED = "#2a78d6", "#e34948"
 
 
 def autoencoder_attribution(model, X: np.ndarray) -> np.ndarray:
@@ -72,6 +84,66 @@ def shap_attribution(
     except Exception as exc:  # pragma: no cover - depends on shap internals
         print(f"  SHAP unavailable for isolation forest: {exc}")
         return None
+
+
+PERMUTATION_COLUMNS = {
+    "iforest": "isolation forest (permutim)",
+    "autoencoder": "autoencoder (permutim)",
+    "ocsvm": "one-class SVM (permutim)",
+}
+
+
+def figures(cfg) -> None:
+    results_dir = REPO_ROOT / cfg.results_dir
+    attr = pd.read_csv(results_dir / "explain_attributions.csv").set_index("feature")
+    signal = pd.read_csv(results_dir / "eda_feature_signal.csv").set_index("feature")
+    xs = signal.loc[attr.index, "abs_auc_gap"]
+    top = xs.nlargest(5).index
+
+    # --- Attention against available signal, one panel per detector -------
+    # The same model-agnostic attribution for all three, so the panels are
+    # comparable; the reconstruction-error view of the Autoencoder measures
+    # something different and is kept to the table.
+    fig, axes = new_figure(ncols=3, figsize=(FULL_WIDTH, 5.6 * CM))
+    for ax, (name, column) in zip(axes, PERMUTATION_COLUMNS.items(), strict=True):
+        ys = attr[column]
+        color = model_color(name)
+        rest = attr.index.difference(top)
+        ax.scatter(xs[rest], ys[rest], s=16, color=color, alpha=0.55, linewidths=0)
+        ax.scatter(xs[top], ys[top], s=18, color=INK, linewidths=0)
+        rho = spearmanr(xs, ys).statistic
+        rho_text = f"{rho:.2f}".replace("-", "−")
+        ax.set_title(f"{MODEL_LABELS[name]}\nρ = {rho_text}", loc="left", fontsize=8.2)
+        ax.set_xlabel("|AUC − 0.5|")
+        ax.set_xlim(0, 0.5)
+        ax.set_ylim(0, None)
+        ax.yaxis.set_major_locator(mpl.ticker.MaxNLocator(4))
+        value_grid(ax, "both")
+    axes[0].set_ylabel("Ndikimi i permutimit")
+    save_figure(fig, REPO_ROOT / cfg.results_dir, "explain_attention_vs_signal")
+
+    # --- How much worse the frauds are reconstructed, per component --------
+    recon = pd.read_csv(results_dir / "explain_ae_reconstruction.csv")
+    recon = recon.sort_values("raporti")
+    fig, ax = new_figure(figsize=(FULL_WIDTH, 9.6 * CM))
+    y = np.arange(len(recon))
+    ratio = recon["raporti"].to_numpy()
+    colors = [model_color("autoencoder") if r > 1 else "#b9b8ae" for r in ratio]
+    # Bars start at a ratio of one, the point where both classes are
+    # reconstructed equally well, so on the logarithmic axis their length is
+    # the factor itself rather than a distance from an arbitrary floor.
+    ax.barh(y, ratio - 1, left=1, height=0.68, color=colors)
+    ax.axvline(1, color=INK_2, lw=0.8)
+    ax.set_xscale("log")
+    ax.set_xticks([1, 2, 5, 10, 20, 50])
+    ax.xaxis.set_major_formatter(mpl.ticker.FuncFormatter(lambda v, _: f"{v:g}"))
+    ax.xaxis.set_minor_formatter(mpl.ticker.NullFormatter())
+    ax.set_yticks(y, recon["feature"], fontsize=7)
+    ax.tick_params(axis="y", length=0)
+    ax.set_ylim(-0.7, len(recon) - 0.3)
+    ax.set_xlabel("Gabimi i rindërtimit për mashtrimet, si shumëfish i atij për legjitimet")
+    value_grid(ax, "x")
+    save_figure(fig, REPO_ROOT / cfg.results_dir, "explain_ae_reconstruction")
 
 
 def main(cfg=None):
@@ -141,51 +213,16 @@ def main(cfg=None):
     save_table(agreement, results_dir, "explain_signal_agreement", float_fmt="%.6g")
     print(agreement.to_string(index=False))
 
-    # --- Figure: reconstruction error, fraud vs legitimate ---------------
-    order = np.argsort(-(err_fraud - err_normal))
-    fig, ax = new_figure(figsize=(7.2, 4.2))
-    xpos = np.arange(len(FEATURE_COLUMNS))
-    ax.bar(xpos - 0.2, err_normal[order], width=0.4, color=BLUE, label="Legjitime")
-    ax.bar(xpos + 0.2, err_fraud[order], width=0.4, color=RED, label="Mashtruese")
-    ax.set_yscale("log")
-    ax.set_xticks(xpos, [FEATURE_COLUMNS[i] for i in order], rotation=90, fontsize=7)
-    ax.set_ylabel("Gabim mesatar i rindërtimit (log)")
-    ax.legend()
-    save_figure(fig, REPO_ROOT / cfg.results_dir, "explain_ae_reconstruction")
-
-    # --- Figure: attention vs available signal ---------------------------
-    fig, ax = new_figure(figsize=(6.4, 4.4))
-    xs = signal.loc[FEATURE_COLUMNS, "abs_auc_gap"].to_numpy()
-    key = (
-        "isolation forest (SHAP)"
-        if "isolation forest (SHAP)" in attr
-        else "isolation forest (permutim)"
+    reconstruction = pd.DataFrame(
+        {
+            "feature": FEATURE_COLUMNS,
+            "gabimi_legjitime": err_normal,
+            "gabimi_mashtrime": err_fraud,
+            "raporti": err_fraud / np.maximum(err_normal, 1e-12),
+        }
     )
-    ys = attr[key].to_numpy()
-    ax.scatter(xs, ys, s=34, color=BLUE, alpha=0.8, edgecolor="white", linewidth=0.8)
-    for i, f in enumerate(FEATURE_COLUMNS):
-        if xs[i] > np.quantile(xs, 0.85) or ys[i] > np.quantile(ys, 0.9):
-            ax.annotate(
-                f,
-                (xs[i], ys[i]),
-                fontsize=7.5,
-                color="#52514e",
-                xytext=(4, 3),
-                textcoords="offset points",
-            )
-    rho, _ = spearmanr(xs, ys)
-    ax.set_xlabel("Sinjali univariat i disponueshëm |AUC − 0.5|")
-    ax.set_ylabel(f"Atribuimi: {key}")
-    ax.text(
-        0.02,
-        0.96,
-        f"Spearman ρ = {rho:.2f}",
-        transform=ax.transAxes,
-        fontsize=9,
-        color="#52514e",
-        va="top",
-    )
-    save_figure(fig, REPO_ROOT / cfg.results_dir, "explain_attention_vs_signal")
+    save_table(reconstruction, results_dir, "explain_ae_reconstruction", float_fmt="%.6f")
+    figures(cfg)
 
     # A verdict, like every other analysis, so the thesis prose is generated
     # from the measurement rather than copied by hand.
@@ -195,18 +232,37 @@ def main(cfg=None):
         f"{r['atribuimi']} rho = {r['spearman_vs_auc_gap']:.2f} (p = {r['p_value']:.2g})"
         for _, r in ranked.iterrows()
     ]
-    best, worst = ranked.iloc[0], ranked.iloc[-1]
+    # The like-for-like comparison uses the one attribution computed the same
+    # way for all three detectors. The reconstruction error of the
+    # Autoencoder is measured on the frauds, so it is high wherever the frauds
+    # are unusual and its agreement with the univariate signal is partly
+    # built in; it is reported, but it does not decide the ordering.
+    comparable = ranked[ranked["atribuimi"].isin(PERMUTATION_COLUMNS.values())]
+    by_column = {v: k for k, v in PERMUTATION_COLUMNS.items()}
+    attention_order = [by_column[a] for a in comparable["atribuimi"]]
+    benchmark = pd.read_csv(results_dir / "benchmark_summary.csv")
+    quality_order = [
+        MODEL_KEYS[m]
+        for m in benchmark.sort_values("ap_mean", ascending=False)["model"]
+        if MODEL_KEYS.get(m) in PERMUTATION_COLUMNS
+    ]
+    same = attention_order == quality_order
+    worst = comparable.iloc[-1]
     verdict = (
         "Atribuimi tregon se detektorët nuk e shpërndajnë vëmendjen njësoj mbi kolonat. "
         + "; ".join(parts)
-        + f". Përputhja më e fortë mes vëmendjes së një detektori dhe sinjalit realisht të "
-        f"disponueshëm është ajo e '{best['atribuimi']}' me rho = "
-        f"{best['spearman_vs_auc_gap']:.2f}, ndërsa më e dobëta është ajo e "
-        f"'{worst['atribuimi']}' me rho = {worst['spearman_vs_auc_gap']:.2f}, e cila nuk "
-        f"dallohet nga zeroja (p = {worst['p_value']:.2g}). Rendi i kësaj përputhjeje është i "
-        f"njëjti me rendin e cilësisë së zbulimit nën konfigurimin e parazgjedhur, çka e bën "
-        f"atë kandidat për shpjegim mekanicist; ai kandidat testohet kauzalisht me ndërhyrjen "
-        f"mbi hyrjen dhe konfirmohet."
+        + ". Me të njëjtën masë për të tre, atë me permutim, renditja e përputhjes me "
+        f"sinjalin është {', '.join(MODEL_LABELS[m] for m in attention_order)}"
+        + (
+            ", e njëjtë me renditjen sipas cilësisë së zbulimit"
+            if same
+            else f", ndërsa renditja sipas cilësisë është "
+            f"{', '.join(MODEL_LABELS[m] for m in quality_order)}"
+        )
+        + f". Përputhja e {MODEL_LABELS[by_column[worst['atribuimi']]]}-it, rho = "
+        f"{worst['spearman_vs_auc_gap']:.2f} (p = {worst['p_value']:.2g}), nuk dallohet nga "
+        f"zeroja me asnjërën masë, dhe pikërisht ky detektor testohet më pas me ndërhyrjen "
+        f"mbi hyrjen."
     )
     (results_dir / "explain_verdict.txt").write_text(verdict + "\n")
     print("\n" + verdict)
@@ -220,4 +276,10 @@ def main(cfg=None):
 
 
 if __name__ == "__main__":
-    main()
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--figures-only", action="store_true", help="redraw the figures from the saved tables"
+    )
+    figures(load_config()) if parser.parse_args().figures_only else main()

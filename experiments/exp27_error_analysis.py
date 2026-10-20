@@ -13,6 +13,7 @@ detector reaches, and what distinguishes those frauds from the ones that are
 found.
 """
 
+import matplotlib as mpl
 import numpy as np
 import pandas as pd
 
@@ -22,11 +23,70 @@ from src.data.scale import fit_scaler, transform
 from src.evaluation.manifest import write_manifest
 from src.evaluation.operational import top_k_mask
 from src.evaluation.protocol import load_folds, rolling_origin_folds
-from src.evaluation.report import MODEL_LABELS, new_figure, save_figure, save_table
+from src.evaluation.report import (
+    CM,
+    FULL_WIDTH,
+    INK_2,
+    MODEL_LABELS,
+    new_figure,
+    save_figure,
+    save_table,
+    value_grid,
+)
 from src.models.build import UNSUPERVISED
 
 BUDGET = 100
-BLUE, RED, GREY = "#2a78d6", "#e34948", "#898781"
+
+
+def figure(cfg, coverage: pd.DataFrame, found: pd.DataFrame, dark: pd.DataFrame) -> None:
+    fig, (ax1, ax2) = new_figure(ncols=2, figsize=(FULL_WIDTH, 6.2 * CM))
+    ax1.bar(coverage["n_detektore"], coverage["pjesa"], color=INK_2, width=0.62)
+    for n, share, count in zip(
+        coverage["n_detektore"], coverage["pjesa"], coverage["mashtrime"], strict=True
+    ):
+        ax1.annotate(
+            f"{count}",
+            (n, share),
+            xytext=(0, 3),
+            textcoords="offset points",
+            ha="center",
+            fontsize=7.5,
+            color=INK_2,
+        )
+    ax1.set_xlabel("Detektorë unsupervised që e arrijnë")
+    ax1.set_ylabel("Pjesa e mashtrimeve")
+    ax1.set_xticks(coverage["n_detektore"])
+    ax1.tick_params(axis="x", length=0)
+    ax1.yaxis.set_major_formatter(mpl.ticker.PercentFormatter(xmax=1.0, decimals=0))
+    ax1.set_ylim(0, float(coverage["pjesa"].max()) * 1.18)
+    value_grid(ax1, "y")
+
+    # Distance from the legitimate centre for the frauds that some detector
+    # reaches and for those none does, as cumulative distributions: the two
+    # groups differ in size and an ECDF needs no bin width.
+    for group, label, color in (
+        (found, "të arritura", "#2a78d6"),
+        (dark, "të paarritura", "#e34948"),
+    ):
+        values = np.sort(group["norma_z"].to_numpy())
+        ax2.step(
+            values,
+            np.arange(1, len(values) + 1) / len(values),
+            where="post",
+            color=color,
+            linewidth=1.5,
+            label=f"{label} ({len(values)})",
+        )
+    ax2.set_xscale("log")
+    ax2.set_xticks([5, 10, 20, 50])
+    ax2.xaxis.set_major_formatter(mpl.ticker.FuncFormatter(lambda v, _: f"{v:g}"))
+    ax2.xaxis.set_minor_formatter(mpl.ticker.NullFormatter())
+    ax2.set_xlabel("Distanca ‖z‖ nga qendra legjitime")
+    ax2.set_ylabel("Pjesa kumulative")
+    ax2.yaxis.set_major_formatter(mpl.ticker.PercentFormatter(xmax=1.0, decimals=0))
+    value_grid(ax2, "both")
+    ax2.legend(loc="lower right", fontsize=7.5, handlelength=1.4)
+    save_figure(fig, REPO_ROOT / cfg.results_dir, "error_analysis")
 
 
 def main(cfg=None):
@@ -138,41 +198,7 @@ def main(cfg=None):
     print("\n=== mashtrimet e arritura kundrejt atyre të paarritshme ===")
     print(comparison.to_string(index=False))
 
-    # --- Figure: coverage and what the missed frauds look like ------------
-    fig, (ax1, ax2) = new_figure(ncols=2, figsize=(8.4, 3.8))
-    ax1.bar(coverage["n_detektore"], 100 * coverage["pjesa"], color=BLUE, width=0.6)
-    for n, share, count in zip(
-        coverage["n_detektore"], coverage["pjesa"], coverage["mashtrime"], strict=True
-    ):
-        ax1.text(n, 100 * share + 1, f"{count}", ha="center", fontsize=8, color="#52514e")
-    ax1.set_xlabel("Detektorë që e arrijnë mashtrimin")
-    ax1.set_ylabel("Përqindja e mashtrimeve")
-    ax1.set_xticks(coverage["n_detektore"])
-
-    bins = np.linspace(0, np.quantile(caught["norma_z"], 0.98), 30)
-    ax2.hist(
-        found["norma_z"],
-        bins=bins,
-        color=BLUE,
-        alpha=0.65,
-        density=True,
-        label="Të kapura",
-        linewidth=0,
-    )
-    ax2.hist(
-        dark["norma_z"],
-        bins=bins,
-        color=RED,
-        alpha=0.65,
-        density=True,
-        label="Të pakapura",
-        linewidth=0,
-    )
-    ax2.set_xlabel("Distanca ‖z‖ nga qendra legjitime")
-    ax2.set_ylabel("Densiteti")
-    ax2.legend(fontsize=8.5)
-    fig.tight_layout(w_pad=2.0)
-    save_figure(fig, REPO_ROOT / cfg.results_dir, "error_analysis")
+    figure(cfg, coverage, found, dark)
 
     n_total = len(caught)
     share_dark = len(dark) / n_total if n_total else float("nan")
