@@ -19,9 +19,8 @@ from docx_helpers import (
 )
 
 TITULLI = (
-    "ZBULIMI I ANOMALIVE NË RRJEDHA TË SIMULUARA TË TRANSAKSIONEVE "
-    "FINANCIARE DUKE PËRDORUR APACHE KAFKA DHE UNSUPERVISED MACHINE "
-    "LEARNING: STUDIM RASTI ME TRANSAKSIONE TË KARTAVE TË KREDITIT"
+    "ZBULIMI I ANOMALIVE NË RRJEDHA TË SIMULUARA TË TRANSAKSIONEVE FINANCIARE DUKE PËRDORUR APACHE "
+    "KAFKA DHE UNSUPERVISED MACHINE LEARNING: STUDIM RASTI ME TRANSAKSIONE TË KARTAVE TË KREDITIT"
 )
 STUDENTI = "Gentrit Halimi"
 MENTORI = "Dr. sc. Mehmet Shala"
@@ -85,8 +84,8 @@ def render_cover(doc) -> None:
     para.alignment = WD_ALIGN_PARAGRAPH.CENTER
     para.paragraph_format.line_spacing = 1.5
     run = para.add_run(
-        "Ky punim është përpiluar dhe dorëzuar në përmbushjen e kërkesave "
-        "të pjesshme për Shkallën e Magjistraturës"
+        "Ky punim është përpiluar dhe dorëzuar në përmbushjen e kërkesave të pjesshme për Shkallën "
+        "e Magjistraturës"
     )
     run.font.name = "Times New Roman"
     run.font.size = Pt(11)
@@ -94,119 +93,84 @@ def render_cover(doc) -> None:
 
 
 ABSTRAKT = [
-    "Zbulimi i mashtrimeve me karta krediti kryhet gjithnjë e më shumë mbi "
-    "rrjedha të vazhdueshme të dhënash, ku etiketat e verifikuara mbërrijnë "
-    "me vonesë ditësh ose javësh dhe ku vendimi duhet marrë brenda "
-    "milisekondash. Ky punim dizajnon, implementon dhe vlerëson "
-    "eksperimentalisht një sistem end-to-end për zbulimin e anomalive mbi një "
-    "rrjedhë të simuluar transaksionesh financiare, duke integruar Apache "
-    "Kafka në modalitetin KRaft me tri algoritmet unsupervised të "
-    "projekt-propozimit, Isolation Forest, Autoencoder dhe One-Class SVM, si "
-    "dhe me një referencë të mbikëqyrur me Regresion Logjistik.",
-    "Studimi zgjedh thellësinë në vend të gjerësisë. Në vend që të shtohen "
-    "algoritme të tjera, secili prej tri detektorëve i nënshtrohet një studimi "
-    "të veçantë të ndërtuar rreth mekanizmit të tij, dhe i gjithë vlerësimi "
-    "kryhet me protokoll rolling-origin në tetë pika kohore prerjeje, ku çdo "
-    "fold rindërton nga fillimi skalimin, modelet dhe pragjet. Përpara çdo "
-    "modelimi matet kufiri i sipërm gjeometrik i vetë problemit me një "
-    "detektor pa parametra.",
-    "Ai kufi rezulton vendimtar për interpretimin. Mashtrimet ndodhen "
-    "mesatarisht 7.9 herë më larg klasës legjitime sesa një transaksion tipik "
-    "legjitim, por vetëm distanca jep Average Precision 0.30, sepse bishti i "
-    "vetë klasës legjitime e mbush të njëjtin rajon; mashtrimi median kërkon "
-    "shqyrtimin e rreth 530 alarmeve. Në nivel transaksioni, 37 për qind e "
-    "mashtrimeve nuk arrihen nga asnjë detektor unsupervised brenda një "
-    "buxheti prej njëqind alarmesh, ndërsa referenca e mbikëqyrur i kap 59 për "
-    "qind të tyre, çka tregon se informacioni ekziston në të dhëna por nuk "
-    "është i formës që një detektor distancash e sheh.",
-    "Dy gjetje metodologjike e ndryshojnë mënyrën si duhen lexuar renditjet e "
-    "publikuara. Zgjedhja e paraprocesimit ka ndikim më të madh se zgjedhja e "
-    "algoritmit: transformimi kuantil e ngre One-Class SVM-në me 0.218 njësi "
-    "AP në të tetë fold-et, ndërsa referencën e mbikëqyrur nuk e prek fare. "
-    "Ndarja e rastësishme e të dhënave, praktikë e zakonshme në literaturë, e "
-    "fryn Average Precision e metodave unsupervised rreth 3.0 herë. Përgjigjja "
-    "për pyetjen se cili algoritëm është më i miri është pra e kushtëzuar nga "
-    "protokolli, jo veti e pandryshueshme e algoritmit.",
-    "Nga ana operacionale sistemi arrin vonesë end-to-end dukshëm nën "
-    "objektivin prej një sekonde në të gjitha ritmet e testuara, dhe pragu "
-    "adaptiv me dritare rrëshqitëse, i propozuar këtu, e stabilizon ngarkesën "
-    "hetimore dhe e përmirëson cilësinë e zbulimit për të tre detektorët "
-    "unsupervised. Qasja ensemble "
-    "nuk e tejkalon modelin më të mirë individual, dhe analiza e gabimeve në "
-    "nivel transaksioni e shpjegon pse. Analiza e zhvendosjes tregon se "
-    "degradimi nuk vjen nga vjetërimi i modelit të normalitetit, por nga "
-    "ndryshimi i vetë popullatës së mashtrimeve, dallim me pasoja praktike të "
-    "kundërta.",
+    "Zbulimi i mashtrimeve me karta krediti bëhet gjithnjë e më shumë mbi rrjedha të vazhdueshme "
+    "të dhënash, ku etiketat e verifikuara vijnë me vonesë ditësh ose javësh, ndërsa vendimi duhet "
+    "marrë brenda milisekondash. Ky punim dizajnon, implementon dhe vlerëson një sistem end-to-end "
+    "për zbulimin e anomalive mbi një rrjedhë të simuluar transaksionesh, i cili lidh Apache "
+    "Kafka-n me tri algoritmet unsupervised të projekt-propozimit (Isolation Forest, Autoencoder "
+    "dhe One-Class SVM) dhe me Regresionin Logjistik si referencë të mbikëqyrur.",
+    "Secili detektor studiohet në thellësi dhe vlerësohet me një protokoll rolling-origin 8-fold, "
+    "që rindërton skaluesin, modelet dhe pragjet në çdo fold. Një detektor distancash pa "
+    "parametra mat paraprakisht kufirin gjeometrik të problemit: mashtrimet janë mesatarisht 7.9 "
+    "herë më larg klasës legjitime se një transaksion tipik legjitim, por distanca jep Average "
+    "Precision (AP) prej vetëm 0.30, sepse bishti i klasës legjitime zë të njëjtin rajon. Me 100 "
+    "alarme për bllok, 37% e mashtrimeve nuk i arrin asnjë detektor unsupervised, ndërsa "
+    "referenca e mbikëqyrur kap 59% të tyre; informacioni ekziston, por jo në formën që e sheh "
+    "një detektor distancash.",
+    "Paraprocesimi ka efekt më të madh se zgjedhja e algoritmit: transformimi kuantil e rrit AP-në "
+    "e One-Class SVM-së mesatarisht me 0.218, me përmirësim në të tetë fold-et, dhe efekti mbetet "
+    "kur skaluesi zgjidhet vetëm nga fold-et e mëparshme. Kur secili detektor merr konfigurimin e "
+    "tij më të mirë, raporti mes më të mirit dhe më të dobëtit bie nga 2.1 në 1.15. Ndarja e "
+    "rastësishme e të dhënave, e zakonshme në literaturë, e rrit AP-në e metodave unsupervised "
+    "rreth tri herë.",
+    "Percentili 99 i vonesës end-to-end nuk e kalon 132 milisekonda në asnjë ritëm të testuar, "
+    "shumë nën objektivin prej një sekonde. Pragu adaptiv me dritare rrëshqitëse e bën ngarkesën e "
+    "hetimeve më të qëndrueshme dhe rrit F1 për të tre detektorët unsupervised. Asnjë ansambël nuk "
+    "e kalon modelin më të mirë individual, sepse detektorët gabojnë njësoj. Pas korrigjimit për "
+    "anshmërinë e mostrave të vogla, zhvendosja e mashtrimeve mbetet më e madhe se ajo e "
+    "transaksioneve legjitime.",
 ]
 
 ABSTRACT_EN = [
-    "Credit-card fraud detection increasingly happens on continuous data "
-    "streams, where verified labels arrive days or weeks late and the "
-    "decision itself must be made in milliseconds. This thesis designs, "
-    "implements and experimentally evaluates an end-to-end anomaly detection "
-    "system over a simulated stream of financial transactions, integrating "
-    "Apache Kafka in KRaft mode with the three unsupervised algorithms named "
-    "in the research proposal, Isolation Forest, Autoencoder and One-Class "
-    "SVM, together with a supervised Logistic Regression reference.",
-    "The study buys depth rather than breadth. Instead of adding further "
-    "algorithms, each of the three detectors receives a dedicated study built "
-    "around its own mechanism, and the whole evaluation runs under a "
-    "rolling-origin protocol at eight successive cut points in which every "
-    "fold rebuilds the scaler, the models and the thresholds from scratch. "
-    "Before any model is fitted, the geometric ceiling of the problem itself "
-    "is measured with a parameter-free detector.",
-    "That ceiling turns out to govern the interpretation. Frauds sit on "
-    "average 7.9 times farther from the legitimate class than a typical "
-    "legitimate transaction, yet distance alone yields an Average Precision "
-    "of 0.30, because the tail of the legitimate class fills the same region; "
-    "the median fraud costs roughly 530 alerts to reach. At the transaction "
-    "level, 37 per cent of frauds are found by no unsupervised detector "
-    "within a budget of one hundred alerts, while the supervised reference "
-    "recovers 59 per cent of them, showing that the information is present in "
-    "the data but not in a form a distance-based detector can see.",
-    "Two methodological findings change how published rankings should be "
-    "read. The preprocessing choice matters more than the choice of "
-    "algorithm: a quantile transform lifts One-Class SVM by 0.218 AP in all "
-    "eight folds, while leaving the supervised reference untouched. A "
-    "shuffled split, common in the literature, inflates the Average Precision "
-    "of the unsupervised methods by roughly a factor of 3.0. Which algorithm "
-    "is best is therefore conditional on the protocol rather than a fixed "
-    "property of the algorithm.",
-    "Operationally the system stays far below the one-second latency target "
-    "at every arrival rate tested, and the sliding-window adaptive threshold "
-    "proposed here stabilises the investigation workload and improves "
-    "detection quality for all three unsupervised detectors. No ensemble "
-    "variant beats the best single model, "
-    "and the per-transaction error analysis explains why. Drift analysis "
-    "shows that degradation comes not from a stale model of normality but "
-    "from a change in the fraud population itself, a distinction with "
-    "opposite practical consequences.",
+    "Credit-card fraud detection increasingly runs on continuous data streams, where verified "
+    "labels arrive days or weeks late while decisions must be made within milliseconds. This "
+    "thesis designs, implements and evaluates an end-to-end anomaly detection system over a "
+    "simulated transaction stream. The system connects Apache Kafka with the three unsupervised "
+    "algorithms named in the research proposal (Isolation Forest, Autoencoder and One-Class SVM) "
+    "and with Logistic Regression as a supervised reference.",
+    "Each detector is studied in depth and evaluated with an 8-fold rolling-origin protocol that "
+    "rebuilds the scaler, the models and the thresholds in every fold. A parameter-free distance "
+    "detector first measures the geometric ceiling of the problem: frauds lie on average 7.9 times "
+    "farther from the legitimate class than a typical legitimate transaction, yet distance yields "
+    "an Average Precision (AP) of only 0.30, because the tail of the legitimate class occupies the "
+    "same region. With 100 alerts per block, 37% of the frauds are reached by no unsupervised "
+    "detector, while the supervised reference catches 59% of them; the information is there, but "
+    "not in a form a distance-based detector can see.",
+    "Preprocessing matters more than the choice of algorithm: a quantile transform raises the AP "
+    "of One-Class SVM by 0.218 on average, improving all eight folds, and the gain holds when the "
+    "scaler is chosen from earlier folds only. When each detector receives its best "
+    "configuration, the ratio between the best and the weakest falls from 2.1 to 1.15. A shuffled "
+    "split, common in the literature, inflates the AP of the unsupervised methods about "
+    "threefold.",
+    "The 99th-percentile end-to-end latency stays below 132 milliseconds at every arrival rate "
+    "tested, far below the one-second target. A sliding-window adaptive threshold makes the "
+    "investigation workload steadier and raises F1 for all three unsupervised detectors. No "
+    "ensemble beats the best single model, because the detectors make the same mistakes. After "
+    "correcting for the small-sample bias of the stability index, the frauds still drift more "
+    "than the legitimate transactions.",
 ]
 
 MIRENJOHJE = [
-    "Falënderime i shkojnë mentorit, Dr. sc. Mehmet Shala, për udhëzimet e "
-    "sakta dhe për lirinë e dhënë që kjo temë të ndiqej në thellësi, "
-    "veçanërisht atëherë kur rezultatet e para nuk përkonin me pritshmëritë "
-    "fillestare.",
-    "Falënderime i shkojnë gjithashtu stafit akademik të Programit për "
-    "Shkenca Kompjuterike dhe Inxhinieri në UBT, në veçanti për lëndët "
-    "Advanced Machine Learning dhe Deep Learning, të cilat e formuan mënyrën "
-    "si kuptohet sot vlerësimi eksperimental: jo si hap final verifikimi, por "
-    "si pjesa më e rëndësishme e vetë kërkimit.",
-    "Një falënderim i veçantë i takon grupit Machine Learning të Université "
-    "Libre de Bruxelles për publikimin e dataset-it që e bëri të mundur këtë "
-    "studim, si dhe komunitetit të softuerit të lirë, pa punën e të cilit një "
-    "infrastrukturë e tillë nuk do të ishte e arritshme brenda kornizës së "
-    "një punimi diplome.",
-    "Së fundi, falënderime i shkojnë familjes për durimin gjatë muajve kur "
-    "kjo punë zuri pjesën më të madhe të kohës.",
+    "Falënderime të veçanta i shkojnë mentorit, Dr. sc. Mehmet Shala, për udhëzimet e sakta dhe "
+    "për lirinë që kjo temë të ndiqej në thellësi, sidomos kur rezultatet e para nuk përputheshin "
+    "me pritjet.",
+    "Falënderime i shkojnë gjithashtu stafit akademik të Programit për Shkenca Kompjuterike dhe "
+    "Inxhinieri në UBT, në veçanti për lëndët Advanced Machine Learning dhe Deep Learning, të "
+    "cilat e formuan idenë se vlerësimi eksperimental është pjesë qendrore e kërkimit dhe jo hapi "
+    "i fundit i tij.",
+    "Një falënderim i takon grupit Machine Learning të Université Libre de Bruxelles për "
+    "publikimin e dataset-it që e bëri të mundur këtë studim, si dhe komunitetit të softuerit të "
+    "lirë, pa të cilin një infrastrukturë e tillë nuk do të ishte e arritshme në kuadrin e një "
+    "punimi diplome.",
+    "Së fundi, falënderime familjes për durimin dhe mbështetjen gjatë muajve kur kjo punë zuri "
+    "pjesën më të madhe të kohës.",
 ]
 
 FJALORI = [
     (
         "AP",
-        "Average Precision, sipërfaqja nën kurbën precision-recall; metrika "
-        "kryesore e këtij punimi",
+        "Average Precision, sipërfaqja nën kurbën precision-recall; metrika kryesore e këtij "
+        "punimi",
     ),
     ("AE", "Autoencoder, rrjet nervor që mëson të rindërtojë hyrjen e vet"),
     ("AUC", "Area Under the Curve, sipërfaqja nën kurbë"),
@@ -214,6 +178,11 @@ FJALORI = [
     ("CV", "Coefficient of Variation, koeficienti i variacionit"),
     ("EM", "Excess-Mass, kriter unsupervised për vlerësimin e funksioneve të pikëzimit"),
     ("FN", "False Negative, mashtrim i pazbuluar"),
+    (
+        "Fold",
+        "Një nga pikat e prerjes së protokollit rolling-origin: një dritare trajnimi dhe blloku i "
+        "testimit që e pason; 8-fold do të thotë tetë pika të tilla",
+    ),
     ("FP", "False Positive, alarm i rremë"),
     ("ID", "Intrinsic Dimension, dimensioni i brendshëm i një bashkësie të dhënash"),
     ("IF", "Isolation Forest"),
@@ -228,16 +197,22 @@ FJALORI = [
     ("PSI", "Population Stability Index, indeksi i stabilitetit të popullatës"),
     ("RBF", "Radial Basis Function, kerneli gausian i përdorur nga One-Class SVM"),
     ("ROC", "Receiver Operating Characteristic"),
+    (
+        "Rolling-origin",
+        "Protokoll vlerësimi ku modeli trajnohet mbi të kaluarën dhe testohet mbi bllokun që vjen "
+        "pas, në disa pika prerjeje të njëpasnjëshme",
+    ),
     ("RSS", "Resident Set Size, memoria rezidente e procesit"),
     ("SHAP", "SHapley Additive exPlanations"),
+    ("Throughput", "Numri i mesazheve të përpunuara për sekondë"),
     ("TP", "True Positive, mashtrim i zbuluar saktë"),
     ("TPE", "Tree-structured Parzen Estimator, mostruesi i përdorur nga Optuna"),
     ("TwoNN", "Vlerësues i dimensionit të brendshëm i bazuar në dy fqinjët më të afërt"),
     ("ULB", "Université Libre de Bruxelles"),
     (
         "unsupervised",
-        "Mësim pa etiketa gjatë trajnimit; termi ruhet në anglisht sepse "
-        "përdoret ashtu edhe në titullin e temës",
+        "Mësim pa etiketa gjatë trajnimit; termi ruhet në anglisht sepse përdoret ashtu edhe në "
+        "titullin e temës",
     ),
 ]
 
@@ -284,10 +259,12 @@ def render_prelims(doc, outline, figures, tables, page_map) -> None:
 
     _center(doc, "LISTA E FIGURAVE", size=14, bold=True, space_after=12)
     for caption in figures:
-        add_toc_entry(doc, _shorten(caption), 1, page_map.get(caption))
+        add_toc_entry(doc, _shorten(caption), 1, page_map.get(caption), bold=False)
+    page_break(doc)
+
     _center(doc, "LISTA E TABELAVE", size=14, bold=True, space_after=12)
     for caption in tables:
-        add_toc_entry(doc, _shorten(caption), 1, page_map.get(caption))
+        add_toc_entry(doc, _shorten(caption), 1, page_map.get(caption), bold=False)
     page_break(doc)
 
     _center(doc, "FJALORI I TERMAVE", size=14, bold=True, space_after=12)
@@ -305,10 +282,13 @@ def render_prelims(doc, outline, figures, tables, page_map) -> None:
         run2.font.size = Pt(12)
 
 
-def _shorten(caption: str, limit: int = 95) -> str:
-    """Figure and table captions are full sentences; the lists need the
-    identifying head of each, not the whole explanation."""
-    if len(caption) <= limit:
-        return caption
-    cut = caption[:limit].rsplit(" ", 1)[0]
+def _shorten(caption: str, limit: int = 110) -> str:
+    """The list of figures carries the first sentence of each caption, the
+    part that names the figure; reading notes after it stay with the figure."""
+    number, _, text = caption.partition(". ")
+    first = text.split(". ")[0].rstrip(".")
+    entry = f"{number}. {first}."
+    if len(entry) <= limit:
+        return entry
+    cut = entry[:limit].rsplit(" ", 1)[0]
     return cut + "…"
