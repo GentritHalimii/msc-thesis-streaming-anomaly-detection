@@ -4,8 +4,7 @@ Three rules, all of which came from review feedback and all of which are easy
 to violate again by accident:
 
 * No em dashes inside prose. They are not part of ordinary Albanian
-  punctuation and their presence in long stretches of text reads as machine
-  output. Commas, semicolons, colons and parentheses do the same work.
+  punctuation; commas, semicolons, colons and parentheses do the same work.
 * No first-person singular. A thesis reports what was done, not what "I" did.
 * Technical terms that are standard in English inside Albanian technical
   writing stay in English. The title itself keeps "unsupervised", so the body

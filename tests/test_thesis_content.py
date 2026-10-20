@@ -171,7 +171,6 @@ def test_adjacent_citations_become_separate_fields():
 
 def test_reference_entries_are_word_numbered_and_bookmarked():
     from docx.oxml.ns import qn
-
     from docx_helpers import (
         add_paragraph,
         apply_list_numbering,
@@ -200,10 +199,8 @@ def test_reference_entries_are_word_numbered_and_bookmarked():
     assert level.find(qn("w:lvlText")).get(qn("w:val")) == "[%1]"
     assert level.find(qn("w:numFmt")).get(qn("w:val")) == "decimal"
 
-    names = {
-        el.get(qn("w:name")) for el in doc.element.body.iter(qn("w:bookmarkStart"))
-    }
+    names = {el.get(qn("w:name")) for el in doc.element.body.iter(qn("w:bookmarkStart"))}
     assert {reference_bookmark(k) for k in keys} <= names
-    assert not any(
-        REFERENCES[k].startswith("[") for k in keys
-    ), "the number comes from Word, so it is not written into the entry"
+    assert not any(REFERENCES[k].startswith("[") for k in keys), (
+        "the number comes from Word, so it is not written into the entry"
+    )
