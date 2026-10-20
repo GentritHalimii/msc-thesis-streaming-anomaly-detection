@@ -204,3 +204,43 @@ def test_reference_entries_are_word_numbered_and_bookmarked():
     assert not any(REFERENCES[k].startswith("[") for k in keys), (
         "the number comes from Word, so it is not written into the entry"
     )
+
+
+def test_every_figure_reference_names_a_figure():
+    """[[fig:name]] is replaced by the figure's number at build time; a typo
+    would only surface when the document is built, so it is caught here."""
+    figure_ref = re.compile(r"\[\[fig:([a-zA-Z0-9_]+)\]\]")
+    chapters = all_chapters()
+    names = {b[1] for blocks in chapters.values() for b in blocks if b[0] == "fig"}
+    dangling = set()
+    for blocks in chapters.values():
+        for text in _texts(blocks):
+            dangling |= {n for n in figure_ref.findall(text) if n not in names}
+    assert not dangling, f"references to figures that do not exist: {sorted(dangling)}"
+
+
+def test_hyphen_before_an_ending_does_not_break():
+    """ "AP-" at the end of one line and "së" at the start of the next reads as
+    a typo, so the hyphen before an inflectional ending is non-breaking. Long
+    compounds may still break, and URLs keep their plain hyphens."""
+    from docx.oxml.ns import qn
+    from docx_helpers import add_paragraph, new_document
+
+    doc = new_document()
+    para = add_paragraph(doc, "AP-së e Autoencoder-it në 8-fold, me rolling-origin.")
+    assert len(list(para._p.iter(qn("w:noBreakHyphen")))) == 3
+    assert para.text == "AP-së e Autoencoder-it në 8-fold, me rolling-origin."
+
+    url = add_paragraph(doc, "Burimi: https://example.org/data-set")
+    assert not list(url._p.iter(qn("w:noBreakHyphen")))
+
+
+def test_list_of_figures_entries_are_not_cut():
+    """The lists of figures and tables show each caption's first sentence; one
+    longer than the limit would be cut short with an ellipsis."""
+    from build_thesis import _scan_captions
+    from content.front_matter import _shorten
+
+    figures, tables = _scan_captions(list(all_chapters().values()))
+    cut = [caption for caption in figures + tables if _shorten(caption).endswith("…")]
+    assert not cut, f"first sentence too long for the list: {cut}"

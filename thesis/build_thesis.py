@@ -44,6 +44,11 @@ from references import REFERENCES  # noqa: E402
 REPO_ROOT = Path(__file__).resolve().parent.parent
 RESULTS = REPO_ROOT / "results"
 CITE_RE = re.compile(r"\[@([a-zA-Z0-9_]+)\]")
+# A reference to a figure by its name, resolved to the figure's number, so the
+# prose can say "Figura 12" without the number going stale when figures move.
+FIG_REF_RE = re.compile(r"\[\[fig:([a-zA-Z0-9_]+)\]\]")
+# A space that groups thousands ("284 807") must not break across lines.
+THOUSANDS_RE = re.compile(r"(?<=\d) (?=\d{3}\b)")
 # Printed stand-in for a value that does not exist, rather than "nan".
 MISSING = "n/a"  # never an em dash: the thesis reserves that character for nothing
 
@@ -53,6 +58,7 @@ class Numbering:
 
     def __init__(self):
         self.citations: dict[str, int] = {}
+        self.figure_numbers: dict[str, int] = {}
         self.figures: dict[int, str] = {}
         self.tables: dict[int, str] = {}
         self._fig = 0
@@ -90,14 +96,24 @@ def resolve_citations(text: str, numbering: Numbering) -> str:
 
     The marker carries both the key, which names the bookmark on the reference
     entry, and the number assigned here, which becomes the field's cached
-    result so the text reads correctly before Word refreshes anything.
+    result so the text reads correctly before Word refreshes anything. Figure
+    references written as [[fig:name]] are replaced by the figure's number.
     """
+
+    def figure(match: re.Match) -> str:
+        name = match.group(1)
+        if name not in numbering.figure_numbers:
+            raise KeyError(f"reference to unknown figure: {name}")
+        return str(numbering.figure_numbers[name])
+
+    text = FIG_REF_RE.sub(figure, text)
 
     def repl(match: re.Match) -> str:
         key = match.group(1)
         return f"{CITE_OPEN}{key}|{numbering.cite(key)}{CITE_CLOSE}"
 
     text = CITE_RE.sub(repl, text)
+    text = THOUSANDS_RE.sub("\u00a0", text)
     # separate adjacent citations: [3][4][7] -> [3], [4], [7]
     return re.sub(f"{CITE_CLOSE}\\s*{CITE_OPEN}", f"{CITE_CLOSE}, {CITE_OPEN}", text)
 
@@ -170,6 +186,10 @@ def collect_outline(chapters: list[list]) -> list[tuple[int, str]]:
 
 
 def first_pass(chapters: list[list], numbering: Numbering) -> None:
+    for blocks in chapters:
+        for block in blocks:
+            if block[0] == "fig":
+                numbering.figure_numbers[block[1]] = len(numbering.figure_numbers) + 1
     for blocks in chapters:
         for block in blocks:
             kind = block[0]
@@ -339,7 +359,8 @@ def _pdf_pages(pdf_path: Path) -> list[str]:
 
 
 def _normalise(text: str) -> str:
-    return re.sub(r"\s+", " ", text).strip().lower()
+    # A non-breaking hyphen comes back from the PDF as U+2011.
+    return re.sub(r"\s+", " ", text.replace("‑", "-")).strip().lower()
 
 
 def extract_page_numbers(pdf_path: Path, entries: list[str], body_anchor: str) -> dict[str, str]:

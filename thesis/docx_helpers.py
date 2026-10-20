@@ -45,6 +45,11 @@ CITE_OPEN = "\ue000"
 CITE_CLOSE = "\ue001"
 CITE_RUN_RE = re.compile(f"{CITE_OPEN}([a-zA-Z0-9_]+)\\|([0-9]+){CITE_CLOSE}")
 REFERENCE_NUM_ID = 100
+# A hyphen that attaches an Albanian ending to a foreign word or an acronym
+# ("AP-së", "Autoencoder-it") or closes a short compound ("8-fold",
+# "end-to-end") must not end a line, so it is written as Word's non-breaking
+# hyphen. Longer compounds such as "rolling-origin" may still break.
+NOBREAK_HYPHEN_RE = re.compile(r"(?<=\w)-(?=[a-zëç]{1,4}\b)")
 
 
 # --------------------------------------------------------------------------
@@ -214,8 +219,32 @@ def _add_text_runs(para, text: str, *, size=None, italic: bool = False, color=No
         _plain_run(para, text[position:], size, italic, color)
 
 
+def _keep_hyphens(run) -> None:
+    """Write the hyphens NOBREAK_HYPHEN_RE selects as non-breaking ones.
+
+    URLs are left alone: a reader copying one from the PDF must get the plain
+    hyphen back.
+    """
+    for text in run._r.findall(qn("w:t")):
+        parts = NOBREAK_HYPHEN_RE.split(text.text or "")
+        if len(parts) == 1 or "://" in text.text:
+            continue
+        text.text = parts[0]
+        text.set(qn("xml:space"), "preserve")
+        previous = text
+        for part in parts[1:]:
+            hyphen = OxmlElement("w:noBreakHyphen")
+            following = OxmlElement("w:t")
+            following.set(qn("xml:space"), "preserve")
+            following.text = part
+            previous.addnext(hyphen)
+            hyphen.addnext(following)
+            previous = following
+
+
 def _plain_run(para, text: str, size, italic: bool, color):
     run = para.add_run(text)
+    _keep_hyphens(run)
     run.font.name = BODY_FONT
     if size is not None:
         run.font.size = size
@@ -299,6 +328,7 @@ def add_heading(doc: Document, text: str, level: int, number: str | None = None)
     if CITE_OPEN in label:  # pragma: no cover - guarded by tests/test_thesis_style
         raise ValueError("a heading cannot carry a citation: it has no run to hold a field")
     run = para.add_run(label)
+    _keep_hyphens(run)
     run.font.name = BODY_FONT
     run.bold = True
     run.font.size = TITLE_SIZE if level == 1 else BODY_SIZE
@@ -446,6 +476,7 @@ def add_table(
         para.paragraph_format.line_spacing = 1.0
         para.paragraph_format.space_after = Pt(2)
         run = para.add_run(str(name))
+        _keep_hyphens(run)
         run.bold = True
         run.font.name = BODY_FONT
         run.font.size = Pt(font_size)
@@ -461,6 +492,7 @@ def add_table(
             para.paragraph_format.line_spacing = 1.0
             para.paragraph_format.space_after = Pt(1)
             run = para.add_run(str(value))
+            _keep_hyphens(run)
             run.font.name = BODY_FONT
             run.font.size = Pt(font_size)
 
@@ -501,8 +533,11 @@ def page_break(doc: Document):
     doc.add_paragraph().add_run().add_break(WD_BREAK.PAGE)
 
 
-def add_toc_entry(doc, text: str, level: int, page: str | None):
+def add_toc_entry(doc, text: str, level: int, page: str | None, bold: bool | None = None):
     """One line of a statically generated table of contents.
+
+    Chapter entries are bold; `bold` overrides that for the lists of figures
+    and tables, whose entries are all at the first level.
 
     A Word TOC field is the usual solution, but it renders as a placeholder
     until someone opens the file and refreshes it — and a thesis that is
@@ -511,10 +546,13 @@ def add_toc_entry(doc, text: str, level: int, page: str | None):
     from a first rendering pass, and a right-aligned tab stop with dot leaders
     reproduces the usual appearance.
 
-    Two details matter. The paragraph must be left-aligned, because justified
-    text stretches the leader dots across the whole line. And the tab stop has
-    to sit at the right edge of the *indented* text area, not of the page, or
-    the number is pushed onto a line of its own.
+    Three details matter. The paragraph must be left-aligned, because justified
+    text stretches the leader dots across the whole line. The tab stop is
+    measured from the margin, not from the entry's indent, so it sits at the
+    same place for every level and the page numbers line up. And the text keeps
+    clear of the page-number column through a right indent, with the tab stop
+    beyond it, so a title that fills its line wraps early instead of leaving
+    the leader dots alone on the next line.
     """
     indent_cm = 0.7 * (level - 1)
     para = doc.add_paragraph()
@@ -523,17 +561,16 @@ def add_toc_entry(doc, text: str, level: int, page: str | None):
     pf.line_spacing = 1.15
     pf.space_after = Pt(3)
     pf.left_indent = Cm(indent_cm)
-    pf.right_indent = Cm(0)
-    pf.tab_stops.add_tab_stop(
-        Cm(TEXT_WIDTH_CM - indent_cm), WD_TAB_ALIGNMENT.RIGHT, WD_TAB_LEADER.DOTS
-    )
+    pf.right_indent = Cm(1.0)
+    pf.tab_stops.add_tab_stop(Cm(TEXT_WIDTH_CM), WD_TAB_ALIGNMENT.RIGHT, WD_TAB_LEADER.DOTS)
     # Any tab inside the caption itself would jump to the leader stop, so the
     # separator between a section number and its title is written as spaces.
     label = text.replace("\t", "   ")
     run = para.add_run(label if page is None else f"{label}\t{page}")
+    _keep_hyphens(run)
     run.font.name = BODY_FONT
     run.font.size = BODY_SIZE
-    run.bold = level == 1
+    run.bold = level == 1 if bold is None else bold
     return para
 
 
