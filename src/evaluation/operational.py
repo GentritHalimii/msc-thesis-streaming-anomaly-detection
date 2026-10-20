@@ -15,12 +15,17 @@ import numpy as np
 
 
 def top_k_mask(scores: np.ndarray, k: int) -> np.ndarray:
-    """Mask of the k highest-scoring items (ties broken by position, which is
-    chronological — the earlier transaction wins, as it would in a stream)."""
+    """Mask of the k highest-scoring items.
+
+    Ties are broken by position, which is chronological: the earlier
+    transaction wins, as it would in a stream. A stable sort is what makes
+    that true; a partition-based selection would pick among tied items in an
+    unspecified order, which matters for coarse scores such as a vote.
+    """
     k = min(int(k), len(scores))
     mask = np.zeros(len(scores), dtype=bool)
     if k > 0:
-        mask[np.argpartition(-scores, k - 1)[:k]] = True
+        mask[np.argsort(-np.asarray(scores), kind="stable")[:k]] = True
     return mask
 
 

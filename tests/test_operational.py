@@ -57,3 +57,11 @@ def test_amount_weighted_ap_rewards_expensive_frauds_first():
     b = amount_weighted_average_precision(Y, expensive_first, AMOUNTS)
     assert b > a
     assert 0.0 <= a <= 1.0 and 0.0 <= b <= 1.0
+
+
+def test_top_k_breaks_ties_in_favour_of_the_earlier_transaction():
+    """A vote produces many equal scores; the alerts that fit in the budget
+    must then be the earliest ones, as they would be on a stream."""
+    scores = np.array([1.0, 0.5, 1.0, 1.0, 0.5])
+    mask = top_k_mask(scores, 2)
+    assert mask.tolist() == [True, False, True, False, False]
