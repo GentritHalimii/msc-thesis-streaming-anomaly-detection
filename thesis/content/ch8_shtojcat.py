@@ -1,6 +1,6 @@
 """Kapitulli 8 — SHTOJCAT."""
 
-from blocks import bullets, h1, h2, numbers, p, tab
+from blocks import bullets, fig, h1, h2, numbers, p, tab
 
 BLOCKS = [
     h1("8", "Shtojcat"),
@@ -22,10 +22,9 @@ BLOCKS = [
             "brendshme kohore dhe pastaj e përsërisin protokollin me hiperparametrat e gjetur.",
             "make evaluate gjeneron tabelat dhe figurat që mbështeten te pikët e ruajtura, pa "
             "trajnuar përsëri asnjë model; ky hap zgjat disa minuta.",
-            "make deep-studies ekzekuton studimet e thelluara për secilin algoritëm, "
-            "karakterizimin gjeometrik, studimin e paraprocesimit, ndërhyrjen mbi hyrjen dhe "
-            "dizajnin faktorial; këto trajnojnë modelet nga fillimi dhe zgjatin orë, prandaj "
-            "mbahen veç.",
+            "make deep-studies ekzekuton studimet për secilin algoritëm, distancat e analizës "
+            "eksploruese, studimin e paraprocesimit dhe dizajnin faktorial; këto trajnojnë modelet "
+            "nga fillimi dhe zgjatin orë, prandaj mbahen veç.",
             "make figures vizaton përsëri të gjitha figurat nga tabelat e ruajtura, pa trajnuar "
             "asnjë model, për rreth dy minuta.",
             "docker compose -f docker/docker-compose.yml up -d ngre Kafka-n në modalitetin KRaft, "
@@ -60,8 +59,8 @@ BLOCKS = [
             "që krahasohen në studim.",
             "src/models/, një modul për detektor, të gjithë pas së njëjtës ndërfaqe "
             "fit/score/save/load, plus regjistri që i ndërton nga konfigurimi.",
-            "src/evaluation/, protokolli rolling-origin, metrikat, karakterizimi gjeometrik, "
-            "metrikat operacionale, kriteret e përzgjedhjes pa etiketa, testet statistikore, "
+            "src/evaluation/, protokolli rolling-origin, metrikat, distancat nga fqinjët më të "
+            "afërt, metrikat operacionale, ndarja e brendshme për akordimin, testet statistikore, "
             "analiza e zhvendosjes, kombinimi i pikëve dhe shtresa e raportimit.",
             "src/streaming/, producer-i me ritëm të kontrolluar, consumer-i me prag statik ose "
             "adaptiv, dhe serializimi.",
@@ -74,6 +73,8 @@ BLOCKS = [
             "docker/, konfigurimi i Kafka-s, PostgreSQL-it dhe Grafana-s, përfshirë burimin e të "
             "dhënave dhe panelin e provizionuar nga skedarë.",
             "thesis/, kodi që gjeneron këtë dokument nga rezultatet e ruajtura.",
+            "webapp/, një panel lokal që i shfaq të njëjtat rezultate në shfletues dhe i ekzekuton "
+            "eksperimentet nga një katalog i deklaruar.",
         ]
     ),
     h2("8.3", "Shtojca C: rezultatet e plota për fold"),
@@ -164,6 +165,15 @@ BLOCKS = [
         },
         font_size=8.5,
     ),
+    p("""Figura [[fig:curves_pr_roc]] jep kurbat precision-recall dhe ROC të po kësaj ndarjeje. Në
+      hapësirën ROC tri metodat unsupervised duken pothuajse të barabarta, me AUC-ROC nga 0.936 deri
+      0.960, ndërsa në hapësirën precision-recall dallimet janë të qarta: AP 0.031 për Isolation
+      Forest-in, 0.091 për One-Class SVM-në dhe 0.140 për Autoencoder-in."""),
+    fig(
+        "curves_pr_roc",
+        "Kurbat precision-recall dhe ROC të ndarjes 70/30 për çdo model.",
+        15.0,
+    ),
     p("""Pasiguria kryesore e punimit raportohet si shpërndarje mbi tetë fold-et, e cila tregon sa
       ndryshon rezultati kur ndryshon periudha. Ajo nuk e mat pasigurinë e mostrimit brenda një
       blloku të vetëm testimi; për prerjen e vetme 70/30 kjo e dyta llogaritet me bootstrap mbi
@@ -209,44 +219,40 @@ BLOCKS = [
       njëjti krahasim nuk është domethënës, sepse aty pyetja është nëse diferenca mbetet nga një
       periudhë në tjetrën. Të dyja janë të vërteta dhe masin gjëra të ndryshme; nëse do të
       raportohej vetëm e para, qëndrueshmëria e renditjes do të mbivlerësohej."""),
-    h2("8.5", "Shtojca E: sipërfaqja e plotë e Isolation Forest-it"),
-    p("""Kapitulli 5 e paraqet hapësirën e hiperparametrave si figurë. Tabela më poshtë jep vlerat e
-      sakta, që të shihet ku ndodhet maksimumi dhe sa i sheshtë është rajoni rreth tij."""),
-    tab(
-        "iforest_surface",
-        "AP mesatare 8-fold e Isolation Forest-it sipas numrit të pemëve dhe nën-mostrës.",
-        rename={"n_estimators": "Pemë / nën-mostër"},
-        font_size=9.0,
+    h2("8.5", "Shtojca E: zhvendosja e të dhënave"),
+    p("""Zhvendosja matet veç e veç për transaksionet legjitime dhe për mashtrimet, duke krahasuar
+      dritaren e trajnimit të çdo fold-i me bllokun e tij të testimit. Për çdo veçori llogaritet
+      indeksi PSI, me dhjetë intervale të përcaktuara nga kuantilet e dritares së trajnimit; vlerat
+      0.10 dhe 0.25 lexohen zakonisht si kufijtë e zhvendosjes së moderuar dhe të madhe. Në mostra
+      të vogla PSI rritet edhe kur shpërndarja nuk ka ndryshuar, sepse disa intervale mbeten bosh
+      rastësisht. Meqë një bllok testimi ka nga 13 deri në 88 mashtrime, PSI-ja e mashtrimeve
+      lexohet kundrejt një shpërndarjeje zero me permutacione: dritarja e trajnimit dhe blloku i
+      testimit bashkohen, ndahen rastësisht në dy pjesë me madhësitë origjinale, dhe PSI llogaritet
+      përsëri 100 herë."""),
+    p("""Vlerat e papërpunuara duken qartë të njëanshme: PSI mesatar është 0.141 për transaksionet
+      legjitime dhe 3.222 për mashtrimet. Rreth 48% e vlerës së mashtrimeve vjen megjithatë nga
+      zhurma e mostrave të vogla, sepse permutacionet vetëm japin mesatarisht 1.561. Vlera e
+      vëzhguar e kalon zhurmën në të tetë fold-et (p ≈ 0.01, vlera më e vogël e mundshme me 100
+      permutacione), dhe teprica mesatare mbi zhurmën, 1.66, është mbi dhjetë herë PSI-ja e
+      popullatës legjitime (Figura [[fig:drift_psi_decomposition]]). Edhe zhvendosja e
+      transaksioneve legjitime e kalon zhurmën e saj në çdo fold, por është e vogël."""),
+    fig(
+        "drift_psi_decomposition",
+        "PSI mesatar mbi 29 veçori për çdo popullatë dhe fold, me brezin e zhurmës nga "
+        "permutacionet.",
+        15.0,
     ),
+    p("""Modeli i normalitetit, mbi të cilin janë trajnuar të tre detektorët, ndryshon pak; më shumë
+      ndryshojnë mashtrimet. Ritrajnimi periodik mbi të dhëna të reja normale nuk e trajton pra këtë
+      anë të problemit."""),
     h2("8.6", "Shtojca F: testet automatike"),
     p("""Masat metodologjike të Kapitullit 4 janë të koduara edhe në teste që ekzekutohen me çdo
-      ndryshim të kodit. Grupet kryesore janë këto:"""),
-    bullets(
-        [
-            "Testet e ndarjes: çdo vulë kohore e trajnimit paraprin çdo vulë të testimit, blloqet "
-            "nuk mbivendosen dhe e mbulojnë rrjedhën pa boshllëqe, dhe ndarja është e njëjtë në "
-            "çdo ekzekutim.",
-            "Testet e rrjedhjes së informacionit: statistikat e skaluesit janë ato të dritares së "
-            "trajnimit dhe nuk ndryshojnë kur transformohen të dhënat e testimit; kolona Time nuk "
-            "është mes veçorive hyrëse.",
-            "Testet e kontratës së modeleve: për çdo detektor, pikat ekstreme të shtuara "
-            "artificialisht marrin pikë më të larta se mostrat normale; ruajtja dhe ringarkimi "
-            "japin të njëjtat pikë; dy trajnime të njëpasnjëshme japin të njëjtin rezultat; çdo "
-            "variant i Autoencoder-it funksionon.",
-            "Testet e konventës së shenjës mbi të dhëna reale: për çdo model, mediana e pikëve të "
-            "mashtrimeve në bllokun e testimit është mbi atë të transaksioneve legjitime.",
-            "Testet e gjeometrisë: të dy vlerësuesit e dimensionit të brendshëm gjejnë dimensionin "
-            "e njohur të të dhënave sintetike, dhe masa e vështirësisë e dallon një problem të "
-            "lehtë nga një i vështirë me bisht të rëndë.",
-            "Testet e metrikave dhe të statistikave: vlerat krahasohen me raste të llogaritura me "
-            "dorë, pragu nga percentili jep pjesën e pritur të alarmeve, korrigjimi i Holm-it "
-            "është monoton, dhe korrigjimi me permutacione i PSI-së e dallon zhurmën e mostrave të "
-            "vogla nga një zhvendosje e vërtetë.",
-            "Testet e burimeve të punimit: çdo citim ka një hyrje në listën e referencave, çdo "
-            "figurë dhe tabelë e përmendur ekziston, dhe numrat e kapitujve janë të renditur.",
-            "Testet e integrimit: pikët në rrjedhë, me një broker real, janë të njëjta me ato "
-            "offline, dhe të dhënat kalojnë plotësisht nëpër PostgreSQL, me numër të saktë "
-            "rreshtash dhe vlera të paprekura.",
-        ]
-    ),
+      ndryshim të kodit. Testet kontrollojnë që çdo vulë kohore e trajnimit paraprin çdo vulë të
+      testimit dhe që blloqet e fold-eve nuk mbivendosen; që skaluesi mëson vetëm nga dritarja e
+      trajnimit dhe që kolona Time nuk është veçori; që çdo detektor u jep pikë më të larta pikave
+      ekstreme dhe mashtrimeve reale, dhe që ruajtja e ringarkimi japin të njëjtat pikë; që metrikat
+      dhe testet statistikore përputhen me raste të llogaritura me dorë; dhe që pikët në rrjedhë, me
+      një broker real, janë të njëjta me ato offline dhe kalojnë plotësisht nëpër PostgreSQL. Një
+      grup i veçantë testesh kontrollon vetë këtë dokument: çdo citim ka hyrje në listën e
+      referencave, dhe çdo figurë e tabelë e përmendur ekziston."""),
 ]

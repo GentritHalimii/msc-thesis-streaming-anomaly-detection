@@ -56,27 +56,13 @@ BLOCKS = [
       mbi rastësinë, por operacionalisht mbetet e pamjaftueshme. Dallimi mes domethënies
       statistikore dhe dobisë praktike shfaqet gjatë gjithë punimit."""),
     p("""Objektivi operacional formulohet veçmas. Nëse ekipi i hetimeve mund të shqyrtojë k alarme
-      në një periudhë, ajo që ka rëndësi nuk është AP-ja, por vlera e rikuperuar brenda këtij
-      buxheti:"""),
-    eq("Kursimi(k) = Σ_{i∈TP(k)} shuma_i − c_het · k"),
-    p("""Dy objektivat nuk maksimizohen domosdoshmërisht nga i njëjti model, dhe në Kapitullin 5
-      renditja ndryshon në disa raste kur kalohet nga njëri te tjetri. Për këtë arsye raportohen të
-      dy."""),
-    h2("3.4", "Kufiri i sipërm i vetë problemit"),
-    p("""Para krahasimit të algoritmeve rrallë pyetet nëse problemi mund të zgjidhet fare me mjetet
-      në fjalë. Të gjitha metodat unsupervised të këtij studimi supozojnë, në forma të ndryshme, se
-      klasa pozitive ndodhet gjeometrikisht larg asaj negative. Ky supozim mund të testohet pa
-      trajnuar asnjë model, dhe rezultati i testit ndikon në mënyrën si lexohen rezultatet e
-      mëpasshme."""),
-    p("""Prandaj Kapitulli 5 nis me karakterizimin gjeometrik të të dhënave: dimensionin e brendshëm
-      të klasës normale, distancën e çdo transaksioni nga fqinjët e tij legjitimë më të afërt dhe
-      cilësinë e zbulimit që arrin një detektor i ndërtuar vetëm mbi këtë distancë. Ky detektor jep
-      një kufi të pavarur nga algoritmi. Nëse detektorët e trajnuar mbeten pranë tij, pengesa nuk
-      është algoritmi por gjeometria e problemit, dhe përfundimet duhen formuluar në përputhje me
-      këtë."""),
-    h2("3.5", "Supozimet"),
-    p("""Studimi mbështetet në katër supozime. Nëse ndonjëri prej tyre nuk vlen, përfundimet
-      kufizohen në mënyrën që përshkruhet më poshtë."""),
+      në një periudhë, ajo që ka rëndësi nuk është AP-ja, por sa mashtrime dhe sa vlerë monetare
+      kapen brenda këtij buxheti. Dy objektivat nuk maksimizohen domosdoshmërisht nga i njëjti
+      model, dhe në Kapitullin 5 renditja ndryshon kur kalohet nga njëri te tjetri. Për këtë arsye
+      raportohen të dy."""),
+    h2("3.4", "Supozimet"),
+    p("""Studimi mbështetet në tri supozime. Nëse ndonjëri prej tyre nuk vlen, përfundimet kufizohen
+      në mënyrën që përshkruhet më poshtë."""),
     numbers(
         [
             "Etiketat historike janë të disponueshme dhe të sakta. Kjo lejon llogaritjen e normës "
@@ -84,17 +70,14 @@ BLOCKS = [
             "mbikëqyrur. Në realitet etiketat historike janë të paplota, kështu që referenca do të "
             "ishte më e dobët dhe hendeku i matur më i vogël.",
             "Transaksionet normale të dritares së trajnimit janë përfaqësuese të normalitetit. Ky "
-            "është supozimi i çdo metode unsupervised, dhe analiza e zhvendosjes në Kapitullin 5 e "
+            "është supozimi i çdo metode unsupervised, dhe analiza e zhvendosjes në Shtojcën E e "
             "teston atë empirikisht.",
             "Renditja sipas kolonës Time pasqyron rendin real të ngjarjeve. Dataset-i nuk ka vula "
             "kohore absolute, vetëm sekonda nga transaksioni i parë, dhe ato pranohen ashtu siç "
             "janë.",
-            "Kostoja e një hetimi është konstante dhe nuk varet nga transaksioni. Në realitet një "
-            "transaksion me vlerë të lartë mund të justifikojë më shumë kohë hetimi; ndjeshmëria "
-            "ndaj këtij supozimi diskutohet në Kapitullin 6.",
         ]
     ),
-    h2("3.6", "Hipotezat"),
+    h2("3.5", "Hipotezat"),
     p("""Projekt-propozimi formuloi tri hipoteza pune. Këtu ato riformulohen në mënyrë të
       testueshme, me kriterin e refuzimit të përcaktuar paraprakisht."""),
     bullets(
@@ -114,7 +97,7 @@ BLOCKS = [
     ),
     p("""Kriteret e refuzimit u përcaktuan para eksperimenteve, në mënyrë që hipotezat të mos
       konfirmohen pas faktit duke zgjedhur metrikën ose fold-et ku rezultati del i favorshëm."""),
-    h2("3.7", "Rreziqet metodologjike dhe masat mbrojtëse"),
+    h2("3.6", "Rreziqet metodologjike dhe masat mbrojtëse"),
     p("""Informacioni nga e ardhmja mund të hyjë në eksperiment nga katër rrugë të ndryshme, dhe
       secila prej tyre do ta bënte vlerësimin vetëkonfirmues. Figura [[fig:diagram_leakage]] i
       përmbledh këto rrugë së bashku me masën e marrë kundër secilës. Çdo masë kontrollohet nga një
@@ -123,9 +106,9 @@ BLOCKS = [
     p("""Rruga e katërt kërkon kujdes të veçantë, sepse vërehet më vështirë. Nëse hiperparametrat
       zgjidhen duke parë rezultatin në të dhënat e testit, numri i raportuar nuk është performanca e
       pritur, por maksimumi i një kërkimi mbi testin. Në këtë punim zgjedhja bëhet mbi një ndarje të
-      brendshme kohore të dritares së trajnimit; si kontroll shtesë provohet edhe një rrugë
-      plotësisht pa etiketa, me kriteret Excess-Mass dhe Mass-Volume."""),
-    h2("3.8", "Kriteret e suksesit"),
+      brendshme kohore të dritares së trajnimit, dhe pasoja e saj për fold-et e hershme trajtohet në
+      nënkapitullin 4.7."""),
+    h2("3.7", "Kriteret e suksesit"),
     p("""Suksesi i punimit nuk matet me arritjen e një vlere të caktuar të metrikës, sepse një
       objektiv numerik i paracaktuar krijon presion për ta arritur atë me mjete metodologjikisht të
       dyshimta. Kriteret janë këto:"""),
@@ -139,8 +122,6 @@ BLOCKS = [
             "pavarura.",
             "Të tri pyetjet hulumtuese marrin përgjigje të drejtpërdrejtë, edhe kur përgjigjja "
             "është negative.",
-            "Çdo pohim për shkakun e një rezultati mbështetet në një matje të drejtpërdrejtë ose "
-            "në një ndërhyrje eksperimentale që e teston atë.",
             "Kufizimet e studimit thuhen hapur dhe nuk fshihen me zgjedhjen e asaj që raportohet.",
         ]
     ),

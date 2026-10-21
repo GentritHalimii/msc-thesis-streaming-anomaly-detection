@@ -110,13 +110,6 @@ REFERENCES: dict[str, str] = {
     "demsar2006": "J. Demšar, “Statistical comparisons of classifiers over multiple "
     "data sets,” Journal of Machine Learning Research, vol. 7, "
     "pp. 1–30, 2006.",
-    "goix2015": "N. Goix, A. Sabourin, and S. Clémençon, “On anomaly ranking "
-    "and excess-mass curves,” in Proc. 18th Int. Conf. Artificial "
-    "Intelligence and Statistics (AISTATS), San Diego, CA, USA, 2015, "
-    "pp. 287–295.",
-    "goix2016": "N. Goix, “How to evaluate the quality of unsupervised anomaly detection "
-    "algorithms?” in ICML Anomaly Detection Workshop, New York, NY, USA, "
-    "2016, arXiv:1607.01152.",
     "gama2013": "J. Gama, R. Sebastião, and P. P. Rodrigues, “On evaluating stream "
     "learning algorithms,” Machine Learning, vol. 90, no. 3, "
     "pp. 317–346, 2013.",
@@ -124,8 +117,6 @@ REFERENCES: dict[str, str] = {
     "for time series predictor evaluation,” Information Sciences, "
     "vol. 191, pp. 192–213, 2012.",
     # --- concept drift ----------------------------------------------------
-    "page1954": "E. S. Page, “Continuous inspection schemes,” Biometrika, vol. 41, "
-    "no. 1/2, pp. 100–115, 1954.",
     "gama2014": "J. Gama, I. Žliobaitė, A. Bifet, M. Pechenizkiy, and "
     "A. Bouchachia, “A survey on concept drift adaptation,” ACM "
     "Computing Surveys, vol. 46, no. 4, pp. 1–37, 2014.",
@@ -149,18 +140,7 @@ REFERENCES: dict[str, str] = {
     "rayana2016": "S. Rayana and L. Akoglu, “Less is more: Building selective anomaly "
     "ensembles,” ACM Trans. Knowledge Discovery from Data, vol. 10, no. 4, "
     "pp. 1–33, 2016.",
-    # --- interpretability ---------------------------------------------------
-    "breiman2001": "L. Breiman, “Random forests,” Machine Learning, vol. 45, no. 1, "
-    "pp. 5–32, 2001.",
-    "lundberg2017": "S. M. Lundberg and S.-I. Lee, “A unified approach to interpreting "
-    "model predictions,” in Advances in Neural Information Processing "
-    "Systems (NIPS), vol. 30, Long Beach, CA, USA, 2017, pp. 4765–4774.",
     # --- statistics ---------------------------------------------------------
-    "friedman1937": "M. Friedman, “The use of ranks to avoid the assumption of normality "
-    "implicit in the analysis of variance,” Journal of the American "
-    "Statistical Association, vol. 32, no. 200, pp. 675–701, 1937.",
-    "nemenyi1963": "P. B. Nemenyi, “Distribution-free multiple comparisons,” Ph.D. "
-    "dissertation, Princeton University, Princeton, NJ, USA, 1963.",
     "wilcoxon1945": "F. Wilcoxon, “Individual comparisons by ranking methods,” "
     "Biometrics Bulletin, vol. 1, no. 6, pp. 80–83, 1945.",
     "holm1979": "S. Holm, “A simple sequentially rejective multiple test procedure,” "

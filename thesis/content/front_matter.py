@@ -25,7 +25,7 @@ TITULLI = (
 STUDENTI = "Gentrit Halimi"
 MENTORI = "Dr. sc. Mehmet Shala"
 PROGRAMI = "Programi për Shkenca Kompjuterike dhe Inxhinieri"
-DATA = "Gusht 2026"
+DATA = "Nëntor 2026"
 VITI_AKADEMIK = "Viti akademik 2024 – 2025"
 
 
@@ -99,26 +99,22 @@ ABSTRAKT = [
     "për zbulimin e anomalive mbi një rrjedhë të simuluar transaksionesh, i cili lidh Apache "
     "Kafka-n me tri algoritmet unsupervised të projekt-propozimit (Isolation Forest, Autoencoder "
     "dhe One-Class SVM) dhe me Regresionin Logjistik si referencë të mbikëqyrur.",
-    "Secili detektor studiohet në thellësi dhe vlerësohet me një protokoll rolling-origin 8-fold, "
-    "që rindërton skaluesin, modelet dhe pragjet në çdo fold. Një detektor distancash pa "
-    "parametra mat paraprakisht kufirin gjeometrik të problemit: mashtrimet janë mesatarisht 7.9 "
-    "herë më larg klasës legjitime se një transaksion tipik legjitim, por distanca jep Average "
-    "Precision (AP) prej vetëm 0.30, sepse bishti i klasës legjitime zë të njëjtin rajon. Me 100 "
-    "alarme për bllok, 37% e mashtrimeve nuk i arrin asnjë detektor unsupervised, ndërsa "
-    "referenca e mbikëqyrur kap 59% të tyre; informacioni ekziston, por jo në formën që e sheh "
-    "një detektor distancash.",
-    "Paraprocesimi ka efekt më të madh se zgjedhja e algoritmit: transformimi kuantil e rrit AP-në "
-    "e One-Class SVM-së mesatarisht me 0.218, me përmirësim në të tetë fold-et, dhe efekti mbetet "
-    "kur skaluesi zgjidhet vetëm nga fold-et e mëparshme. Kur secili detektor merr konfigurimin e "
-    "tij më të mirë, raporti mes më të mirit dhe më të dobëtit bie nga 2.1 në 1.15. Ndarja e "
-    "rastësishme e të dhënave, e zakonshme në literaturë, e rrit AP-në e metodave unsupervised "
-    "rreth tri herë.",
-    "Percentili 99 i vonesës end-to-end nuk e kalon 132 milisekonda në asnjë ritëm të testuar, "
-    "shumë nën objektivin prej një sekonde. Pragu adaptiv me dritare rrëshqitëse e bën ngarkesën e "
-    "hetimeve më të qëndrueshme dhe rrit F1 për të tre detektorët unsupervised. Asnjë ansambël nuk "
-    "e kalon modelin më të mirë individual, sepse detektorët gabojnë njësoj. Pas korrigjimit për "
-    "anshmërinë e mostrave të vogla, zhvendosja e mashtrimeve mbetet më e madhe se ajo e "
-    "transaksioneve legjitime.",
+    "Detektorët vlerësohen mbi dataset-in publik të ULB-së me një protokoll rolling-origin 8-fold, "
+    "që rindërton skaluesin, modelet dhe pragjet në çdo fold, me Average Precision (AP) si metrikë "
+    "kryesore. Percentili 99 i vonesës end-to-end nuk e kalon 132 milisekonda në asnjë nga ritmet "
+    "e testuara, deri në 2000 mesazhe në sekondë, shumë nën objektivin prej një sekonde.",
+    "Në konfigurimin bazë Autoencoder-i ofron balancën më të mirë mes cilësisë dhe kostos, me AP "
+    "0.193 dhe koston më të ulët të pikëzimit, para One-Class SVM-së (0.151) dhe Isolation "
+    "Forest-it (0.091). Referenca e mbikëqyrur arrin 0.734, gjë që tregon sa vlejnë etiketat "
+    "historike. Asnjë ansambël nuk e kalon modelin më të mirë individual, sepse detektorët gabojnë "
+    "njësoj: me 100 alarme për bllok, 37% e mashtrimeve nuk i arrin asnjë prej tyre, ndërsa "
+    "referenca e mbikëqyrur kap 59% të këtyre mashtrimeve.",
+    "Konfigurimi peshon më shumë se zgjedhja e algoritmit. Transformimi kuantil e rrit AP-në e "
+    "One-Class SVM-së me 0.218, me përmirësim në të tetë fold-et, dhe kur secili detektor merr "
+    "konfigurimin e tij më të mirë, raporti mes më të mirit dhe më të dobëtit bie nga 2.1 në 1.15. "
+    "Ndarja e rastësishme e të dhënave, e zakonshme në literaturë, e rrit AP-në e metodave "
+    "unsupervised rreth tri herë. Një prag adaptiv me dritare rrëshqitëse e bën ngarkesën e "
+    "hetimeve më të qëndrueshme dhe rrit F1 për të tre detektorët unsupervised.",
 ]
 
 ABSTRACT_EN = [
@@ -128,26 +124,23 @@ ABSTRACT_EN = [
     "simulated transaction stream. The system connects Apache Kafka with the three unsupervised "
     "algorithms named in the research proposal (Isolation Forest, Autoencoder and One-Class SVM) "
     "and with Logistic Regression as a supervised reference.",
-    "Each detector is studied in depth and evaluated with an 8-fold rolling-origin protocol that "
-    "rebuilds the scaler, the models and the thresholds in every fold. A parameter-free distance "
-    "detector first measures the geometric ceiling of the problem: frauds lie on average 7.9 times "
-    "farther from the legitimate class than a typical legitimate transaction, yet distance yields "
-    "an Average Precision (AP) of only 0.30, because the tail of the legitimate class occupies the "
-    "same region. With 100 alerts per block, 37% of the frauds are reached by no unsupervised "
-    "detector, while the supervised reference catches 59% of them; the information is there, but "
-    "not in a form a distance-based detector can see.",
-    "Preprocessing matters more than the choice of algorithm: a quantile transform raises the AP "
-    "of One-Class SVM by 0.218 on average, improving all eight folds, and the gain holds when the "
-    "scaler is chosen from earlier folds only. When each detector receives its best "
-    "configuration, the ratio between the best and the weakest falls from 2.1 to 1.15. A shuffled "
-    "split, common in the literature, inflates the AP of the unsupervised methods about "
-    "threefold.",
-    "The 99th-percentile end-to-end latency stays below 132 milliseconds at every arrival rate "
-    "tested, far below the one-second target. A sliding-window adaptive threshold makes the "
-    "investigation workload steadier and raises F1 for all three unsupervised detectors. No "
-    "ensemble beats the best single model, because the detectors make the same mistakes. After "
-    "correcting for the small-sample bias of the stability index, the frauds still drift more "
-    "than the legitimate transactions.",
+    "The detectors are evaluated on the public ULB dataset with an 8-fold rolling-origin protocol "
+    "that rebuilds the scaler, the models and the thresholds in every fold, with Average Precision "
+    "(AP) as the primary metric. The 99th-percentile end-to-end latency stays below 132 "
+    "milliseconds at every arrival rate tested, up to 2000 messages per second, far below the "
+    "one-second target.",
+    "In the default configuration the Autoencoder offers the best balance between quality and "
+    "cost, with an AP of 0.193 and the lowest scoring cost, ahead of One-Class SVM (0.151) and "
+    "Isolation Forest (0.091). The supervised reference reaches 0.734, which shows what historical "
+    "labels are worth. No ensemble beats the best single model, because the detectors make the "
+    "same mistakes: with 100 alerts per block, 37% of the frauds are reached by none of them, "
+    "while the supervised reference catches 59% of those frauds.",
+    "Configuration matters more than the choice of algorithm. A quantile transform raises the AP "
+    "of One-Class SVM by 0.218, improving all eight folds, and when each detector receives its "
+    "best configuration the ratio between the best and the weakest falls from 2.1 to 1.15. A "
+    "shuffled split, common in the literature, inflates the AP of the unsupervised methods about "
+    "threefold. A sliding-window adaptive threshold makes the investigation workload steadier and "
+    "raises F1 for all three unsupervised detectors.",
 ]
 
 MIRENJOHJE = [
@@ -174,9 +167,7 @@ FJALORI = [
     ),
     ("AE", "Autoencoder, rrjet nervor që mëson të rindërtojë hyrjen e vet"),
     ("AUC", "Area Under the Curve, sipërfaqja nën kurbë"),
-    ("CD", "Critical Difference, diferenca kritike në testin post-hoc të Nemenyi-t"),
     ("CV", "Coefficient of Variation, koeficienti i variacionit"),
-    ("EM", "Excess-Mass, kriter unsupervised për vlerësimin e funksioneve të pikëzimit"),
     ("FN", "False Negative, mashtrim i pazbuluar"),
     (
         "Fold",
@@ -184,12 +175,9 @@ FJALORI = [
         "testimit që e pason; 8-fold do të thotë tetë pika të tilla",
     ),
     ("FP", "False Positive, alarm i rremë"),
-    ("ID", "Intrinsic Dimension, dimensioni i brendshëm i një bashkësie të dhënash"),
     ("IF", "Isolation Forest"),
     ("KRaft", "Kafka Raft, modaliteti i Apache Kafka-s pa ZooKeeper"),
-    ("KS", "Kolmogorov-Smirnov, test dy-mostror i barazisë së shpërndarjeve"),
     ("LR", "Logistic Regression, Regresioni Logjistik"),
-    ("MV", "Mass-Volume, kriter unsupervised, plotësues i EM-së"),
     ("OCSVM", "One-Class SVM, makinë me vektorë mbështetës njëklasëshe"),
     ("p50 / p95 / p99", "Percentili i 50-të, 95-të dhe 99-të i një shpërndarjeje"),
     ("PCA", "Principal Component Analysis, analiza e komponentëve kryesorë"),
@@ -202,12 +190,8 @@ FJALORI = [
         "Protokoll vlerësimi ku modeli trajnohet mbi të kaluarën dhe testohet mbi bllokun që vjen "
         "pas, në disa pika prerjeje të njëpasnjëshme",
     ),
-    ("RSS", "Resident Set Size, memoria rezidente e procesit"),
-    ("SHAP", "SHapley Additive exPlanations"),
     ("Throughput", "Numri i mesazheve të përpunuara për sekondë"),
-    ("TP", "True Positive, mashtrim i zbuluar saktë"),
     ("TPE", "Tree-structured Parzen Estimator, mostruesi i përdorur nga Optuna"),
-    ("TwoNN", "Vlerësues i dimensionit të brendshëm i bazuar në dy fqinjët më të afërt"),
     ("ULB", "Université Libre de Bruxelles"),
     (
         "unsupervised",

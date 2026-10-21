@@ -52,23 +52,16 @@ BLOCKS = [
       mbi të kaluarën. Punimi mat edhe sa i fryn rezultatet kjo praktikë."""),
     p("""Fushëveprimi kufizohet në dy drejtime. Sistemi është prototip kërkimor në mjedis të
       kontrolluar dhe jo sistem financiar në prodhim. Krahasimi përqendrohet te tri algoritmet
-      unsupervised që emërton projekt-propozimi, të cilat studiohen në thellësi, në vend që të
-      shtohen shumë algoritme të tjera me nga një konfigurim të vetëm. Arsyet e kësaj zgjedhjeje
-      jepen në nënkapitullin vijues."""),
+      unsupervised që emërton projekt-propozimi, të cilat studiohen në thellësi."""),
     h2("1.4", "Thellësi në vend të gjerësisë"),
     p("""Projekt-propozimi emërton Isolation Forest dhe Autoencoder-in si detektorët kryesorë,
       One-Class SVM si komponent shtesë dhe Regresionin Logjistik si model bazë (baseline). Studimi
-      i përmbahet kësaj bashkësie. Një listë më e gjatë detektorësh do të jepte një tabelë më të
-      madhe, por jo më shumë njohuri: kur çdo algoritëm ka vetëm një konfigurim dhe një rresht në
-      tabelë, nuk mund të dallohet nëse diferencat vijnë nga mekanizmi i algoritmit apo nga akordimi
-      i tij."""),
-    p("""Thellësia kërkohet në gjashtë drejtime. Para çdo modelimi matet gjeometria e të dhënave, e
-      cila jep një kufi të sipërm për çdo metodë të bazuar në distancë. Ndarja e vetme zëvendësohet
-      me një protokoll rolling-origin 8-fold. Paraprocesimi trajtohet si variabël eksperimentale dhe
-      jo si zgjedhje e paracaktuar. Për secilin algoritëm hartohet hapësira e hiperparametrave dhe
-      kryhen diagnostika që lidhen me mekanizmin e tij. Shpjegimi i renditjes së algoritmeve
-      testohet me një ndërhyrje eksperimentale mbi hyrjen. Së fundi, analiza e gabimeve shkon deri
-      te transaksioni i veçantë, për të parë cilat mashtrime nuk kapen dhe pse."""),
+      i përmbahet kësaj bashkësie dhe shkon në thellësi në katër drejtime. Ndarja e vetme
+      zëvendësohet me një protokoll rolling-origin 8-fold, i cili tregon nëse renditja e algoritmeve
+      mbetet e njëjtë në periudha të ndryshme. Paraprocesimi dhe hiperparametrat trajtohen si
+      variabla eksperimentale dhe jo si zgjedhje të paracaktuara. Për secilin algoritëm studiohen
+      parametrat që lidhen me mekanizmin e tij. Së fundi, analiza e gabimeve shkon deri te
+      transaksioni i veçantë, për të parë cilat mashtrime nuk kapen dhe pse."""),
     h2("1.5", "Pyetjet hulumtuese"),
     p("""Punimi ndërtohet rreth tri pyetjeve hulumtuese, të formuluara në projekt-propozimin e
       miratuar dhe të pandryshuara gjatë punës:"""),
@@ -88,55 +81,43 @@ BLOCKS = [
       përgjigje jepen edhe kushtet nën të cilat vlen, sepse disa prej tyre varen nga protokolli i
       vlerësimit dhe nga konfigurimi i algoritmeve."""),
     h2("1.6", "Objektivat e punimit"),
-    p("""Objektivat specifike, sipas radhës në të cilën realizohen, janë:"""),
+    p("""Objektivat specifike janë ato të projekt-propozimit:"""),
     numbers(
         [
-            "Rishikimi i literaturës për tri algoritmet e propozimit, për zbulimin e mashtrimeve "
-            "me karta dhe për arkitekturat streaming me Apache Kafka, me theks te metodologjia e "
-            "vlerësimit.",
-            "Karakterizimi gjeometrik i dataset-it, për të përcaktuar kufirin e sipërm që mund të "
-            "arrijnë metodat e bazuara në distancë, para se të trajnohet ndonjë model.",
-            "Dizajnimi i një arkitekture end-to-end me pesë shtresa, nga leximi i të dhënave deri "
-            "te gjenerimi dhe ruajtja e alarmeve.",
-            "Ndërtimi i një protokolli vlerësimi pa rrjedhje informacioni, me ndarje kronologjike "
-            "të përsëritur në tetë pika kohore prerjeje.",
-            "Studimi i thelluar i secilit prej tri algoritmeve: hapësira e hiperparametrave, "
-            "ndjeshmëria ndaj paraprocesimit dhe diagnostika që lidhen me mekanizmin e tij.",
-            "Matja e kostos operacionale (vonesa, throughput, memoria dhe CPU) nën ritme të "
+            "Rishikimi i literaturës për zbulimin e anomalive, për tri algoritmet e propozimit, "
+            "për zbulimin e mashtrimeve me karta dhe për arkitekturat streaming me Apache Kafka.",
+            "Dizajnimi dhe implementimi i një arkitekture end-to-end me pesë shtresa, nga leximi i "
+            "të dhënave deri te gjenerimi dhe ruajtja e alarmeve, me vonesë të matur nën ritme të "
             "kontrolluara mbërritjeje.",
+            "Trajnimi i tri modeleve unsupervised vetëm mbi transaksionet normale dhe krahasimi i "
+            "tyre me Regresionin Logjistik, sipas cilësisë së zbulimit dhe kostos operacionale, në "
+            "një protokoll vlerësimi pa rrjedhje informacioni.",
             "Testimi eksperimental i qasjes ensemble dhe raportimi i rezultatit, cilido qoftë "
             "drejtimi i tij.",
-            "Analiza e shkaqeve: zhvendosja e shpërndarjeve, interpretueshmëria e vendimeve, "
-            "testimi i mekanizmit të propozuar me ndërhyrje dhe analiza e gabimeve në nivel "
-            "transaksioni.",
             "Ruajtja e rezultateve në PostgreSQL dhe vizualizimi i tyre në një panel Grafana të "
             "konfiguruar tërësisht nga kodi.",
+            "Nxjerrja e përfundimeve dhe e rekomandimeve praktike nga rezultatet eksperimentale.",
         ]
     ),
     h2("1.7", "Kontributet"),
     p("""Kontributet kryesore të punimit janë këto:"""),
     bullets(
         [
-            "Protokolli rolling-origin 8-fold mbi një pipeline të vërtetë streaming, ku në çdo "
-            "fold rindërtohen nga fillimi skaluesi, modelet dhe pragjet. Kështu mund të shihet "
-            "nëse renditja e algoritmeve mbetet e njëjtë në periudha të ndryshme apo është pasojë "
-            "e një prerjeje të vetme.",
-            "Matja e fryrjes që shkakton ndarja e rastësishme, me të njëjtat të dhëna dhe të "
-            "njëjtat modele: Average Precision e metodave unsupervised rritet mesatarisht rreth "
-            "tri herë, ndërsa ajo e referencës së mbikëqyrur jo.",
-            "Trajtimi i paraprocesimit si variabël eksperimentale. Zgjedhja e transformimit ndikon "
-            "në rezultat më shumë se zgjedhja mes tri algoritmeve dhe pothuajse nuk e prek "
-            "referencën e mbikëqyrur; efekti mbetet edhe kur skaluesi zgjidhet vetëm nga fold-et e "
-            "mëparshme.",
-            "Kufiri i sipërm gjeometrik i problemit, i matur me një detektor pa parametra, i cili "
-            "tregon sa nga rezultati modest u takon vetë të dhënave.",
-            "Shpjegimi i dobësisë së Isolation Forest-it me shpërndarjen e ndarjeve mbi kolonat, i "
-            "testuar me një ndërhyrje eksperimentale mbi hyrjen.",
-            "Ndarja e zhvendosjes së të dhënave sipas popullatës, legjitime dhe mashtruese, me një "
-            "korrigjim me permutacione për anshmërinë që indeksi PSI ka në mostra të vogla.",
+            "Një pipeline i plotë mbi Apache Kafka, nga riprodhimi kronologjik i transaksioneve "
+            "deri te alarmet në PostgreSQL dhe Grafana, me vonesë end-to-end të matur në katër "
+            "ritme mbërritjeje.",
+            "Krahasimi i unifikuar i Isolation Forest-it, Autoencoder-it dhe One-Class SVM-së me "
+            "një referencë të mbikëqyrur mbi të njëjtën infrastrukturë, me cilësinë dhe koston "
+            "operacionale krahas njëra-tjetrës, në një protokoll rolling-origin 8-fold ku në çdo "
+            "fold rindërtohen nga fillimi skaluesi, modelet dhe pragjet.",
+            "Rezultati negativ për ansamblet, i shpjeguar në nivel transaksioni: detektorët "
+            "gabojnë njësoj, prandaj kombinimi i tyre nuk sjell informacion të ri.",
+            "Dy gjetje metodologjike të matura mbi të njëjtat të dhëna dhe të njëjtat modele: "
+            "ndarja e rastësishme e rrit Average Precision të metodave unsupervised rreth tri "
+            "herë, dhe zgjedhja e paraprocesimit ndikon në rezultat më shumë se zgjedhja mes tri "
+            "algoritmeve.",
             "Një prag adaptiv me dritare rrëshqitëse për shtresën e alarmeve, i cili e bën "
-            "ngarkesën e hetimeve më të qëndrueshme dhe rrit F1 për detektorët unsupervised, por e "
-            "ul për referencën e mbikëqyrur; shkaku i kësaj asimetrie shpjegohet.",
+            "ngarkesën e hetimeve më të qëndrueshme për detektorët unsupervised.",
         ]
     ),
     h2("1.8", "Ajo që ky punim nuk e trajton"),
@@ -144,17 +125,18 @@ BLOCKS = [
       disponueshmëria e lartë, autentikimi ose orkestrimi me Kubernetes. Nuk ndërtohet ritrajnim në
       kohë reale. Nuk përdoren teknika mbimostrimi si SMOTE [@chawla2002], sepse ato kërkojnë
       etiketa gjatë trajnimit. Nuk krahasohen platforma streaming mes tyre, dhe krahasimi nuk
-      zgjerohet përtej tri algoritmeve të propozimit, për arsyet e nënkapitullit 1.4. Punimi nuk mat
-      as vonesën nën trafik real: ritmi i mbërritjes është sintetik dhe i kontrolluar, dhe çdo vlerë
-      e vonesës raportohet bashkë me ritmin nën të cilin u mat."""),
+      zgjerohet përtej tri algoritmeve të propozimit. Punimi nuk mat as vonesën nën trafik real:
+      ritmi i mbërritjes është sintetik dhe i kontrolluar, dhe çdo vlerë e vonesës raportohet bashkë
+      me ritmin nën të cilin u mat."""),
     h2("1.9", "Struktura e punimit"),
     p("""Kapitulli 2 rishikon literaturën: mekanizmat e zbulimit të anomalive, tri algoritmet e
       propozimit, punimet për zbulimin e mashtrimeve me karta, arkitekturat streaming dhe
       metodologjinë e vlerësimit. Kapitulli 3 e formulon problemin me saktësi, bashkë me supozimet,
       hipotezat dhe kriteret e suksesit. Kapitulli 4 përshkruan metodologjinë: dataset-in,
       protokollin e ndarjes, modelet, procedurën e pragut, metrikat dhe arkitekturën e implementuar.
-      Kapitulli 5 paraqet rezultatet sipas tri pyetjeve hulumtuese, të ndjekura nga studimet e
-      thelluara për secilin algoritëm. Kapitulli 6 i diskuton rezultatet, i krahason me literaturën,
-      paraqet kufizimet dhe drejtimet për punë të mëtejshme. Shtojcat përmbajnë hollësitë e
-      riprodhimit, strukturën e kodit, tabelat e plota të rezultateve dhe testet automatike."""),
+      Kapitulli 5 paraqet rezultatet sipas tri pyetjeve hulumtuese dhe tregon sa varen ato nga
+      konfigurimi i algoritmeve dhe nga protokolli i ndarjes. Kapitulli 6 i diskuton rezultatet, i
+      krahason me literaturën, paraqet kufizimet dhe drejtimet për punë të mëtejshme. Shtojcat
+      përmbajnë hollësitë e riprodhimit, strukturën e kodit, rezultatet për çdo fold, rezultatet e
+      ndarjes 70/30, analizën e zhvendosjes dhe testet automatike."""),
 ]

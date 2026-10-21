@@ -45,12 +45,8 @@ _HYRJE = [
       secilës veçori veç e veç, si ECOD, supozojnë pavarësinë e veçorive dhe fitojnë shpejtësi prej
       saj [@li2022ecod], ndërsa vlerësimi robust i kovariancës e modelon normalitetin si një
       elipsoid të vetëm. Të gjitha këto metoda gjenden në biblioteka të unifikuara si PyOD
-      [@zhao2019pyod], kështu që testimi i dhjetëra detektorëve është teknikisht i lehtë."""),
-    p("""Kjo lehtësi ka edhe një anë problematike. Kur krahasohen dhjetëra detektorë mbi një dataset
-      të vetëm, numri i testeve statistikore rritet, korrigjimi për krahasime të shumëfishta bëhet
-      aq i rreptë sa asnjë diferencë nuk mbetet e dallueshme, dhe kuptimi i mekanizmit zëvendësohet
-      nga një renditje emrash. Ky punim zgjedh rrugën tjetër: tri familje me mekanizma të ndryshëm,
-      secila e studiuar në thellësi. Arsyetimi i plotë jepet në nënkapitullin 2.13."""),
+      [@zhao2019pyod]. Ato mbeten jashtë krahasimit, sepse projekt-propozimi e kufizon studimin te
+      tri algoritmet e tij."""),
     p("""Tri algoritmet e studimit përdorin tri mekanizma të ndryshëm. Isolation Forest mat sa lehtë
       izolohet një pikë, Autoencoder-i sa keq rindërtohet ajo, dhe One-Class SVM se në cilën anë të
       një kufiri të mësuar ndodhet. Meqë mekanizmat ndryshojnë, diferencat në rezultate mund të
@@ -106,8 +102,7 @@ _ALGORITMET = [
       mësojë funksionin identitet. Këtë e siguron vetëm ngushtica e hapësirës latente. Nëse
       dimensioni latent i afrohet atij të hyrjes, rrjeti mund t'i rindërtojë mirë edhe anomalitë,
       dhe pika humbet fuqinë dalluese. Dimensioni latent pra nuk është një hiperparametër i
-      zakonshëm, por pjesë e vetë mekanizmit të zbulimit; Kapitulli 5 e studion atë krahas
-      dimensionit të brendshëm të matur të klasës normale."""),
+      zakonshëm, por pjesë e vetë mekanizmit të zbulimit, dhe Kapitulli 5 e studion atë veçmas."""),
     h3("2.3.2", "Variantet dhe regularizimi"),
     p("""Literatura ofron disa mënyra për ta forcuar këtë mekanizëm. Autoencoder-i denoising
       trajnohet të rindërtojë hyrjen e pastër nga një version i zhurmshëm i saj, gjë që e shtyn
@@ -254,8 +249,9 @@ _METODOLOGJIA = [
       dallimin mes dy metrikave."""),
     p("""As AP nuk e pasqyron plotësisht mënyrën se si përdoret një detektor. Një ekip hetimesh nuk
       e shqyrton gjithë renditjen, por vetëm aq alarme sa i lejon kapaciteti. Prandaj raportohen
-      edhe metrika për një buxhet të fiksuar alarmesh dhe kursimet neto sipas një modeli kostoje, që
-      një përmirësim në renditje të shprehet në njësi që ekipi operacional i njeh."""),
+      edhe metrika për një buxhet të fiksuar alarmesh, sa mashtrime dhe sa vlerë monetare kapen
+      brenda tij, që një përmirësim në renditje të shprehet në njësi që ekipi operacional i
+      njeh."""),
     h3("2.8.2", "Ndarja kohore dhe rrjedhja e informacionit"),
     p("""Bergmeir dhe Benítez analizuan validimin e kryqëzuar për të dhëna me strukturë kohore dhe
       treguan se ndarja e rastësishme jep vlerësime të anshme, sepse modeli trajnohet me të dhëna që
@@ -278,26 +274,12 @@ _METODOLOGJIA = [
       përjashtimi i tyre do të ishte një supozim i panevojshëm i ashpër për një bankë. Kufiri që
       vihet këtu, me etiketa historike por pa etiketa aktuale, është ai që vonesa e verifikimit
       imponon në praktikë."""),
-    h3("2.8.4", "Përzgjedhja e modeleve pa etiketa"),
-    p("""Një kontradiktë e njohur e fushës është se metodat unsupervised zakonisht akordohen me
-      etiketa. Goix e formuloi problemin qartë dhe propozoi dy kritere që nuk kërkojnë etiketa,
-      kurbat Excess-Mass dhe Mass-Volume, të cilat vlerësojnë sa mirë bashkësitë e nivelit të një
-      funksioni pikëzimi e përqendrojnë masën probabilitare në vëllim të vogël [@goix2015],
-      [@goix2016]. Vështirësia praktike është vlerësimi i masës Lebesgue në dimension të lartë;
-      zgjidhja e rekomanduar, e zbatuar edhe këtu, është mesatarizimi mbi nënhapësira të rastësishme
-      me dimension të ulët."""),
-    p("""Këto kritere masin përqendrimin e masës dhe jo dobinë operacionale, dhe vlera e tyre
-      absolute nuk krahasohet mes dataset-eve. Prandaj këtu nuk e zëvendësojnë kriterin me etiketa,
-      por përdoren për një pyetje të vetme: a do ta zgjidhte një kriter pa etiketa të njëjtin
-      konfigurim?"""),
-    h3("2.8.5", "Krahasimi statistikor i algoritmeve"),
-    p("""Demšar-i përshkroi protokollin që mbetet standard për krahasimin e disa algoritmeve mbi
-      disa bashkësi të dhënash: testin joparametrik të Friedman-it mbi matricën e rangjeve, të
-      ndjekur nga testi post-hoc i Nemenyi-t dhe diagrami i diferencës kritike [@demsar2006],
-      [@friedman1937], [@nemenyi1963]. Për krahasime të veçanta dyshe rekomandohet testi i
-      Wilcoxon-it për çifte [@wilcoxon1945], me korrigjim për krahasime të shumëfishta; procedura e
-      Holm-it është më e fuqishme se ajo e Bonferroni-t dhe e kontrollon njësoj gabimin
-      [@holm1979]."""),
+    h3("2.8.4", "Krahasimi statistikor i algoritmeve"),
+    p("""Demšar-i, në punimin që mbetet referenca standarde për krahasimin statistikor të
+      algoritmeve mbi disa bashkësi të dhënash, rekomandon për krahasimet dyshe testin joparametrik
+      të Wilcoxon-it për çifte [@demsar2006], [@wilcoxon1945]. Kur bëhen disa krahasime
+      njëkohësisht, p-vlerat duhen korrigjuar; procedura e Holm-it është më e fuqishme se ajo e
+      Bonferroni-t dhe e kontrollon njësoj gabimin [@holm1979]."""),
     p("""Një çështje që literatura e aplikuar shpesh e anashkalon është fuqia statistikore. Me N
       njësi vëzhgimi, p-vlera më e vogël që mund të japë testi dypalësh i Wilcoxon-it është 2/2^N.
       Me gjashtë njësi, asnjë krahasim nuk e kalon korrigjimin e Holm-it kur testohen më shumë se
@@ -313,24 +295,20 @@ _METODOLOGJIA = [
       i njeh ato. Statistikat që përshkruajnë shpërndarjen normale janë pra të ndotura nga vetë
       vlerat ekstreme që sistemi duhet të nxjerrë në pah, dhe për këtë arsye alternativat robuste
       dhe ato të bazuara në rang duhen krahasuar empirikisht."""),
-    p("""Një drejtim tjetër, edhe më pak i përdorur në punët e aplikuara, është karakterizimi
-      gjeometrik i problemit para çdo modelimi. Vlerësuesit e dimensionit të brendshëm tregojnë sa
-      dimensione zë realisht klasa normale, ndërsa masat e mbivendosjes së klasave tregojnë nëse
-      pozitivët ndahen fare nga negativët. Aggarwal e konsideron këtë hap paraprak të domosdoshëm në
-      analizën e vlerave të jashtëzakonshme [@aggarwal2017]. Këto masa japin një kufi të pavarur nga
-      algoritmi, dhe çdo rezultat i mëvonshëm duhet lexuar në raport me të."""),
+    p("""Një drejtim tjetër, më pak i përdorur në punët e aplikuara, është shikimi i gjeometrisë së
+      të dhënave para modelimit: sa larg klasës normale ndodhen vlerat e jashtëzakonshme dhe sa
+      mbivendosen dy klasat. Aggarwal e konsideron këtë hap paraprak të domosdoshëm në analizën e
+      vlerave të jashtëzakonshme [@aggarwal2017]. Në këtë punim ai bëhet në analizën eksploruese të
+      Kapitullit 4, me distancën e çdo transaksioni nga fqinjët legjitimë më të afërt."""),
     h2("2.10", "Zhvendosja e konceptit"),
     p("""Rishikimi i Gama-s dhe bashkautorëve për përshtatjen ndaj zhvendosjes së konceptit dallon
       zhvendosjen e shpërndarjes së hyrjeve nga zhvendosja e lidhjes mes hyrjeve dhe daljes, dhe
-      përmbledh detektorët që e sinjalizojnë atë gjatë punës [@gama2014]. Ndër ta, testi i Page-it
-      për inspektim të vazhdueshëm grumbullon devijimet nga mesatarja rrjedhëse dhe jep sinjal kur
-      shuma kalon një prag [@page1954]; varianti i tij Page-Hinkley përdoret në Kapitullin 5 për
-      monitorimin e zhvendosjes."""),
+      përmbledh detektorët që e sinjalizojnë atë gjatë punës [@gama2014]."""),
     p("""Në punët e aplikuara shpesh përzihet dallimi mes zhvendosjes së popullatës normale dhe
       zhvendosjes së popullatës së anomalive, ndonëse pasojat janë të ndryshme. E para e bën të
       vjetëruar modelin e normalitetit dhe zgjidhet me ritrajnim mbi të dhëna të reja pa etiketa. E
       dyta nuk e prek modelin e normalitetit; anomalitë thjesht bëhen më pak të dallueshme, dhe
-      ritrajnimi nuk ndihmon. Ky punim e ndan zhvendosjen e matur sipas këtyre dy popullatave."""),
+      ritrajnimi nuk ndihmon. Shtojca E e mat zhvendosjen veç e veç për këto dy popullata."""),
     h2("2.11", "Ansamblet e detektorëve"),
     p("""Zimek, Campello dhe Sander shtruan pyetjet themelore për ansamblet në zbulimin
       unsupervised: si normalizohen pikë me shkallë krejt të ndryshme, dhe si sigurohet diversiteti
@@ -341,50 +319,26 @@ _METODOLOGJIA = [
       më shumë: përzgjedhja e kujdesshme e anëtarëve jep më shumë se kombinimi i të gjithë
       detektorëve [@rayana2016]. Rezultati i këtij punimi shkon në të njëjtin drejtim, me një
       përfundim më të kufizuar, dhe analiza e gabimeve në nivel transaksioni tregon arsyen."""),
-    h2("2.12", "Interpretueshmëria e vendimeve"),
-    p("""SHAP i Lundberg-ut dhe Lee-së ofron një kornizë të përbashkët për atribuimin e kontributit
-      të veçorive, të bazuar te vlerat e Shapley-t nga teoria e lojërave [@lundberg2017]. Rëndësia
-      me permutim, e prezantuar nga Breiman për pyjet e rastësishme, mbetet alternativa më e
-      thjeshtë dhe e pavarur nga modeli [@breiman2001]."""),
-    p("""Kur veçoritë janë të anonimizuara me PCA, interpretimi semantik nuk është i mundur: nuk
-      mund të thuhet se modeli i kushton vëmendje, për shembull, shpeshtësisë së transaksioneve,
-      sepse komponentët nuk kanë emër. Mbetet megjithatë një pyetje që ka përgjigje dhe është
-      informuese: a përkon vëmendja e modelit me dimensionet që mbartin realisht sinjal
-      diskriminues? Në literaturën e shqyrtuar kjo pyetje nuk është shtruar sistematikisht për këtë
-      dataset. Në Kapitullin 5 përgjigja e saj ndihmon të shpjegohet renditja e algoritmeve dhe
-      testohet më pas me një ndërhyrje eksperimentale."""),
-    h2("2.13", "Boshllëqet e identifikuara dhe pozicionimi i punimit"),
-    p("""Nga ky rishikim dalin pesë boshllëqe, mbi të cilat ndërtohet kontributi i punimit:"""),
+    h2("2.12", "Boshllëqet e identifikuara dhe pozicionimi i punimit"),
+    p("""Nga ky rishikim dalin tri boshllëqe, mbi të cilat ndërtohet kontributi i punimit:"""),
     bullets(
         [
-            "Shumica e krahasimeve mbi dataset-in ULB përdorin një ndarje të vetme, shpesh të "
-            "rastësishme. Nuk u gjet një krahasim i tri algoritmeve të propozimit mbi këtë dataset "
-            "nën një protokoll rolling-origin ku çdo fold rindërton gjithë zinxhirin e "
-            "paraprocesimit dhe të pragjeve.",
+            "Studimet për këtë dataset i analizojnë modelet kryesisht në mënyrë statike, mbi një "
+            "ndarje të vetme, dhe shpesh testojnë një algoritëm të vetëm unsupervised. Nuk u gjet "
+            "një krahasim i tri algoritmeve të propozimit mbi të njëjtën infrastrukturë Kafka, "
+            "bashkë me një referencë të mbikëqyrur, me vonesë të matur dhe me një protokoll "
+            "rolling-origin ku çdo fold rindërton gjithë zinxhirin e paraprocesimit dhe të "
+            "pragjeve.",
             "Fryrja e rezultateve nga ndarja e rastësishme përmendet shpesh si rrezik, por rrallë "
             "matet mbi të njëjtat të dhëna dhe të njëjtat modele.",
-            "Renditja e algoritmeve raportohet gjerësisht, ndërsa shpjegimi i saj përmes "
-            "atribuimit të veçorive mungon, dhe testimi i atij shpjegimi me ndërhyrje mungon "
-            "plotësisht.",
-            "Kufiri i sipërm i vetë problemit, pra sa i ndashëm është gjeometrikisht pa asnjë "
-            "model, matet rrallë, kështu që nuk dihet nëse rezultatet modeste vijnë nga algoritmet "
-            "apo nga të dhënat.",
             "Studimet për ansamblet në zbulimin unsupervised raportojnë kryesisht rezultate "
             "pozitive; rezultatet negative, po aq informuese kur shpjegohen, publikohen rrallë.",
         ]
     ),
-    p("""Nga këto boshllëqe del edhe fushëveprimi i punimit. Zgjedhja e tri familjeve në vend të një
-      bashkësie të gjerë detektorësh nuk është kufizim i imponuar, por kusht që katër nga pesë
-      boshllëqet të mund të trajtohen. Studimi i mekanizmit të një algoritmi kërkon hapjen e
-      strukturës së tij, prova të ndërtuara posaçërisht për të dhe një ndërhyrje që e teston
-      shpjegimin; kjo punë nuk shkallëzohet në dhjetëra metoda. Ka edhe një arsye statistikore:
-      diferenca kritike e testit post-hoc rritet me numrin e metodave, kështu që me një numër të
-      fiksuar fold-esh një bashkësi e gjerë detektorësh e bën testin të paaftë të refuzojë ndonjë
-      hipotezë. Kapitulli 5 e tregon këtë me numra."""),
-    p("""Punimi i trajton të pesë boshllëqet. Përveç tyre, ai shton një kontribut praktik që nuk
-      vjen nga literatura, por nga një problem i hasur gjatë implementimit: paqëndrueshmëria e
-      ngarkesës së hetimeve kur pragu mbahet fiks mbi një rrjedhë që ndryshon, dhe zgjidhja e saj me
-      një prag adaptiv me dritare rrëshqitëse."""),
+    p("""Punimi i trajton të tri. Përveç tyre, ai shton një kontribut praktik që nuk vjen nga
+      literatura, por nga një problem i hasur gjatë implementimit: paqëndrueshmëria e ngarkesës së
+      hetimeve kur pragu mbahet fiks mbi një rrjedhë që ndryshon, dhe zgjidhja e saj me një prag
+      adaptiv me dritare rrëshqitëse."""),
 ]
 
 BLOCKS = _HYRJE + _ALGORITMET + _DOMENI + _METODOLOGJIA
