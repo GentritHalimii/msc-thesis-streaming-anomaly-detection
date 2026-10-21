@@ -8,11 +8,12 @@ tables, and numbered equations. Front matter is numbered in Roman numerals and
 the body restarts at Arabic 1.
 
 Several of these need raw OOXML because python-docx has no API for them:
-page-number fields, per-section numbering formats, and the table-of-contents
-field that Word populates when the file is opened.
+page-number fields, per-section numbering formats, bookmarks, and the
+cross-reference fields behind citations and the page numbers of the contents.
 """
 
 import functools
+import itertools
 import numbers
 import re
 from pathlib import Path
@@ -181,32 +182,58 @@ def define_reference_numbering(doc: Document) -> int:
 
 
 def apply_list_numbering(para, num_id: int, level: int = 0) -> None:
-    """Attach a paragraph to a numbering definition."""
-    ppr = para._p.get_or_add_pPr()
-    npr = OxmlElement("w:numPr")
-    ilvl = OxmlElement("w:ilvl")
-    ilvl.set(qn("w:val"), str(level))
-    nid = OxmlElement("w:numId")
-    nid.set(qn("w:val"), str(num_id))
-    npr.append(ilvl)
-    npr.append(nid)
-    ppr.append(npr)
+    """Attach a paragraph to a numbering definition.
+
+    The schema puts w:numPr ahead of the spacing and alignment the paragraph
+    already carries; python-docx inserts it there. Appended after them, as an
+    earlier build did, it is out of order, and Word may drop the number.
+    """
+    num_pr = para._p.get_or_add_pPr().get_or_add_numPr()
+    num_pr.get_or_add_ilvl().val = level
+    num_pr.get_or_add_numId().val = num_id
 
 
-def bookmark_paragraph(para, name: str, bookmark_id: int) -> None:
-    """Wrap a whole paragraph in a bookmark, the way Word marks a numbered
-    item so that a cross-reference can report its number."""
+# Bookmark ids only have to be unique within a document; one counter for the
+# whole process guarantees that, however many documents it builds.
+_BOOKMARK_IDS = itertools.count(1000)
+
+
+def bookmark_paragraph(para, name: str, bookmark_id: int | None = None) -> None:
+    """Wrap a whole paragraph in a bookmark, the way Word marks a numbered item
+    or a heading so that a cross-reference can report its number or its page.
+
+    The start goes after w:pPr, which must remain the paragraph's first child:
+    in front of it, as an earlier build placed it, Word may ignore the
+    paragraph's properties, and with them the reference list's numbering.
+    """
+    if bookmark_id is None:
+        bookmark_id = next(_BOOKMARK_IDS)
     start = OxmlElement("w:bookmarkStart")
     start.set(qn("w:id"), str(bookmark_id))
     start.set(qn("w:name"), name)
     end = OxmlElement("w:bookmarkEnd")
     end.set(qn("w:id"), str(bookmark_id))
-    para._p.insert(0, start)
-    para._p.append(end)
+    p = para._p
+    p.insert(1 if p.pPr is not None else 0, start)
+    p.append(end)
 
 
 def reference_bookmark(key: str) -> str:
     return f"Ref_{key}"
+
+
+# Targets of the page numbers in the contents and in the figure and table
+# lists. Word bookmark names allow letters, digits and underscores only.
+def heading_bookmark(number: str) -> str:
+    return "Toc_" + number.replace(".", "_")
+
+
+def figure_bookmark(number: int) -> str:
+    return f"Fig_{number}"
+
+
+def table_bookmark(number: int) -> str:
+    return f"Tab_{number}"
 
 
 def _add_citation_field(para, key: str, number: int):
@@ -270,13 +297,45 @@ def _plain_run(para, text: str, size, italic: bool, color):
     return run
 
 
+# Children of w:sectPr that the schema places after w:pgNumType.
+_AFTER_PG_NUM_TYPE = (
+    "w:cols",
+    "w:formProt",
+    "w:vAlign",
+    "w:noEndnote",
+    "w:titlePg",
+    "w:textDirection",
+    "w:bidi",
+    "w:rtlGutter",
+    "w:docGrid",
+    "w:printerSettings",
+    "w:sectPrChange",
+)
+
+
 def set_page_numbering(section, fmt: str = "decimal", start: int | None = None) -> None:
-    """Per-section page-number format; `fmt` is 'decimal' or 'upperRoman'."""
+    """Per-section page-number format; `fmt` is 'decimal' or 'upperRoman'.
+
+    A new section starts as a copy of the previous one, numbering included, so
+    the inherited w:pgNumType is replaced rather than added to. Word expects a
+    single one, ahead of w:cols. With three of them after w:docGrid, as an
+    earlier build wrote, LibreOffice read the last and numbered the body 1, 2,
+    3, while Word is free to take the first and number it I, II, III.
+    """
+    sect = section._sectPr
+    for old in sect.findall(qn("w:pgNumType")):
+        sect.remove(old)
     pg = OxmlElement("w:pgNumType")
     pg.set(qn("w:fmt"), fmt)
     if start is not None:
         pg.set(qn("w:start"), str(start))
-    section._sectPr.append(pg)
+    successor = next(
+        (el for tag in _AFTER_PG_NUM_TYPE if (el := sect.find(qn(tag))) is not None), None
+    )
+    if successor is not None:
+        successor.addprevious(pg)
+    else:
+        sect.append(pg)
 
 
 def add_page_number_footer(section) -> None:
@@ -327,7 +386,14 @@ def add_paragraph(
     return para
 
 
-def add_heading(doc: Document, text: str, level: int, number: str | None = None):
+def add_heading(
+    doc: Document,
+    text: str,
+    level: int,
+    number: str | None = None,
+    *,
+    bookmark: str | None = None,
+):
     """Chapter titles: 14 pt bold capitals. Subsections: 12 pt bold."""
     para = doc.add_paragraph()
     para.alignment = WD_ALIGN_PARAGRAPH.LEFT
@@ -363,6 +429,8 @@ def add_heading(doc: Document, text: str, level: int, number: str | None = None)
         r.font.size = TITLE_SIZE if level == 1 else BODY_SIZE
         r.bold = True
         r.font.color.rgb = INK
+    if bookmark:
+        bookmark_paragraph(para, bookmark)
     return para
 
 
@@ -388,7 +456,7 @@ def add_bullets(doc: Document, items: list[str], numbered: bool = False):
         pf.tab_stops.add_tab_stop(Cm(1.6))
 
 
-def add_caption(doc: Document, text: str, *, above: bool = False):
+def add_caption(doc: Document, text: str, *, above: bool = False, bookmark: str | None = None):
     para = doc.add_paragraph()
     para.alignment = WD_ALIGN_PARAGRAPH.CENTER
     pf = para.paragraph_format
@@ -397,10 +465,19 @@ def add_caption(doc: Document, text: str, *, above: bool = False):
     pf.space_after = Pt(10 if not above else 4)
     pf.keep_with_next = above
     _add_text_runs(para, text, size=CAPTION_SIZE, color=MUTED)
+    if bookmark:
+        bookmark_paragraph(para, bookmark)
     return para
 
 
-def add_figure(doc: Document, image_path: Path, caption: str, width_cm: float = 14.5):
+def add_figure(
+    doc: Document,
+    image_path: Path,
+    caption: str,
+    width_cm: float = 14.5,
+    *,
+    bookmark: str | None = None,
+):
     para = doc.add_paragraph()
     para.alignment = WD_ALIGN_PARAGRAPH.CENTER
     para.paragraph_format.space_before = Pt(10)
@@ -409,7 +486,7 @@ def add_figure(doc: Document, image_path: Path, caption: str, width_cm: float = 
     # caption alone at the top of the next one.
     para.paragraph_format.keep_with_next = True
     para.add_run().add_picture(str(image_path), width=Cm(width_cm))
-    add_caption(doc, caption)
+    add_caption(doc, caption, bookmark=bookmark)
 
 
 def add_equation(doc: Document, expression: str, number: int):
@@ -480,6 +557,7 @@ def add_table(
     font_size: float = 9.5,
     col_widths: list[float] | None = None,
     max_rows: int | None = None,
+    bookmark: str | None = None,
 ):
     """Table with its numbered title above it, as the template illustrates.
 
@@ -488,7 +566,7 @@ def add_table(
     both cases no column is narrower than its longest unbreakable piece, so a
     number never wraps inside its cell and a word is never split.
     """
-    add_caption(doc, f"Tabela {number}. {caption}", above=True)
+    add_caption(doc, f"Tabela {number}. {caption}", above=True, bookmark=bookmark)
     df = dataframe if max_rows is None else dataframe.head(max_rows)
     df = df.map(_display_text)
     numeric = [all(_is_number(value) for value in df[name]) for name in df.columns]
@@ -672,8 +750,16 @@ def page_break(doc: Document):
     doc.add_paragraph().add_run().add_break(WD_BREAK.PAGE)
 
 
-def add_toc_entry(doc, text: str, level: int, page: str | None, bold: bool | None = None):
-    """One line of a statically generated table of contents.
+def add_toc_entry(
+    doc,
+    text: str,
+    level: int,
+    page: str | None,
+    bold: bool | None = None,
+    *,
+    bookmark: str | None = None,
+):
+    """One line of the table of contents, or of the figure and table lists.
 
     Chapter entries are bold; `bold` overrides that for the lists of figures
     and tables, whose entries are all at the first level.
@@ -681,9 +767,11 @@ def add_toc_entry(doc, text: str, level: int, page: str | None, bold: bool | Non
     A Word TOC field is the usual solution, but it renders as a placeholder
     until someone opens the file and refreshes it — and a thesis that is
     printed or converted without that refresh has an empty contents page.
-    These entries are written out with real page numbers instead, recovered
-    from a first rendering pass, and a right-aligned tab stop with dot leaders
-    reproduces the usual appearance.
+    The entries are therefore written out, and only the page number is a
+    field: a PAGEREF to a bookmark on the heading or caption, whose cached
+    value is the page recovered from a first rendering pass. LibreOffice
+    computes these itself, and Word recomputes them for its own pagination
+    when it updates fields on opening, so the numbers stay right in both.
 
     Three details matter. The paragraph must be left-aligned, because justified
     text stretches the leader dots across the whole line. The tab stop is
@@ -705,11 +793,20 @@ def add_toc_entry(doc, text: str, level: int, page: str | None, bold: bool | Non
     # Any tab inside the caption itself would jump to the leader stop, so the
     # separator between a section number and its title is written as spaces.
     label = text.replace("\t", "   ")
-    run = para.add_run(label if page is None else f"{label}\t{page}")
-    _keep_hyphens(run)
-    run.font.name = BODY_FONT
-    run.font.size = BODY_SIZE
-    run.bold = level == 1 if bold is None else bold
+    weight = level == 1 if bold is None else bold
+    if bookmark is None:
+        run = para.add_run(label if page is None else f"{label}\t{page}")
+        _keep_hyphens(run)
+        runs = [run]
+    else:
+        run = para.add_run(f"{label}\t")
+        _keep_hyphens(run)
+        _field(para, f" PAGEREF {bookmark} \\h ", page or "")
+        runs = [run, para.runs[-1]]
+    for run in runs:
+        run.font.name = BODY_FONT
+        run.font.size = BODY_SIZE
+        run.bold = weight
     return para
 
 

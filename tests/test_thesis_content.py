@@ -211,6 +211,32 @@ def test_reference_entries_are_word_numbered_and_bookmarked():
         "the number comes from Word, so it is not written into the entry"
     )
 
+    # Word reads w:pPr only as a paragraph's first child, and w:numPr only
+    # ahead of the spacing and alignment; LibreOffice forgives both, Word may
+    # drop the number.
+    for para in doc.paragraphs[-len(keys) :]:
+        assert para._p[0].tag == qn("w:pPr"), "the bookmark must follow the properties"
+        tags = [child.tag for child in para._p.pPr]
+        assert tags.index(qn("w:numPr")) < tags.index(qn("w:spacing"))
+
+
+def test_each_section_has_one_page_number_format_before_its_columns():
+    from docx.oxml.ns import qn
+    from docx_helpers import new_document, start_new_section
+
+    doc = new_document()
+    start_new_section(doc, "upperRoman", start=1)
+    # A new section starts as a copy of the previous one, Roman numbering
+    # included; the body's own format must replace it, not follow it.
+    start_new_section(doc, "decimal", start=1)
+    formats = []
+    for section in doc.sections[1:]:
+        tags = [child.tag for child in section._sectPr]
+        assert tags.count(qn("w:pgNumType")) == 1
+        assert tags.index(qn("w:pgNumType")) < tags.index(qn("w:cols"))
+        formats.append(section._sectPr.find(qn("w:pgNumType")).get(qn("w:fmt")))
+    assert formats == ["upperRoman", "decimal"]
+
 
 def test_every_figure_reference_names_a_figure():
     """[[fig:name]] is replaced by the figure's number at build time; a typo

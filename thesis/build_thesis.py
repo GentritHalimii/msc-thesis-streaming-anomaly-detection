@@ -36,10 +36,13 @@ from docx_helpers import (  # noqa: E402
     apply_list_numbering,
     bookmark_paragraph,
     define_reference_numbering,
+    figure_bookmark,
+    heading_bookmark,
     new_document,
     page_break,
     reference_bookmark,
     start_new_section,
+    table_bookmark,
 )
 from references import REFERENCES  # noqa: E402
 
@@ -288,12 +291,14 @@ def first_pass(chapters: list[list], numbering: Numbering) -> None:
 def render_blocks(doc, blocks: list, numbering: Numbering, counters: dict) -> None:
     for block in blocks:
         kind = block[0]
-        if kind == "h1":
-            add_heading(doc, resolve_citations(block[2], numbering), 1, block[1])
-        elif kind == "h2":
-            add_heading(doc, resolve_citations(block[2], numbering), 2, block[1])
-        elif kind == "h3":
-            add_heading(doc, resolve_citations(block[2], numbering), 3, block[1])
+        if kind in ("h1", "h2", "h3"):
+            add_heading(
+                doc,
+                resolve_citations(block[2], numbering),
+                int(kind[1]),
+                block[1],
+                bookmark=heading_bookmark(block[1]),
+            )
         elif kind == "p":
             add_paragraph(doc, resolve_citations(block[1], numbering))
         elif kind == "note":
@@ -310,7 +315,11 @@ def render_blocks(doc, blocks: list, numbering: Numbering, counters: dict) -> No
                 raise FileNotFoundError(f"missing figure: {path}")
             n = counters["figure"]()
             add_figure(
-                doc, path, f"Figura {n}. {resolve_citations(caption, numbering)}", width_cm=width
+                doc,
+                path,
+                f"Figura {n}. {resolve_citations(caption, numbering)}",
+                width_cm=width,
+                bookmark=figure_bookmark(n),
             )
         elif kind == "tab":
             csv_name, caption, options = block[1], block[2], block[3]
@@ -323,6 +332,7 @@ def render_blocks(doc, blocks: list, numbering: Numbering, counters: dict) -> No
                 number=n,
                 font_size=options.get("font_size", 9.0),
                 col_widths=options.get("widths"),
+                bookmark=table_bookmark(n),
             )
         elif kind == "eq":
             add_equation(doc, block[1], counters["equation"]())
@@ -403,13 +413,13 @@ def build(output: Path, page_map: dict[str, str] | None = None):
 
     # Chapter 7: references, ordered by first appearance.
     page_break(doc)
-    add_heading(doc, "REFERENCAT", 1, "7")
+    add_heading(doc, "REFERENCAT", 1, "7", bookmark=heading_bookmark("7"))
     num_id = define_reference_numbering(doc)
     ordered = sorted(numbering.citations.items(), key=lambda kv: kv[1])
-    for bookmark_id, (key, _num) in enumerate(ordered, start=1):
+    for key, _num in ordered:
         para = add_paragraph(doc, REFERENCES[key], align=WD_ALIGN_PARAGRAPH.JUSTIFY, space_after=6)
         apply_list_numbering(para, num_id)
-        bookmark_paragraph(para, reference_bookmark(key), bookmark_id)
+        bookmark_paragraph(para, reference_bookmark(key))
 
     # Chapter 8: appendices, after the reference list as the template requires.
     page_break(doc)
