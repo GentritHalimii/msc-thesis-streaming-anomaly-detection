@@ -1,21 +1,24 @@
 """Cover pages, abstracts, acknowledgements, contents and glossary.
 
-The layout follows the faculty template literally: two title pages, an
-abstract confined to a single page and carrying no chapter number, page
-numbering that starts here in Roman numerals, and contents / figure / table
-lists generated as Word fields so they stay correct after any edit.
+The layout follows the faculty template literally: two title pages set in
+Times New Roman 14 with the template's spacing, an abstract confined to a
+single page and carrying no chapter number, page numbering that starts there
+in Roman numerals, and a contents page that opens with the figure list, the
+table list and the glossary. The page numbers in the contents and in the two
+lists are Word fields, so they stay correct after any edit.
 """
 
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.shared import Pt
 from docx_helpers import (
     add_logo,
-    add_page_number_footer,
     add_paragraph,
     add_toc_entry,
+    figure_bookmark,
+    heading_bookmark,
     page_break,
-    set_page_numbering,
     start_new_section,
+    table_bookmark,
 )
 
 TITULLI = (
@@ -29,67 +32,76 @@ DATA = "Nëntor 2026"
 VITI_AKADEMIK = "Viti akademik 2024 – 2025"
 
 
-def _center(doc, text, size=12, bold=False, space_after=6, caps=False):
+# The template sets every line of both title pages in Times New Roman 14.
+COVER_SIZE = Pt(14)
+STATEMENT = (
+    "Ky punim është përpiluar dhe dorëzuar në përmbushjen e kërkesave të pjesshme për Shkallën "
+    "e Magjistraturës"
+)
+
+
+def _line(doc, text: str = "", bold: bool = False):
+    """One single-spaced, centred line of a title page.
+
+    An empty line is one of the template's "S" spacers. It holds a space so
+    that it takes the height of a 14 pt line, not of the default font.
+    """
     para = doc.add_paragraph()
     para.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    para.paragraph_format.line_spacing = 1.5
-    para.paragraph_format.space_after = Pt(space_after)
-    run = para.add_run(text.upper() if caps else text)
+    pf = para.paragraph_format
+    pf.line_spacing = 1.0
+    pf.space_before = Pt(0)
+    pf.space_after = Pt(0)
+    run = para.add_run(text or " ")
     run.font.name = "Times New Roman"
-    run.font.size = Pt(size)
+    run.font.size = COVER_SIZE
     run.bold = bold
     return para
 
 
-def _blank(doc, n=1):
-    for _ in range(n):
-        para = doc.add_paragraph()
-        para.paragraph_format.space_after = Pt(0)
-        para.paragraph_format.line_spacing = 1.0
+def _spacers(doc, count: int) -> None:
+    for _ in range(count):
+        _line(doc)
 
 
 def render_cover(doc) -> None:
-    """Two title pages; neither carries a page number."""
+    """The template's two title pages, line for line; neither is numbered.
+
+    Only the title is bold. The template's title takes one line and this one
+    four, so the first page drops one spacer from each of its three gaps; that
+    keeps the template's proportions and leaves room at the foot of the page.
+    The second page fits with the template's spacing unchanged.
+    """
     section = doc.sections[0]
     section.different_first_page_header_footer = False
 
     add_logo(doc)
-    _center(doc, PROGRAMI, size=13, bold=True)
-    _blank(doc, 4)
-    _center(doc, TITULLI, size=14, bold=True)
-    _blank(doc, 2)
-    _center(doc, "Shkalla e Magjistraturës", size=12)
-    _blank(doc, 6)
-    _center(doc, STUDENTI, size=12, bold=True)
-    _blank(doc, 4)
-    _center(doc, DATA, size=12)
-    _center(doc, "Prishtinë", size=12)
+    _line(doc, PROGRAMI)
+    _spacers(doc, 10)
+    _line(doc, TITULLI, bold=True)
+    _line(doc, "Shkalla e Magjistraturës")
+    _spacers(doc, 7)
+    _line(doc, STUDENTI)
+    _spacers(doc, 7)
+    _line(doc, DATA)
+    _line(doc, "Prishtinë")
     page_break(doc)
 
     add_logo(doc)
-    _center(doc, PROGRAMI, size=13, bold=True)
-    _blank(doc, 1)
-    _center(doc, "Punim Diplome", size=12, bold=True)
-    _center(doc, VITI_AKADEMIK, size=12)
-    _blank(doc, 4)
-    _center(doc, STUDENTI, size=12, bold=True)
-    _blank(doc, 2)
-    _center(doc, TITULLI, size=14, bold=True)
-    _blank(doc, 3)
-    _center(doc, f"Mentori: {MENTORI}", size=12)
-    _blank(doc, 5)
-    _center(doc, DATA, size=12)
-    _blank(doc, 3)
-    para = doc.add_paragraph()
-    para.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    para.paragraph_format.line_spacing = 1.5
-    run = para.add_run(
-        "Ky punim është përpiluar dhe dorëzuar në përmbushjen e kërkesave të pjesshme për Shkallën "
-        "e Magjistraturës"
-    )
-    run.font.name = "Times New Roman"
-    run.font.size = Pt(11)
-    run.italic = True
+    _line(doc, PROGRAMI)
+    _spacers(doc, 2)
+    _line(doc, "Punim Diplome")
+    _line(doc, VITI_AKADEMIK)
+    _spacers(doc, 5)
+    _line(doc, STUDENTI)
+    _spacers(doc, 1)
+    _line(doc, TITULLI, bold=True)
+    _spacers(doc, 1)
+    _line(doc, f"Mentori: {MENTORI}")
+    _spacers(doc, 6)
+    _line(doc, DATA)
+    _spacers(doc, 7)
+    _line(doc, STATEMENT)
 
 
 ABSTRAKT = [
@@ -201,57 +213,99 @@ FJALORI = [
 ]
 
 
+# The contents opens with these three, as the template's example shows.
+FRONT_ENTRIES = ("LISTA E FIGURAVE", "LISTA E TABELAVE", "FJALORI I TERMAVE")
+
+
 def contents_entries(outline, figures, tables):
     """Every line that appears in the contents, figure list and table list,
     in the order the reader meets them."""
     return [text for _, text in outline] + figures + tables
 
 
+def _title(doc, text: str, *, space_before: int = 0):
+    """A front-matter title. The template asks every title for Times New Roman
+    14, bold capitals, aligned left, so these are set like chapter titles."""
+    para = doc.add_paragraph()
+    para.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    pf = para.paragraph_format
+    pf.line_spacing = 1.5
+    pf.space_before = Pt(space_before)
+    pf.space_after = Pt(12)
+    pf.keep_with_next = True
+    run = para.add_run(text)
+    run.font.name = "Times New Roman"
+    run.font.size = Pt(14)
+    run.bold = True
+    return para
+
+
 def render_prelims(doc, outline, figures, tables, page_map) -> None:
     """Everything between the title pages and chapter 1.
 
     `page_map` carries printed page numbers recovered from a first rendering
-    pass; on the first pass it is empty and the entries are written without
-    numbers, which keeps the front matter at its final length so the numbers
-    found in the second pass remain valid.
+    pass. They become the cached results of the page-number fields; on the
+    first pass the fields are empty, and the front matter still has its final
+    length, so the numbers found in the second pass remain valid.
     """
-    section = start_new_section(doc, "upperRoman", start=1)
-    set_page_numbering(section, "upperRoman", 1)
-    add_page_number_footer(section)
+    start_new_section(doc, "upperRoman", start=1)
 
-    _center(doc, "ABSTRAKT", size=14, bold=True, space_after=12)
+    _title(doc, "ABSTRAKT")
     for para in ABSTRAKT:
         add_paragraph(doc, para)
     page_break(doc)
 
-    _center(doc, "ABSTRACT", size=14, bold=True, space_after=12)
+    _title(doc, "ABSTRACT")
     for para in ABSTRACT_EN:
         add_paragraph(doc, para)
     page_break(doc)
 
-    _center(doc, "MIRËNJOHJE", size=14, bold=True, space_after=12)
+    _title(doc, "MIRËNJOHJE")
     for para in MIRENJOHJE:
         add_paragraph(doc, para)
     page_break(doc)
 
-    _center(doc, "PËRMBAJTJA", size=14, bold=True, space_after=12)
+    _title(doc, "PËRMBAJTJA")
+    # These three are numbered in Roman numerals, which LibreOffice does not
+    # apply to a page reference, so their numbers are written out. They depend
+    # only on the front matter, which breaks pages at fixed places.
+    for title in FRONT_ENTRIES:
+        add_toc_entry(doc, title, 1, page_map.get(title))
     # The outline already carries the references entry in its correct place
-    # between chapters 6 and 8, so nothing is appended here.
+    # between chapters 6 and 8, so nothing is appended here. Chapter entries
+    # are in capitals, like the chapter titles they point to.
     for level, text in outline:
-        add_toc_entry(doc, text, level, page_map.get(text))
+        number, _, name = text.partition("\t")
+        label = f"{number}\t{name.upper()}" if level == 1 else text
+        add_toc_entry(doc, label, level, page_map.get(text), bookmark=heading_bookmark(number))
     page_break(doc)
 
-    _center(doc, "LISTA E FIGURAVE", size=14, bold=True, space_after=12)
-    for caption in figures:
-        add_toc_entry(doc, _shorten(caption), 1, page_map.get(caption), bold=False)
+    _title(doc, "LISTA E FIGURAVE")
+    for number, caption in enumerate(figures, start=1):
+        add_toc_entry(
+            doc,
+            _shorten(caption),
+            1,
+            page_map.get(caption),
+            bold=False,
+            bookmark=figure_bookmark(number),
+        )
+
+    # The template has the table list follow the figure list directly, not on
+    # a new page.
+    _title(doc, "LISTA E TABELAVE", space_before=18)
+    for number, caption in enumerate(tables, start=1):
+        add_toc_entry(
+            doc,
+            _shorten(caption),
+            1,
+            page_map.get(caption),
+            bold=False,
+            bookmark=table_bookmark(number),
+        )
     page_break(doc)
 
-    _center(doc, "LISTA E TABELAVE", size=14, bold=True, space_after=12)
-    for caption in tables:
-        add_toc_entry(doc, _shorten(caption), 1, page_map.get(caption), bold=False)
-    page_break(doc)
-
-    _center(doc, "FJALORI I TERMAVE", size=14, bold=True, space_after=12)
+    _title(doc, "FJALORI I TERMAVE")
     for term, meaning in FJALORI:
         para = doc.add_paragraph()
         para.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY

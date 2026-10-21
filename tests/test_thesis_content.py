@@ -238,6 +238,56 @@ def test_each_section_has_one_page_number_format_before_its_columns():
     assert formats == ["upperRoman", "decimal"]
 
 
+def test_contents_follow_the_template():
+    from content.front_matter import FRONT_ENTRIES, render_prelims
+    from docx.oxml.ns import qn
+    from docx_helpers import heading_bookmark, new_document
+
+    doc = new_document()
+    outline = [(1, "1\tHyrje"), (2, "1.1\tKonteksti")]
+    render_prelims(doc, outline, ["Figura 1. Një figurë."], ["Tabela 1. Një tabelë."], {})
+    paras = doc.paragraphs
+    texts = [para.text for para in paras]
+
+    # The contents opens with the two lists and the glossary, then the
+    # chapters in capitals, as in the template's example.
+    start = texts.index("PËRMBAJTJA")
+    assert texts[start + 1 : start + 4] == list(FRONT_ENTRIES)
+    chapter = paras[start + 4]
+    assert chapter.text.startswith("1   HYRJE")
+    assert f"PAGEREF {heading_bookmark('1')}" in " ".join(_field_instructions(chapter))
+
+    # The table list follows the figure list without a page break.
+    between = paras[
+        texts.index("LISTA E FIGURAVE", start + 4) : texts.index("LISTA E TABELAVE", start + 4)
+    ]
+    breaks = [br for para in between for br in para._p.iter(qn("w:br"))]
+    assert not breaks, "the table list must not start a new page"
+
+    # Every title in the front matter is aligned left.
+    for title in ("ABSTRAKT", "PËRMBAJTJA", *FRONT_ENTRIES):
+        index = texts.index(title, start if title in FRONT_ENTRIES else 0)
+        if title in FRONT_ENTRIES:
+            index = len(texts) - 1 - texts[::-1].index(title)
+        assert paras[index].alignment == 0, f"{title} is not aligned left"
+
+
+def test_title_pages_are_times_new_roman_14_with_only_the_title_bold():
+    from content.front_matter import TITULLI, render_cover
+    from docx.shared import Pt
+    from docx_helpers import new_document
+
+    doc = new_document()
+    render_cover(doc)
+    lines = [para for para in doc.paragraphs if para.text.strip()]
+    assert lines, "the title pages have text"
+    for para in lines:
+        for run in para.runs:
+            assert run.font.name == "Times New Roman"
+            assert run.font.size == Pt(14), para.text
+            assert bool(run.bold) == (para.text == TITULLI), para.text
+
+
 def test_every_figure_reference_names_a_figure():
     """[[fig:name]] is replaced by the figure's number at build time; a typo
     would only surface when the document is built, so it is caught here."""

@@ -13,6 +13,7 @@ cross-reference fields behind citations and the page numbers of the contents.
 """
 
 import functools
+import io
 import itertools
 import numbers
 import re
@@ -30,6 +31,7 @@ from docx.enum.text import (
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from docx.shared import Cm, Pt, RGBColor
+from PIL import Image
 
 BODY_FONT = "Times New Roman"
 BODY_SIZE = Pt(12)
@@ -729,20 +731,31 @@ def add_toc_field(doc: Document, instruction: str, placeholder: str):
 
 
 LOGO_PATH = Path(__file__).parent / "assets" / "ubt-logo.png"
+# The template's picture is this banner cropped to the seal at its left: the
+# right 87.565% is cut away (a:srcRect r="87565") and it is set 2.68 cm wide.
+LOGO_KEPT_FRACTION = 1 - 0.87565
+LOGO_WIDTH_CM = 2.68
 
 
-def add_logo(doc: Document, width_cm: float = 11.0):
-    """The university logo, centred, as the template's two front pages show.
+def add_logo(doc: Document):
+    """The university seal, centred, as the template's two front pages show.
 
     The template annotates it "do not change the logo", so the file is the one
-    embedded in the faculty's own instructions rather than a redrawn copy.
+    embedded in the faculty's own instructions, cropped the way the template
+    crops it rather than redrawn.
     """
     if not LOGO_PATH.exists():  # pragma: no cover - the asset ships with the repo
         return None
+    with Image.open(LOGO_PATH) as banner:
+        seal = banner.crop((0, 0, round(banner.width * LOGO_KEPT_FRACTION), banner.height))
+        buffer = io.BytesIO()
+        seal.save(buffer, format="PNG")
+    buffer.seek(0)
     para = doc.add_paragraph()
     para.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    para.paragraph_format.space_after = Pt(14)
-    para.add_run().add_picture(str(LOGO_PATH), width=Cm(width_cm))
+    para.paragraph_format.line_spacing = 1.0
+    para.paragraph_format.space_after = Pt(0)
+    para.add_run().add_picture(buffer, width=Cm(LOGO_WIDTH_CM))
     return para
 
 

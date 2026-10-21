@@ -23,6 +23,7 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+from content.front_matter import FRONT_ENTRIES  # noqa: E402
 from docx.enum.text import WD_ALIGN_PARAGRAPH  # noqa: E402
 from docx_helpers import (  # noqa: E402
     CITE_CLOSE,
@@ -482,6 +483,52 @@ def extract_page_numbers(pdf_path: Path, entries: list[str], body_anchor: str) -
     return mapping
 
 
+def _roman(number: int) -> str:
+    values = [
+        (1000, "M"),
+        (900, "CM"),
+        (500, "D"),
+        (400, "CD"),
+        (100, "C"),
+        (90, "XC"),
+        (50, "L"),
+        (40, "XL"),
+        (10, "X"),
+        (9, "IX"),
+        (5, "V"),
+        (4, "IV"),
+        (1, "I"),
+    ]
+    out = []
+    for value, letters in values:
+        count, number = divmod(number, value)
+        out.append(letters * count)
+    return "".join(out)
+
+
+def extract_front_pages(pdf_path: Path, titles: list[str]) -> dict[str, str]:
+    """Roman page numbers of the front-matter titles the contents lists.
+
+    The front matter is numbered from the abstract, which is page I. A title
+    is found as a line of its own, and the last such line is the one wanted:
+    the contents names each title first, on a line of its own in the first
+    pass, before its page numbers are known.
+    """
+    pages = [
+        [line.strip() for line in page.splitlines() if line.strip()]
+        for page in _pdf_pages(pdf_path)
+    ]
+    first = next((i for i, lines in enumerate(pages) if "ABSTRAKT" in lines), None)
+    if first is None:
+        return {}
+    mapping: dict[str, str] = {}
+    for title in titles:
+        found = [i for i in range(first, len(pages)) if title in pages[i]]
+        if found:
+            mapping[title] = _roman(found[-1] - first + 1)
+    return mapping
+
+
 def render_pdf(docx_path: Path) -> Path:
     subprocess.run(
         [
@@ -521,7 +568,10 @@ def main():
         pdf = render_pdf(path)
         entries, anchor = _all_entries(out)
         mapping = extract_page_numbers(pdf, entries, anchor)
-        print(f"faza 2: u gjetën numra faqesh për {len(mapping)}/{len(entries)} zëra")
+        front = list(FRONT_ENTRIES)
+        mapping |= extract_front_pages(pdf, front)
+        found, wanted = len(mapping), len(entries) + len(front)
+        print(f"faza 2: u gjetën numra faqesh për {found}/{wanted} zëra")
         path, numbering, n_fig, n_tab, n_eq = build(out, page_map=mapping)
         render_pdf(path)
 
