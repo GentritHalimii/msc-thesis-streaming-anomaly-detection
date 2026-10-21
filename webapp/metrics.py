@@ -171,24 +171,6 @@ def dataset() -> list[dict[str, Any]]:
                     "accent",
                 )
             )
-            tiles.append(
-                _tile(
-                    "Vetëm distanca jep",
-                    _fmt(float(row["ap_vetem_distance"])),
-                    "AP",
-                    "detektor pa asnjë parametër",
-                    "warn",
-                )
-            )
-            tiles.append(
-                _tile(
-                    "Alarme për mashtrimin median",
-                    f"{float(row['rangu_median_i_mashtrimit']):.0f}",
-                    "",
-                    "kur renditet vetëm sipas distancës",
-                    "warn",
-                )
-            )
     return tiles
 
 
@@ -332,19 +314,12 @@ def _safe(builder: Callable[[], str], default: str = "—") -> str:
 
 
 def tour() -> list[dict[str, Any]]:
-    """Nine steps through the study, each with a number read from disk.
+    """Eight steps through the study, each with a number read from disk.
 
     This is the orientation somebody needs who has not read the document: the
     claims in the order they depend on each other, every one of them linking
     to the section that proves it.
     """
-
-    def geometry_claim() -> str:
-        row = artifacts.table_frame("geometry_summary").query("dritarja == 'trajnim'").iloc[0]
-        return (
-            f"{float(row['raporti_distancave']):.1f}× më larg, por vetëm "
-            f"{_fmt(float(row['ap_vetem_distance']))} AP"
-        )
 
     def latency_claim() -> str:
         frame = artifacts.table_frame("latency_summary")
@@ -363,12 +338,14 @@ def tour() -> list[dict[str, Any]]:
         significant = int(frame["significant_holm_05"].astype(bool).sum())
         return f"{significant} nga {len(frame)} krahasime mbijetojnë korrigjimin"
 
-    def causal_claim() -> str:
-        frame = artifacts.table_frame("feature_selection")
-        labelled = frame[frame["renditja"].str.contains("etiketa", na=False)]
-        labelled = labelled[~labelled["renditja"].str.contains("pa etiketa", na=False)]
-        gains = labelled.groupby("model")["vs_te_gjitha"].max().sort_values(ascending=False)
-        return f"{gains.index[0]} fiton {gains.iloc[0]:+.3f} AP, më shumë se të tjerët"
+    def threshold_claim() -> str:
+        frame = artifacts.table_frame("contamination_sweep")
+        unsup = frame[frame["model"] != "logreg"]
+        best = unsup.loc[unsup["f1"].idxmax()]
+        return (
+            f"F1 maksimal {_fmt(float(best['f1']))} me kontaminim "
+            f"{100 * float(best['contamination']):g}%"
+        )
 
     def scaling_claim() -> str:
         frame = artifacts.table_frame("scaling_significance")
@@ -398,14 +375,6 @@ def tour() -> list[dict[str, Any]]:
 
     steps = [
         (
-            "Problemi ka një tavan që nuk varet nga algoritmi",
-            "Mashtrimet janë vërtet larg klasës legjitime, por bishti i asaj klase e mbush të "
-            "njëjtin rajon. Kjo e vendos kufirin që çdo metodë distance mund të arrijë.",
-            geometry_claim,
-            "dataseti",
-            "gjeometria",
-        ),
-        (
             "Sistemi është i realizueshëm me rezervë të gjerë",
             "Vonesa end-to-end mbi një broker të vërtetë Kafka qëndron një deri dy rende "
             "madhësie nën objektivin prej një sekonde.",
@@ -430,12 +399,20 @@ def tour() -> list[dict[str, Any]]:
             "domethenia",
         ),
         (
-            "Dobësia e Isolation Forest-it u mat dhe u testua kauzalisht",
-            "Tri proba tregojnë se kapaciteti shpërndahet mbi kolona pa sinjal; ndërhyrja mbi "
-            "hyrjen e kthen korrelacionin në pohim të testuar.",
-            causal_claim,
-            "kauzaliteti",
-            "nderhyrja",
+            "Pragu ka peshë praktike",
+            "Me një prag sipas normës së mashtrimit detektorët unsupervised kapin pak, sepse "
+            "mashtrimet nuk zënë majën e renditjes së tyre; optimumi ndodhet më lart.",
+            threshold_claim,
+            "rezultatet",
+            "buxheti",
+        ),
+        (
+            "Ansambli nuk ndihmon, dhe dihet pse",
+            "Detektorët nuk gabojnë në mënyra të pavarura: mashtrimet e vështira janë të "
+            "vështira për të tre njëkohësisht.",
+            ensemble_claim,
+            "ansambli",
+            "ansambli",
         ),
         (
             "Paraprocesimi peshon më shumë se zgjedhja e algoritmit",
@@ -446,20 +423,12 @@ def tour() -> list[dict[str, Any]]:
             "paraprocesimi",
         ),
         (
-            "Renditja nuk mbijeton kalimin nga vlerat e parazgjedhura",
+            "Me konfigurimin e duhur dallimet ngushtohen",
             "Kur secilit detektor i jepet konfigurimi i vet më i mirë, hapësira mes tyre "
-            "ngushtohet dhe radha përmbyset.",
+            "ngushtohet dhe One-Class SVM kalon në krye.",
             effort_claim,
             "konfigurimi",
             "kapaciteti",
-        ),
-        (
-            "Ansambli nuk ndihmon, dhe dihet pse",
-            "Detektorët nuk gabojnë në mënyra të pavarura: mashtrimet e vështira janë të "
-            "vështira për të tre njëkohësisht.",
-            ensemble_claim,
-            "ansambli",
-            "ansambli",
         ),
         (
             "Vendimet e protokollit peshojnë më shumë se zgjedhja e algoritmit",
