@@ -16,7 +16,6 @@ dependencies = [
     "psutil>=6.0",
     "scipy>=1.14",
     "optuna>=4.0",
-    "shap>=0.46",
     "python-docx>=1.1",
 ]
 
