@@ -12,52 +12,40 @@ kronologjik për të simuluar një rrjedhë. Nuk është sistem prodhimi.
 
 ## Fushëveprimi
 
-Studimi kufizohet te algoritmet që emërton projekt-propozimi dhe blen **thellësi në vend të
-gjerësisë**:
+Studimi kufizohet te algoritmet që emërton projekt-propozimi dhe i studion ato në thellësi:
 
 | Roli | Modeli |
 |---|---|
 | Detektorë primarë unsupervised | Isolation Forest, Autoencoder |
 | Komponent shtesë unsupervised | One-Class SVM |
 | Referencë e mbikëqyrur | Logistic Regression (kufi i sipërm, jo konkurrent) |
-| Ablacion | PCA lineare (pragu i familjes së rindërtimit, jo detektor i pavarur) |
 
-Thellësia vjen nga: karakterizimi gjeometrik i të dhënave para modelimit, protokolli
-rolling-origin me tetë fold-e, paraprocesimi si variabël eksperimentale, sipërfaqja e plotë e
-hiperparametrave dhe diagnostikat e mekanizmit për secilin algoritëm, test kauzal i
-shpjegimit, politika e dritares së trajnimit, dhe analiza e gabimeve në nivel transaksioni.
+Thellësia vjen nga katër drejtime: protokolli rolling-origin me tetë fold-e, paraprocesimi dhe
+hiperparametrat si variabla eksperimentale, studimi i parametrave kryesorë të secilit
+algoritëm, dhe analiza e gabimeve në nivel transaksioni.
 
 ## Rezultatet kryesore
 
-- **Kufiri gjeometrik.** Mashtrimet janë 7.9× më larg klasës legjitime se një transaksion
-  tipik legjitim, por vetëm distanca jep AP 0.30; bishti i klasës legjitime e mbush të
-  njëjtin rajon. Mashtrimi median kërkon ~530 alarme.
-- **Vonesa.** Mesatarja end-to-end 19–68 ms në 16 konfigurime, p99 maksimal 132 ms, pra 8–53×
-  nën objektivin prej 1 s. Ngopja rreth 1,760 msg/s me një consumer.
-- **Cilësia (StandardScaler, hiperparametra të parazgjedhur).** LR 0.734; Autoencoder 0.193;
-  One-Class SVM 0.151; Isolation Forest 0.091.
-- **Akordimi e përmbys renditjen e dy të fundit.** Autoencoder 0.193 → 0.335, Isolation Forest
-  0.091 → 0.168, One-Class SVM 0.151 → 0.146; udhëheqësi mbetet, dy të fundit ndërrohen.
-- **Paraprocesimi ka ndikim më të madh se algoritmi.** Transformimi kuantil e ngre OCSVM-në me
-  **+0.218 AP** (në 0.368, rezultati më i mirë unsupervised i studimit) në 8/8 fold-e;
-  referencën e mbikëqyrur nuk e prek (p = 0.84).
-- **Mekanizmi i Isolation Forest, i matur.** Pesë veçoritë më informative marrin 17.4% të
-  ndarjeve kundrejt 17.2% të pritur nga rastësia (ρ = 0.10). Rrotullimi i hapësirës e ndryshon
-  AP-në vetëm +0.007, pra shkaku nuk është përputhja e boshteve.
-- **Analiza e gabimeve.** Në buxhet 100 alarmesh, 37% e mashtrimeve nuk arrihen nga asnjë
-  detektor unsupervised; referenca e mbikëqyrur i kap 59% të tyre.
-- **Ansambli.** Rezultat negativ nën të dy regjimet e hiperparametrave.
-- **Protokolli.** Ndarja e rastësishme e fryn AP-në unsupervised ~3.0× (deri 4.5× për
-  Isolation Forest); referencën e mbikëqyrur nuk e fryn fare (0.92×).
-- **Zhvendosja.** PSI 3.22 për mashtrimet kundrejt 0.14 për normalet: ndryshojnë mashtrimet,
-  jo modeli i normalitetit.
-- **Pragu adaptiv.** Për të tre detektorët unsupervised F1 0.124 → 0.166 me CV të ngarkesës
-  0.84 → 0.62; për referencën e mbikëqyrur e përkeqëson (0.720 → 0.535), sepse pragu i saj
-  statik është tashmë i kalibruar.
-- **Ndërhyrja kauzale.** Me vetëm 3 komponentët më informativë, Isolation Forest fiton +0.530 AP,
-  më shumë se Autoencoder (+0.397) dhe One-Class SVM (+0.360); referenca humbet (−0.124).
-- **Kostoja e One-Class SVM-së.** 1,000 mostra trajnimi japin të njëjtën cilësi si 20,000, me
-  kohë trajnimi 160× më të vogël dhe kosto pikëzimi 9× më të vogël.
+- **Vonesa (PH1).** Mesatarja end-to-end 19–68 ms në 16 konfigurime (50 deri 2000 msg/s), 15–53
+  herë nën objektivin prej 1 s; p99 maksimal 132 ms. Një consumer i vetëm ngopet rreth 1 760
+  msg/s.
+- **Krahasimi (PH2), konfigurimi bazë.** Autoencoder 0.193, One-Class SVM 0.151, Isolation
+  Forest 0.091; referenca e mbikëqyrur 0.734. Autoencoder-i ka edhe koston më të ulët të
+  pikëzimit; dallimi i tij nga One-Class SVM nuk është domethënës (Wilcoxon, Holm).
+- **Ansambli (PH3).** Rezultat negativ nën të dy regjimet e hiperparametrave. Detektorët gabojnë
+  njësoj: me 100 alarme për bllok, 37% e mashtrimeve nuk i arrin asnjë prej tyre, ndërsa
+  referenca e mbikëqyrur kap 59% të tyre.
+- **Konfigurimi peshon më shumë se algoritmi.** Transformimi kuantil e ngre One-Class SVM-në me
+  +0.218 AP (në 0.368) në 8/8 fold-e, edhe kur skaluesi zgjidhet vetëm nga fold-et e mëparshme;
+  akordimi e çon Autoencoder-in në 0.335 dhe Isolation Forest-in në 0.168. Me konfigurimin më të
+  mirë për secilin, raporti mes më të mirit dhe më të dobëtit bie nga 2.1 në 1.15.
+- **Protokolli.** Ndarja e rastësishme e fryn AP-në unsupervised rreth 3.0 herë (4.5 herë për
+  Isolation Forest); referencën e mbikëqyrur nuk e fryn (0.92).
+- **Pragu.** Me prag sipas normës së mashtrimit detektorët unsupervised kapin pak; F1 arrin
+  kulmin me kontaminim 0.5%. Pragu adaptiv e ul paqëndrueshmërinë e ngarkesës (CV 0.84 → 0.62)
+  dhe rrit F1 unsupervised nga 0.124 në 0.166; referencës së mbikëqyrur ia ul F1-in.
+- **Kostoja e One-Class SVM-së.** 1 000 mostra trajnimi japin të njëjtën cilësi si 20 000, me
+  kohë trajnimi 160 herë dhe kosto pikëzimi 9 herë më të vogël.
 
 ---
 
@@ -73,7 +61,7 @@ paneli nuk mund të bjerë ndesh me studimin.
 
 | Çfarë ofron | Pse |
 |---|---|
-| Njëmbëdhjetë faqe në rendin e punimit, me referencë te nënkapitulli përkatës | Për ta ndjekur të njëjtin argument më shpejt |
+| Nëntë faqe në rendin e punimit, me referencë te nënkapitulli përkatës | Për ta ndjekur të njëjtin argument më shpejt |
 | Verdikti i çdo eksperimenti, i shkruar nga vetë kodi | Teksti që parafrazon punimi, i lexueshëm pa hapur dokumentin |
 | Grafikë interaktivë krahas figurës origjinale të punimit | Eksplorim, pa humbur besnikërinë ndaj dokumentit |
 | Konsolë ekzekutimi me log në kohë reale | Rigjenerimi i çdo hapi nga shfletuesi |
@@ -152,20 +140,20 @@ particioneve; pa këtë sinkronizim bishti i shpërndarjes ndotet nga koha e nis
 ```
 config/        një YAML: seed, ndarja, protokolli, hiperparametrat, Kafka, PostgreSQL
 src/data/      lexim, ndarje kronologjike, shtatë opsione paraprocesimi
-src/models/    iforest, autoencoder, ocsvm, logreg, pca (ablacion), ensemble
-src/evaluation/protokolli, metrikat, gjeometria, kostoja, EM/MV, statistikat, zhvendosja
+src/models/    iforest, autoencoder, ocsvm, logreg, pca (krahasim linear), ensemble
+src/evaluation/protokolli, metrikat, distancat kNN, kostoja, validimi i brendshëm, statistikat, zhvendosja
 src/streaming/ producer, consumer (prag statik ose adaptiv), serializimi
 src/storage/   PostgreSQL
 experiments/   një skript për eksperiment; asnjë logjikë modelimi
 tests/         rrjedhja, protokolli, kontrata e modeleve, metrikat, stili i punimit, integrimi
 docker/        Kafka (KRaft) + PostgreSQL + Grafana i provizionuar nga skedarë
 thesis/        gjeneruesi i punimit .docx nga rezultatet
+webapp/        paneli lokal i rezultateve (make webapp)
 ```
 
 ## Shënime mbi ndershmërinë e rezultateve
 
 Vlerat e raportuara janë më të ulëta se shumica e punimeve mbi këtë dataset. Kjo është e
 qëllimshme dhe e shpjeguar: `results/protocol_inflation.csv` mat sa i fryn rezultatet ndarja e
-rastësishme, dhe `results/geometry_verdict.txt` tregon kufirin e sipërm të vetë problemit pa
-asnjë model. Rezultati negativ i ansamblit raportohet ashtu siç doli, së bashku me shpjegimin
-e tij në nivel transaksioni.
+rastësishme. Rezultati negativ i ansamblit raportohet ashtu siç doli, së bashku me shpjegimin e
+tij në nivel transaksioni.
