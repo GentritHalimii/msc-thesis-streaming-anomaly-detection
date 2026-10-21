@@ -29,6 +29,8 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH  # noqa: E402
 from docx_helpers import (  # noqa: E402
     CITE_CLOSE,
     CITE_OPEN,
+    FIGURE_CLOSE,
+    FIGURE_OPEN,
     add_bullets,
     add_equation,
     add_figure,
@@ -53,6 +55,7 @@ RESULTS = REPO_ROOT / "results"
 CITE_RE = re.compile(r"\[@([a-zA-Z0-9_]+)\]")
 # A reference to a figure by its name, resolved to the figure's number, so the
 # prose can say "Figura 12" without the number going stale when figures move.
+# In the document the number is a cross-reference to the figure's caption.
 FIG_REF_RE = re.compile(r"\[\[fig:([a-zA-Z0-9_]+)\]\]")
 # A space that groups thousands ("284 807") must not break across lines.
 THOUSANDS_RE = re.compile(r"(?<=\d) (?=\d{3}\b)")
@@ -104,14 +107,15 @@ def resolve_citations(text: str, numbering: Numbering) -> str:
     The marker carries both the key, which names the bookmark on the reference
     entry, and the number assigned here, which becomes the field's cached
     result so the text reads correctly before Word refreshes anything. Figure
-    references written as [[fig:name]] are replaced by the figure's number.
+    references written as [[fig:name]] become a marked figure number, which
+    the run writers render the same way, as a field pointing at the caption.
     """
 
     def figure(match: re.Match) -> str:
         name = match.group(1)
         if name not in numbering.figure_numbers:
             raise KeyError(f"reference to unknown figure: {name}")
-        return str(numbering.figure_numbers[name])
+        return f"{FIGURE_OPEN}{numbering.figure_numbers[name]}{FIGURE_CLOSE}"
 
     text = FIG_REF_RE.sub(figure, text)
 
@@ -319,8 +323,9 @@ def render_blocks(doc, blocks: list, numbering: Numbering, counters: dict) -> No
             add_figure(
                 doc,
                 path,
-                f"Figura {n}. {resolve_citations(caption, numbering)}",
+                resolve_citations(caption, numbering),
                 width_cm=width,
+                number=n,
                 bookmark=figure_bookmark(n),
             )
         elif kind == "tab":
@@ -362,7 +367,11 @@ def _set_properties(doc, front_matter) -> None:
     props.created = props.modified = datetime.now(UTC).replace(microsecond=0, tzinfo=None)
 
 
-def build(output: Path, page_map: dict[str, str] | None = None):
+def build(
+    output: Path,
+    page_map: dict[str, str] | None = None,
+    break_before: frozenset[str] = frozenset(),
+):
     from content import (
         ch1_hyrje,
         ch2_literatura,
@@ -404,7 +413,7 @@ def build(output: Path, page_map: dict[str, str] | None = None):
         + [(1, "7\tREFERENCAT")]
         + collect_outline([ch8_shtojcat.BLOCKS])
     )
-    front_matter.render_prelims(doc, outline, dry_fig, dry_tab, page_map)
+    front_matter.render_prelims(doc, outline, dry_fig, dry_tab, page_map, break_before)
 
     # Body restarts page numbering at Arabic 1, per the template.
     start_new_section(doc, "decimal", start=1)
@@ -526,13 +535,20 @@ def _roman(number: int) -> str:
     return "".join(out)
 
 
-def extract_front_pages(pdf_path: Path, titles: list[str]) -> dict[str, str]:
-    """Roman page numbers of the front-matter titles the contents lists.
+def extract_front_pages(pdf_path: Path, titles: list[str]) -> tuple[dict[str, str], frozenset[str]]:
+    """Roman page numbers of the front-matter titles the contents lists, and
+    the titles left alone at the foot of a page.
 
     The front matter is numbered from the abstract, which is page I. A title
     is found as a line of its own, and the last such line is the one wanted:
     the contents names each title first, on a line of its own in the first
     pass, before its page numbers are known.
+
+    Word keeps a title on the page of the first line that follows it.
+    LibreOffice does not when that line belongs to an automatic table, so the
+    table list's title can end a page alone, with its entries on the next.
+    Such a title is returned for the second pass to start on that next page,
+    where Word puts it too, and it is given that page's number.
     """
     pages = [
         [line.strip() for line in page.splitlines() if line.strip()]
@@ -540,13 +556,22 @@ def extract_front_pages(pdf_path: Path, titles: list[str]) -> dict[str, str]:
     ]
     first = next((i for i, lines in enumerate(pages) if "ABSTRAKT" in lines), None)
     if first is None:
-        return {}
+        return {}, frozenset()
     mapping: dict[str, str] = {}
+    stranded = set()
     for title in titles:
         found = [i for i in range(first, len(pages)) if title in pages[i]]
-        if found:
-            mapping[title] = _roman(found[-1] - first + 1)
-    return mapping
+        if not found:
+            continue
+        page = found[-1]
+        lines = pages[page]
+        below = lines[len(lines) - lines[::-1].index(title) :]
+        # Only the page number, a Roman numeral, follows the title.
+        if all(re.fullmatch(r"[IVXLC]+", line) for line in below):
+            stranded.add(title)
+            page += 1
+        mapping[title] = _roman(page - first + 1)
+    return mapping, frozenset(stranded)
 
 
 def render_pdf(docx_path: Path) -> Path:
@@ -589,10 +614,11 @@ def main():
         entries, anchor = _all_entries(out)
         mapping = extract_page_numbers(pdf, entries, anchor)
         front = list(FRONT_ENTRIES)
-        mapping |= extract_front_pages(pdf, front)
+        front_pages, stranded = extract_front_pages(pdf, front)
+        mapping |= front_pages
         found, wanted = len(mapping), len(entries) + len(front)
         print(f"faza 2: u gjetën numra faqesh për {found}/{wanted} zëra")
-        path, numbering, n_fig, n_tab, n_eq = build(out, page_map=mapping)
+        path, numbering, n_fig, n_tab, n_eq = build(out, page_map=mapping, break_before=stranded)
         render_pdf(path)
 
     print(f"shkruar: {path}")

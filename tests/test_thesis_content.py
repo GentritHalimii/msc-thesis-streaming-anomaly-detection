@@ -238,38 +238,199 @@ def test_each_section_has_one_page_number_format_before_its_columns():
     assert formats == ["upperRoman", "decimal"]
 
 
-def test_contents_follow_the_template():
+def _effective_alignment(paragraph):
+    if paragraph.alignment is not None:
+        return paragraph.alignment
+    return paragraph.style.paragraph_format.alignment
+
+
+def test_contents_and_lists_are_word_automatic_tables():
+    """The contents and the two lists are Word's own TOC fields, which Word
+    updates and whose entries a Ctrl+click follows. Written out as plain
+    lines, as an earlier build did, they looked right but stayed frozen."""
     from content.front_matter import FRONT_ENTRIES, render_prelims
     from docx.oxml.ns import qn
-    from docx_helpers import heading_bookmark, new_document
+    from docx_helpers import (
+        CONTENTS_FIELD,
+        FIGURE_LIST_FIELD,
+        TABLE_LIST_FIELD,
+        heading_bookmark,
+        new_document,
+        title_bookmark,
+    )
 
     doc = new_document()
     outline = [(1, "1\tHyrje"), (2, "1.1\tKonteksti")]
-    render_prelims(doc, outline, ["Figura 1. Një figurë."], ["Tabela 1. Një tabelë."], {})
+    figures = ["Figura 1. Një figurë. Me një shënim."]
+    render_prelims(doc, outline, figures, ["Tabela 1. Një tabelë."], {})
     paras = doc.paragraphs
     texts = [para.text for para in paras]
 
+    # The template's contents uses exactly these switches.
+    assert CONTENTS_FIELD.split() == ["TOC", "\\o", '"1-3"', "\\h", "\\z", "\\u"]
+    tables = [i for para in paras for i in _field_instructions(para) if "TOC" in i]
+    assert tables == [CONTENTS_FIELD, FIGURE_LIST_FIELD, TABLE_LIST_FIELD]
+
     # The contents opens with the two lists and the glossary, then the
-    # chapters in capitals, as in the template's example.
+    # chapters in capitals, as in the template's example. Each line links to
+    # its title, and its page number is a field on the same bookmark.
     start = texts.index("PËRMBAJTJA")
-    assert texts[start + 1 : start + 4] == list(FRONT_ENTRIES)
-    chapter = paras[start + 4]
-    assert chapter.text.startswith("1   HYRJE")
-    assert f"PAGEREF {heading_bookmark('1')}" in " ".join(_field_instructions(chapter))
+    lines = [text.rstrip("\t") for text in texts[start + 1 : start + 6]]
+    assert lines == [*FRONT_ENTRIES, "1\tHYRJE", "1.1\tKonteksti"]
+    for para, target in zip(
+        paras[start + 1 : start + 6],
+        [
+            *(title_bookmark(t) for t in FRONT_ENTRIES),
+            heading_bookmark("1"),
+            heading_bookmark("1.1"),
+        ],
+        strict=True,
+    ):
+        assert para._p.find(qn("w:hyperlink")).get(qn("w:anchor")) == target
+        assert f"PAGEREF {target} " in " ".join(_field_instructions(para))
+    assert paras[start + 4].style.name == "toc 1"
+    assert paras[start + 5].style.name == "toc 2"
+
+    # The figure list shows the caption's first sentence, which is all the
+    # caption paragraph holds.
+    assert "Figura 1. Një figurë.\t" in texts
+
+    # Word's contents finds the three listed titles because they are
+    # headings; the abstracts, the acknowledgements and the contents' own
+    # title are not, so the contents leaves them out, as the template asks.
+    def last(title):
+        return paras[len(texts) - 1 - texts[::-1].index(title)]
+
+    for title in FRONT_ENTRIES:
+        assert last(title).style.name == "Heading 1", title
+        assert last(title).paragraph_format.page_break_before is None
+    for title in ("ABSTRAKT", "ABSTRACT", "MIRËNJOHJE", "PËRMBAJTJA"):
+        assert last(title).style.name == "Normal", title
 
     # The table list follows the figure list without a page break.
-    between = paras[
-        texts.index("LISTA E FIGURAVE", start + 4) : texts.index("LISTA E TABELAVE", start + 4)
-    ]
+    between = paras[texts.index("LISTA E FIGURAVE") : texts.index("LISTA E TABELAVE")]
     breaks = [br for para in between for br in para._p.iter(qn("w:br"))]
     assert not breaks, "the table list must not start a new page"
 
     # Every title in the front matter is aligned left.
     for title in ("ABSTRAKT", "PËRMBAJTJA", *FRONT_ENTRIES):
-        index = texts.index(title, start if title in FRONT_ENTRIES else 0)
-        if title in FRONT_ENTRIES:
-            index = len(texts) - 1 - texts[::-1].index(title)
-        assert paras[index].alignment == 0, f"{title} is not aligned left"
+        assert _effective_alignment(last(title)) == 0, f"{title} is not aligned left"
+
+
+def test_a_title_left_alone_at_the_foot_of_a_page_moves_to_the_next(monkeypatch):
+    """LibreOffice does not keep a title with the automatic table under it,
+    as Word does; the first pass reports such a title and the second starts
+    it on the next page, with that page's number in the contents."""
+    import build_thesis
+
+    pages = [
+        "ABSTRAKT\nTeksti.\nI",
+        "PËRMBAJTJA\nLISTA E FIGURAVE......II\nII",
+        "LISTA E FIGURAVE\nFigura 1. Një figurë......5\nLISTA E TABELAVE\nIII",
+        "Tabela 1. Një tabelë......7\nIV",
+    ]
+    monkeypatch.setattr(build_thesis, "_pdf_pages", lambda _path: pages)
+    titles = ["LISTA E FIGURAVE", "LISTA E TABELAVE"]
+    mapping, stranded = build_thesis.extract_front_pages(Path("thesis.pdf"), titles)
+    assert stranded == {"LISTA E TABELAVE"}
+    assert mapping == {"LISTA E FIGURAVE": "III", "LISTA E TABELAVE": "IV"}
+
+
+def test_captions_are_numbered_by_word():
+    """A caption's number is a SEQ field, which Word renumbers and builds the
+    lists from, inside the bookmark that the lists and the text point to.
+    The paragraph Word lists keeps the first sentence; a reading note
+    follows in a paragraph of its own."""
+    from docx.oxml.ns import qn
+    from docx_helpers import add_caption, figure_bookmark, new_document
+
+    doc = new_document()
+    para = add_caption(doc, "Figura", 3, "Një titull. Një shënim.", bookmark=figure_bookmark(3))
+    assert para.style.name == "Caption"
+    assert _field_instructions(para) == [" SEQ Figura \\* ARABIC "]
+    assert para.text == "Figura 3. Një titull."
+    assert doc.paragraphs[-1].text == "Një shënim."
+    assert doc.paragraphs[-1].style.name == "Caption"
+
+    children = list(para._p)
+    start = next(i for i, el in enumerate(children) if el.tag == qn("w:bookmarkStart"))
+    assert children[start].get(qn("w:name")) == figure_bookmark(3)
+    assert children[start + 2].tag == qn("w:bookmarkEnd"), "the bookmark holds the number only"
+    number = children[start + 1]
+    assert [el.text for el in number.iter(qn("w:instrText"))] == [" SEQ Figura \\* ARABIC "]
+    assert [el.text for el in number.iter(qn("w:t"))] == ["3"]
+
+
+def test_figure_number_in_the_text_is_a_cross_reference():
+    from build_thesis import Numbering, resolve_citations
+    from docx_helpers import add_paragraph, figure_bookmark, new_document
+
+    numbering = Numbering()
+    numbering.figure_numbers["arkitektura"] = 4
+    doc = new_document()
+    para = add_paragraph(
+        doc, resolve_citations("Siç tregon Figura [[fig:arkitektura]].", numbering)
+    )
+    assert _field_instructions(para) == [f" REF {figure_bookmark(4)} \\h "]
+    assert _field_results(para) == ["4"]
+    assert para.text == "Siç tregon Figura 4."
+
+
+def test_headings_and_captions_take_their_look_from_word_styles():
+    """Word copies formatting set on a heading's or a caption's text into the
+    entry it writes for the contents or the lists, so the template's look is
+    in the styles and the text carries none of its own."""
+    from docx.shared import Pt
+    from docx_helpers import TEXT_WIDTH_CM, add_caption, add_heading, new_document
+
+    doc = new_document()
+    heading = add_heading(doc, "Hyrje", 1, "1")
+    caption = add_caption(doc, "Tabela", 1, "Një tabelë.", above=True)
+    assert heading.text == "1\tHYRJE"
+    for para in (heading, caption):
+        assert all(run._r.rPr is None for run in para.runs), para.text
+
+    for level, size in ((1, 14), (2, 12), (3, 12)):
+        style = doc.styles[f"Heading {level}"]
+        font = style.font
+        assert (font.name, font.size, font.bold) == ("Times New Roman", Pt(size), True)
+        assert bool(font.all_caps) == (level == 1)
+        assert str(font.color.rgb) == "000000"
+        fonts = style.element.rPr.rFonts
+        assert not [name for name in fonts.attrib if "heme" in name], "no theme font"
+        assert style.paragraph_format.alignment == 0
+    caption_font = doc.styles["Caption"].font
+    assert (caption_font.name, caption_font.size, caption_font.bold) == (
+        "Times New Roman",
+        Pt(11),
+        False,
+    )
+
+    # Word applies these four styles to every entry it writes.
+    for name, style_id in (
+        ("toc 1", "TOC1"),
+        ("toc 2", "TOC2"),
+        ("toc 3", "TOC3"),
+        ("table of figures", "TableofFigures"),
+    ):
+        style = doc.styles[name]
+        assert style.style_id == style_id
+        assert style.builtin, "Word applies its built-in TOC styles, not a custom namesake"
+        stops = list(style.paragraph_format.tab_stops)
+        assert abs(stops[-1].position.cm - TEXT_WIDTH_CM) < 0.01
+        assert stops[-1].leader == 1, "dots lead to the page number"  # WD_TAB_LEADER.DOTS
+
+
+def test_word_is_asked_to_update_the_fields_on_opening():
+    """w:updateFields belongs ahead of w:compat; appended at the end of the
+    settings, as an earlier build wrote it, it is out of the schema's order."""
+    from docx.oxml.ns import qn
+    from docx_helpers import new_document
+
+    settings = new_document().settings.element
+    tags = [child.tag for child in settings]
+    assert settings.find(qn("w:updateFields")).get(qn("w:val")) == "true"
+    assert tags.index(qn("w:updateFields")) < tags.index(qn("w:compat"))
 
 
 def test_title_pages_are_times_new_roman_14_with_only_the_title_bold():
@@ -317,15 +478,21 @@ def test_hyphen_before_an_ending_does_not_break():
     assert not list(url._p.iter(qn("w:noBreakHyphen")))
 
 
-def test_list_of_figures_entries_are_not_cut():
-    """The lists of figures and tables show each caption's first sentence; one
-    longer than the limit would be cut short with an ellipsis."""
-    from build_thesis import _scan_captions
-    from content.front_matter import _shorten
+def test_list_entries_are_the_caption_paragraphs_word_lists():
+    """Word rebuilds the lists from the caption paragraphs, so the entries
+    written at build time must read exactly as those paragraphs do, or the
+    lists would change the first time Word updates them."""
+    from build_thesis import Numbering, _scan_captions, resolve_citations
+    from content.front_matter import _list_entries
+    from docx_helpers import FIGURE_LABEL, TABLE_LABEL, add_caption, new_document
 
     figures, tables = _scan_captions(list(all_chapters().values()))
-    cut = [caption for caption in figures + tables if _shorten(caption).endswith("…")]
-    assert not cut, f"first sentence too long for the list: {cut}"
+    doc = new_document()
+    for captions, label in ((figures, FIGURE_LABEL), (tables, TABLE_LABEL)):
+        entries = _list_entries(captions, str, {})
+        for number, (caption, entry) in enumerate(zip(captions, entries, strict=True), start=1):
+            text = resolve_citations(caption.partition(". ")[2], Numbering())
+            assert entry[1] == add_caption(doc, label, number, text).text
 
 
 def test_table_numbers_print_with_fixed_decimals():

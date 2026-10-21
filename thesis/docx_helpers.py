@@ -7,9 +7,13 @@ bold, page numbers bottom-right, numbered captions below figures and above
 tables, and numbered equations. Front matter is numbered in Roman numerals and
 the body restarts at Arabic 1.
 
+The contents, the list of figures and the list of tables are Word's own
+tables, built from the Heading styles and from the captions' numbers, so Word
+can update them and a Ctrl+click on an entry goes to its page.
+
 Several of these need raw OOXML because python-docx has no API for them:
-page-number fields, per-section numbering formats, bookmarks, and the
-cross-reference fields behind citations and the page numbers of the contents.
+page-number fields, per-section numbering formats, bookmarks, the tables of
+contents, and the cross-reference fields behind citations and figure numbers.
 """
 
 import functools
@@ -21,6 +25,7 @@ from pathlib import Path
 
 from docx import Document
 from docx.enum.section import WD_SECTION
+from docx.enum.style import WD_STYLE_TYPE
 from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.enum.text import (
     WD_ALIGN_PARAGRAPH,
@@ -30,7 +35,7 @@ from docx.enum.text import (
 )
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
-from docx.shared import Cm, Pt, RGBColor
+from docx.shared import Cm, Pt, RGBColor, Twips
 from PIL import Image
 
 BODY_FONT = "Times New Roman"
@@ -43,13 +48,33 @@ TEXT_WIDTH_CM = 15.0
 INK = RGBColor(0, 0, 0)
 MUTED = RGBColor(0x40, 0x40, 0x40)
 
-# A resolved citation travels through the content layer as text, so it is
-# wrapped in private-use code points that cannot occur in the thesis itself.
-# The run writers below turn each wrapped span into a Word cross-reference.
+# A resolved citation or figure number travels through the content layer as
+# text, so it is wrapped in private-use code points that cannot occur in the
+# thesis itself. The run writers below turn each wrapped span into a Word
+# cross-reference.
 CITE_OPEN = "\ue000"
 CITE_CLOSE = "\ue001"
-CITE_RUN_RE = re.compile(f"{CITE_OPEN}([a-zA-Z0-9_]+)\\|([0-9]+){CITE_CLOSE}")
+FIGURE_OPEN = "\ue002"
+FIGURE_CLOSE = "\ue003"
+FIELD_RUN_RE = re.compile(
+    f"{CITE_OPEN}([a-zA-Z0-9_]+)\\|([0-9]+){CITE_CLOSE}|{FIGURE_OPEN}([0-9]+){FIGURE_CLOSE}"
+)
 REFERENCE_NUM_ID = 100
+# The caption labels. Word's SEQ fields count each one separately, and the
+# lists of figures and tables are built from them.
+FIGURE_LABEL = "Figura"
+TABLE_LABEL = "Tabela"
+# The automatic tables, with the switches the faculty template uses for its
+# contents: heading levels 1 to 3, entries as links, no page numbers in web
+# view, and paragraphs with an outline level. The two lists collect captions.
+CONTENTS_FIELD = ' TOC \\o "1-3" \\h \\z \\u '
+FIGURE_LIST_FIELD = f' TOC \\h \\z \\c "{FIGURE_LABEL}" '
+TABLE_LIST_FIELD = f' TOC \\h \\z \\c "{TABLE_LABEL}" '
+# Where a contents entry's number and its title start, in twips, as in the
+# template's own contents: a level-2 number at 240 with its title at 880, a
+# level-3 number at 480 with its title at 1320. A title that runs onto a
+# second line continues under its first word.
+CONTENTS_TABS = {1: (0, 480), 2: (240, 880), 3: (480, 1320)}
 # A hyphen that attaches an Albanian ending to a foreign word or an acronym
 # ("AP-së", "Autoencoder-it") or closes a short compound ("8-fold",
 # "end-to-end") must not end a line, so it is written as Word's non-breaking
@@ -84,11 +109,93 @@ def new_document() -> Document:
     pf.line_spacing = LINE_SPACING
     pf.space_after = Pt(6)
     pf.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+    _define_heading_and_caption_styles(doc)
+    _define_contents_styles(doc)
 
     for section in doc.sections:
         _apply_page_setup(section)
     _set_update_fields_on_open(doc)
     return doc
+
+
+def _set_style_font(style, size, *, bold: bool, color: RGBColor) -> None:
+    """Times New Roman at `size`, in place of the theme font and colour that
+    python-docx's template gives its headings and captions."""
+    fonts = style.element.get_or_add_rPr().get_or_add_rFonts()
+    for theme in ("w:asciiTheme", "w:hAnsiTheme", "w:eastAsiaTheme", "w:cstheme"):
+        fonts.attrib.pop(qn(theme), None)
+    for slot in ("w:ascii", "w:hAnsi", "w:eastAsia", "w:cs"):
+        fonts.set(qn(slot), BODY_FONT)
+    style.font.size = size
+    style.font.bold = bold
+    style.font.italic = False
+    style.font.color.rgb = color
+
+
+def _define_heading_and_caption_styles(doc: Document) -> None:
+    """The template's titles and captions as Word styles.
+
+    The look belongs to the style, not to the text, for two reasons. Word's
+    automatic contents and lists copy formatting set on a heading's or a
+    caption's text into the entry, so a 14 pt title would come back as a
+    14 pt line of the contents. And a heading or caption added later in Word
+    gets the template's look from the style alone.
+    """
+    for level in (1, 2, 3):
+        style = doc.styles[f"Heading {level}"]
+        _set_style_font(style, TITLE_SIZE if level == 1 else BODY_SIZE, bold=True, color=INK)
+        style.font.all_caps = level == 1 or None
+        pf = style.paragraph_format
+        pf.alignment = WD_ALIGN_PARAGRAPH.LEFT
+        pf.line_spacing = LINE_SPACING
+        pf.space_before = Pt(18 if level == 1 else 12)
+        pf.space_after = Pt(8)
+        pf.keep_with_next = True
+
+    caption = doc.styles["Caption"]
+    _set_style_font(caption, CAPTION_SIZE, bold=False, color=MUTED)
+    caption.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    caption.paragraph_format.line_spacing = 1.0
+
+
+def _define_contents_styles(doc: Document) -> None:
+    """Word's TOC 1 to 3 and Table of Figures styles, which Word applies to
+    every entry it writes when it updates the contents or the lists.
+
+    The paragraph is left-aligned, because justified text stretches the
+    leader dots across the whole line. The page-number tab stop is measured
+    from the margin, so the numbers line up at every level. And the text keeps
+    clear of the page-number column through a right indent, with the tab stop
+    beyond it, so a title that fills its line wraps early instead of leaving
+    the leader dots alone on the next line.
+    """
+    entries = [(f"toc {level}", f"TOC{level}", level) for level in CONTENTS_TABS]
+    for name, style_id, level in [*entries, ("table of figures", "TableofFigures", None)]:
+        # Built-in, not custom: marked custom, a style named "toc 1" is not
+        # the TOC 1 that Word applies, and Word would format with its own.
+        style = doc.styles.add_style(name, WD_STYLE_TYPE.PARAGRAPH, builtin=True)
+        style.style_id = style_id
+        style.base_style = doc.styles["Normal"]
+        style.next_paragraph_style = doc.styles["Normal"]
+        style.priority = 39 if level else 99
+        style.unhide_when_used = True
+        pf = style.paragraph_format
+        pf.alignment = WD_ALIGN_PARAGRAPH.LEFT
+        pf.line_spacing = 1.15
+        pf.space_after = Pt(3)
+        pf.right_indent = Cm(1.0)
+        if level:
+            # The number starts the line, and the title and its wrapped lines
+            # start at the tab stop after it.
+            number, title = CONTENTS_TABS[level]
+            pf.left_indent = Twips(title)
+            pf.first_line_indent = Twips(number - title)
+            pf.tab_stops.add_tab_stop(Twips(title))
+        pf.tab_stops.add_tab_stop(Cm(TEXT_WIDTH_CM), WD_TAB_ALIGNMENT.RIGHT, WD_TAB_LEADER.DOTS)
+        if level == 1:
+            # Chapter entries are bold capitals, like the chapter titles.
+            style.font.bold = True
+            style.font.all_caps = True
 
 
 def _apply_page_setup(section) -> None:
@@ -105,32 +212,86 @@ def _apply_page_setup(section) -> None:
     section.right_margin = Cm(3.0)
 
 
+# Children of w:settings that the schema places after w:updateFields.
+_AFTER_UPDATE_FIELDS = (
+    "w:hdrShapeDefaults",
+    "w:footnotePr",
+    "w:endnotePr",
+    "w:compat",
+    "w:docVars",
+    "w:rsids",
+    "m:mathPr",
+    "w:attachedSchema",
+    "w:themeFontLang",
+    "w:clrSchemeMapping",
+    "w:doNotIncludeSubdocsInStats",
+    "w:doNotAutoCompressPictures",
+    "w:forceUpgrade",
+    "w:captions",
+    "w:readModeInkLockDown",
+    "w:smartTagType",
+    "sl:schemaLibrary",
+    "w:shapeDefaults",
+    "w:doNotEmbedSmartTags",
+    "w:decimalSymbol",
+    "w:listSeparator",
+)
+
+
 def _set_update_fields_on_open(doc: Document) -> None:
-    """Ask Word to refresh every field (TOC, page counts) when the file opens,
-    so the generated table of contents is never stale."""
+    """Ask Word to refresh every field (contents, lists, cross-references)
+    when the file opens, so they match Word's own pagination.
+
+    The setting goes ahead of w:compat, where the schema puts it, rather than
+    at the end of the settings, where an earlier build appended it.
+    """
     settings = doc.settings.element
-    if settings.find(qn("w:updateFields")) is None:
-        el = OxmlElement("w:updateFields")
-        el.set(qn("w:val"), "true")
+    if settings.find(qn("w:updateFields")) is not None:
+        return
+    el = OxmlElement("w:updateFields")
+    el.set(qn("w:val"), "true")
+    successor = next(
+        (s for tag in _AFTER_UPDATE_FIELDS if (s := settings.find(qn(tag))) is not None), None
+    )
+    if successor is not None:
+        successor.addprevious(el)
+    else:
         settings.append(el)
 
 
-def _field(paragraph, instruction: str, placeholder: str = "") -> None:
-    """Insert a Word field code (PAGE, TOC, ...) into a paragraph."""
+def _fld_char(kind: str):
+    char = OxmlElement("w:fldChar")
+    char.set(qn("w:fldCharType"), kind)
+    return char
+
+
+def _field_start(paragraph, instruction: str):
+    """The opening of a field, in one run: the field character, the
+    instruction and the separator. The result follows, in this paragraph or
+    over later ones, and `_field_end` closes it."""
     run = paragraph.add_run()
-    begin = OxmlElement("w:fldChar")
-    begin.set(qn("w:fldCharType"), "begin")
     instr = OxmlElement("w:instrText")
     instr.set(qn("xml:space"), "preserve")
     instr.text = instruction
-    separate = OxmlElement("w:fldChar")
-    separate.set(qn("w:fldCharType"), "separate")
+    for el in (_fld_char("begin"), instr, _fld_char("separate")):
+        run._r.append(el)
+    return run
+
+
+def _field_end(paragraph):
+    run = paragraph.add_run()
+    run._r.append(_fld_char("end"))
+    return run
+
+
+def _field(paragraph, instruction: str, placeholder: str = ""):
+    """Insert a Word field code (PAGE, REF, ...) with its cached result."""
+    run = _field_start(paragraph, instruction)
     text = OxmlElement("w:t")
     text.text = placeholder
-    end = OxmlElement("w:fldChar")
-    end.set(qn("w:fldCharType"), "end")
-    for el in (begin, instr, separate, text, end):
-        run._r.append(el)
+    run._r.append(text)
+    run._r.append(_fld_char("end"))
+    return run
 
 
 def define_reference_numbering(doc: Document) -> int:
@@ -220,16 +381,41 @@ def bookmark_paragraph(para, name: str, bookmark_id: int | None = None) -> None:
     p.append(end)
 
 
+def _open_bookmark(para, name: str) -> int:
+    """Start a bookmark at the current end of the paragraph; what is added
+    to the paragraph before `_close_bookmark` falls inside it."""
+    bookmark_id = next(_BOOKMARK_IDS)
+    start = OxmlElement("w:bookmarkStart")
+    start.set(qn("w:id"), str(bookmark_id))
+    start.set(qn("w:name"), name)
+    para._p.append(start)
+    return bookmark_id
+
+
+def _close_bookmark(para, bookmark_id: int) -> None:
+    end = OxmlElement("w:bookmarkEnd")
+    end.set(qn("w:id"), str(bookmark_id))
+    para._p.append(end)
+
+
 def reference_bookmark(key: str) -> str:
     return f"Ref_{key}"
 
 
-# Targets of the page numbers in the contents and in the figure and table
-# lists. Word bookmark names allow letters, digits and underscores only.
+# Targets of the entries in the contents and in the figure and table lists.
+# Word bookmark names allow letters, digits and underscores only.
 def heading_bookmark(number: str) -> str:
     return "Toc_" + number.replace(".", "_")
 
 
+def title_bookmark(title: str) -> str:
+    """An unnumbered title that the contents lists, such as LISTA E FIGURAVE."""
+    return "Toc_" + "_".join(title.split())
+
+
+# A figure's or table's bookmark covers the number in its caption, so the
+# same bookmark serves the lists, which jump to it and report its page, and
+# a reference in the text, which repeats the number.
 def figure_bookmark(number: int) -> str:
     return f"Fig_{number}"
 
@@ -246,19 +432,30 @@ def _add_citation_field(para, key: str, number: int):
     sees. The cached result carries the number computed at build time, so the
     document reads correctly before Word has refreshed anything.
     """
-    _field(para, f" REF {reference_bookmark(key)} \\r \\h ", f"[{number}]")
-    run = para.runs[-1]
+    run = _field(para, f" REF {reference_bookmark(key)} \\r \\h ", f"[{number}]")
+    run.font.name = BODY_FONT
+    return run
+
+
+def _add_figure_reference(para, number: int):
+    """A figure number in the text, as a cross-reference to the number in the
+    figure's caption. Word renumbers the caption and the reference together,
+    and a Ctrl+click on the number goes to the figure."""
+    run = _field(para, f" REF {figure_bookmark(number)} \\h ", str(number))
     run.font.name = BODY_FONT
     return run
 
 
 def _add_text_runs(para, text: str, *, size=None, italic: bool = False, color=None):
-    """Text plus any citations it carries, as a sequence of runs."""
+    """Text plus any citations and figure numbers it carries, as runs."""
     position = 0
-    for match in CITE_RUN_RE.finditer(text):
+    for match in FIELD_RUN_RE.finditer(text):
         if match.start() > position:
             _plain_run(para, text[position : match.start()], size, italic, color)
-        _add_citation_field(para, match.group(1), int(match.group(2)))
+        if match.group(1):
+            _add_citation_field(para, match.group(1), int(match.group(2)))
+        else:
+            _add_figure_reference(para, int(match.group(3)))
         position = match.end()
     if position < len(text) or position == 0:
         _plain_run(para, text[position:], size, italic, color)
@@ -396,41 +593,17 @@ def add_heading(
     *,
     bookmark: str | None = None,
 ):
-    """Chapter titles: 14 pt bold capitals. Subsections: 12 pt bold."""
-    para = doc.add_paragraph()
-    para.alignment = WD_ALIGN_PARAGRAPH.LEFT
-    pf = para.paragraph_format
-    pf.line_spacing = LINE_SPACING
-    pf.space_before = Pt(18 if level == 1 else 12)
-    pf.space_after = Pt(8)
-    pf.keep_with_next = True
-    label = (
-        f"{number}\t{text.upper() if level == 1 else text}"
-        if number
-        else (text.upper() if level == 1 else text)
-    )
-    if CITE_OPEN in label:  # pragma: no cover - guarded by tests/test_thesis_style
-        raise ValueError("a heading cannot carry a citation: it has no run to hold a field")
-    run = para.add_run(label)
-    _keep_hyphens(run)
-    run.font.name = BODY_FONT
-    run.bold = True
-    run.font.size = TITLE_SIZE if level == 1 else BODY_SIZE
-    run.font.color.rgb = INK
-    # Outline level makes the entry visible to the table-of-contents field.
-    ppr = para._p.get_or_add_pPr()
-    outline = OxmlElement("w:outlineLvl")
-    outline.set(qn("w:val"), str(level - 1))
-    ppr.append(outline)
-    style_id = f"Heading{min(level, 4)}"
-    pstyle = OxmlElement("w:pStyle")
-    pstyle.set(qn("w:val"), style_id)
-    ppr.insert(0, pstyle)
-    for r in para.runs:
-        r.font.name = BODY_FONT
-        r.font.size = TITLE_SIZE if level == 1 else BODY_SIZE
-        r.bold = True
-        r.font.color.rgb = INK
+    """Chapter titles: 14 pt bold capitals. Subsections: 12 pt bold.
+
+    The look comes from Word's Heading 1 to 3 styles, which the contents is
+    built from; the text carries no formatting of its own.
+    """
+    title = text.upper() if level == 1 else text
+    label = f"{number}\t{title}" if number else title
+    if CITE_OPEN in label or FIGURE_OPEN in label:  # pragma: no cover - guarded by tests
+        raise ValueError("a heading cannot carry a cross-reference: the contents copies it")
+    para = doc.add_paragraph(style=f"Heading {level}")
+    _keep_hyphens(para.add_run(label))
     if bookmark:
         bookmark_paragraph(para, bookmark)
     return para
@@ -458,17 +631,51 @@ def add_bullets(doc: Document, items: list[str], numbered: bool = False):
         pf.tab_stops.add_tab_stop(Cm(1.6))
 
 
-def add_caption(doc: Document, text: str, *, above: bool = False, bookmark: str | None = None):
-    para = doc.add_paragraph()
-    para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+def split_caption(text: str) -> tuple[str, str]:
+    """A caption's first sentence, which names the figure, and the rest."""
+    title, _, note = text.partition(". ")
+    return (f"{title}." if note else title), note
+
+
+def add_caption(
+    doc: Document,
+    label: str,
+    number: int,
+    text: str,
+    *,
+    above: bool = False,
+    bookmark: str | None = None,
+):
+    """A numbered caption, "Figura 3. ...", whose number is Word's own.
+
+    The number is a SEQ field, the counter behind Word's Insert Caption, so
+    Word renumbers the captions when a figure is added or moved and builds
+    the lists of figures and tables from them. A list entry is the whole
+    paragraph that holds the number, so that paragraph keeps only the first
+    sentence, the one that names the figure; any reading notes after it
+    follow in a paragraph of their own.
+    """
+    if CITE_OPEN in text or FIGURE_OPEN in text:  # pragma: no cover - guarded by tests
+        raise ValueError("a caption cannot carry a cross-reference: the lists copy it")
+    title, note = split_caption(text)
+    para = doc.add_paragraph(style="Caption")
     pf = para.paragraph_format
-    pf.line_spacing = 1.0
-    pf.space_before = Pt(2 if not above else 8)
-    pf.space_after = Pt(10 if not above else 4)
+    pf.space_before = Pt(8 if above else 2)
+    pf.space_after = Pt(4 if above else 10)
     pf.keep_with_next = above
-    _add_text_runs(para, text, size=CAPTION_SIZE, color=MUTED)
-    if bookmark:
-        bookmark_paragraph(para, bookmark)
+    para.add_run(f"{label} ")
+    bookmark_id = _open_bookmark(para, bookmark) if bookmark else None
+    _field(para, f" SEQ {label} \\* ARABIC ", str(number))
+    if bookmark_id is not None:
+        _close_bookmark(para, bookmark_id)
+    _keep_hyphens(para.add_run(f". {title}"))
+    if note:
+        rest = doc.add_paragraph(style="Caption")
+        rest.paragraph_format.space_after = pf.space_after
+        rest.paragraph_format.keep_with_next = above
+        _keep_hyphens(rest.add_run(note))
+        pf.space_after = Pt(0)
+        pf.keep_with_next = True
     return para
 
 
@@ -478,6 +685,7 @@ def add_figure(
     caption: str,
     width_cm: float = 14.5,
     *,
+    number: int,
     bookmark: str | None = None,
 ):
     para = doc.add_paragraph()
@@ -488,7 +696,7 @@ def add_figure(
     # caption alone at the top of the next one.
     para.paragraph_format.keep_with_next = True
     para.add_run().add_picture(str(image_path), width=Cm(width_cm))
-    add_caption(doc, caption, bookmark=bookmark)
+    add_caption(doc, FIGURE_LABEL, number, caption, bookmark=bookmark)
 
 
 def add_equation(doc: Document, expression: str, number: int):
@@ -568,7 +776,7 @@ def add_table(
     both cases no column is narrower than its longest unbreakable piece, so a
     number never wraps inside its cell and a word is never split.
     """
-    add_caption(doc, f"Tabela {number}. {caption}", above=True, bookmark=bookmark)
+    add_caption(doc, TABLE_LABEL, number, caption, above=True, bookmark=bookmark)
     df = dataframe if max_rows is None else dataframe.head(max_rows)
     df = df.map(_display_text)
     numeric = [all(_is_number(value) for value in df[name]) for name in df.columns]
@@ -721,13 +929,46 @@ def _share(floors: list[float], weights: list[float], total: float) -> list[floa
             fixed[i] = True
 
 
-def add_toc_field(doc: Document, instruction: str, placeholder: str):
-    para = doc.add_paragraph()
-    para.paragraph_format.line_spacing = LINE_SPACING
-    _field(para, instruction, placeholder)
-    for run in para.runs:
-        run.font.name = BODY_FONT
-        run.font.size = BODY_SIZE
+def add_automatic_table(doc: Document, instruction: str, entries):
+    """One of Word's automatic tables: the contents, or a list of figures or
+    of tables.
+
+    `entries` holds (style name, text, page, bookmark) for each line, in
+    order. Word keeps such a table as a TOC field whose result is the lines
+    themselves. This writes the same field, with the lines Word would write
+    as its result and the page numbers from a first rendering pass, so the
+    document reads correctly as it is, in LibreOffice or in a PDF made
+    without Word. Word replaces the result with its own when it updates the
+    field: on opening, with F9 or with Update Table.
+
+    As in Word's own tables, each line is a link to its heading or caption,
+    which Ctrl+click follows, and its page number is a PAGEREF field. The
+    field ends in a paragraph of its own after the last line, where Word ends
+    it too, so an update by Word leaves the layout as it was. That paragraph
+    is returned so the caller can put a page break in it.
+    """
+    opened = False
+    for style, text, page, bookmark in entries:
+        para = doc.add_paragraph(style=style)
+        if not opened:
+            _field_start(para, instruction)
+            opened = True
+        label = para.add_run(f"{text}\t")
+        _keep_hyphens(label)
+        page_number = _field(para, f" PAGEREF {bookmark} \\h ", page or "")
+        link = OxmlElement("w:hyperlink")
+        link.set(qn("w:anchor"), bookmark)
+        link.set(qn("w:history"), "1")
+        label._r.addprevious(link)
+        link.append(label._r)
+        link.append(page_number._r)
+    closing = doc.add_paragraph()
+    closing.paragraph_format.line_spacing = 1.0
+    closing.paragraph_format.space_after = Pt(0)
+    if not opened:
+        _field_start(closing, instruction)
+    _field_end(closing)
+    return closing
 
 
 LOGO_PATH = Path(__file__).parent / "assets" / "ubt-logo.png"
@@ -761,66 +1002,6 @@ def add_logo(doc: Document):
 
 def page_break(doc: Document):
     doc.add_paragraph().add_run().add_break(WD_BREAK.PAGE)
-
-
-def add_toc_entry(
-    doc,
-    text: str,
-    level: int,
-    page: str | None,
-    bold: bool | None = None,
-    *,
-    bookmark: str | None = None,
-):
-    """One line of the table of contents, or of the figure and table lists.
-
-    Chapter entries are bold; `bold` overrides that for the lists of figures
-    and tables, whose entries are all at the first level.
-
-    A Word TOC field is the usual solution, but it renders as a placeholder
-    until someone opens the file and refreshes it — and a thesis that is
-    printed or converted without that refresh has an empty contents page.
-    The entries are therefore written out, and only the page number is a
-    field: a PAGEREF to a bookmark on the heading or caption, whose cached
-    value is the page recovered from a first rendering pass. LibreOffice
-    computes these itself, and Word recomputes them for its own pagination
-    when it updates fields on opening, so the numbers stay right in both.
-
-    Three details matter. The paragraph must be left-aligned, because justified
-    text stretches the leader dots across the whole line. The tab stop is
-    measured from the margin, not from the entry's indent, so it sits at the
-    same place for every level and the page numbers line up. And the text keeps
-    clear of the page-number column through a right indent, with the tab stop
-    beyond it, so a title that fills its line wraps early instead of leaving
-    the leader dots alone on the next line.
-    """
-    indent_cm = 0.7 * (level - 1)
-    para = doc.add_paragraph()
-    para.alignment = WD_ALIGN_PARAGRAPH.LEFT
-    pf = para.paragraph_format
-    pf.line_spacing = 1.15
-    pf.space_after = Pt(3)
-    pf.left_indent = Cm(indent_cm)
-    pf.right_indent = Cm(1.0)
-    pf.tab_stops.add_tab_stop(Cm(TEXT_WIDTH_CM), WD_TAB_ALIGNMENT.RIGHT, WD_TAB_LEADER.DOTS)
-    # Any tab inside the caption itself would jump to the leader stop, so the
-    # separator between a section number and its title is written as spaces.
-    label = text.replace("\t", "   ")
-    weight = level == 1 if bold is None else bold
-    if bookmark is None:
-        run = para.add_run(label if page is None else f"{label}\t{page}")
-        _keep_hyphens(run)
-        runs = [run]
-    else:
-        run = para.add_run(f"{label}\t")
-        _keep_hyphens(run)
-        _field(para, f" PAGEREF {bookmark} \\h ", page or "")
-        runs = [run, para.runs[-1]]
-    for run in runs:
-        run.font.name = BODY_FONT
-        run.font.size = BODY_SIZE
-        run.bold = weight
-    return para
 
 
 def _apply_column_widths(table, col_widths: list[float]) -> None:

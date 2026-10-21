@@ -4,21 +4,28 @@ The layout follows the faculty template literally: two title pages set in
 Times New Roman 14 with the template's spacing, an abstract confined to a
 single page and carrying no chapter number, page numbering that starts there
 in Roman numerals, and a contents page that opens with the figure list, the
-table list and the glossary. The page numbers in the contents and in the two
-lists are Word fields, so they stay correct after any edit.
+table list and the glossary. The contents and the two lists are Word's own
+automatic tables, so Word updates them and a Ctrl+click on an entry goes to
+the page it names.
 """
 
-from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_BREAK
 from docx.shared import Pt
 from docx_helpers import (
+    CONTENTS_FIELD,
+    FIGURE_LIST_FIELD,
+    TABLE_LIST_FIELD,
+    add_automatic_table,
+    add_heading,
     add_logo,
     add_paragraph,
-    add_toc_entry,
     figure_bookmark,
     heading_bookmark,
     page_break,
+    split_caption,
     start_new_section,
     table_bookmark,
+    title_bookmark,
 )
 
 TITULLI = (
@@ -223,14 +230,17 @@ def contents_entries(outline, figures, tables):
     return [text for _, text in outline] + figures + tables
 
 
-def _title(doc, text: str, *, space_before: int = 0):
-    """A front-matter title. The template asks every title for Times New Roman
-    14, bold capitals, aligned left, so these are set like chapter titles."""
+def _title(doc, text: str):
+    """A front-matter title that the contents leaves out, as the template
+    asks for the abstracts and the acknowledgements. The template asks every
+    title for Times New Roman 14, bold capitals, aligned left, so these are
+    set like chapter titles, but as ordinary paragraphs rather than headings,
+    which Word's contents would collect."""
     para = doc.add_paragraph()
     para.alignment = WD_ALIGN_PARAGRAPH.LEFT
     pf = para.paragraph_format
     pf.line_spacing = 1.5
-    pf.space_before = Pt(space_before)
+    pf.space_before = Pt(0)
     pf.space_after = Pt(12)
     pf.keep_with_next = True
     run = para.add_run(text)
@@ -240,13 +250,40 @@ def _title(doc, text: str, *, space_before: int = 0):
     return para
 
 
-def render_prelims(doc, outline, figures, tables, page_map) -> None:
+def _listed_title(doc, text: str, *, space_before: int = 0, new_page: bool = False):
+    """A front-matter title that the contents lists. It is a Heading 1 with
+    no number, which is how the template marks these three and how Word's
+    contents finds them, spaced like the other front-matter titles."""
+    para = add_heading(doc, text, 1, bookmark=title_bookmark(text))
+    para.paragraph_format.space_before = Pt(space_before)
+    para.paragraph_format.space_after = Pt(12)
+    para.paragraph_format.page_break_before = new_page or None
+    return para
+
+
+def _list_entries(captions, bookmark, page_map):
+    """The lines of the figure or table list: the label, the number and the
+    first sentence of each caption, which is the caption paragraph that Word
+    copies when it updates the list."""
+    entries = []
+    for number, caption in enumerate(captions, start=1):
+        label, _, text = caption.partition(". ")
+        title, _ = split_caption(text)
+        entries.append(
+            ("table of figures", f"{label}. {title}", page_map.get(caption), bookmark(number))
+        )
+    return entries
+
+
+def render_prelims(doc, outline, figures, tables, page_map, break_before=frozenset()) -> None:
     """Everything between the title pages and chapter 1.
 
     `page_map` carries printed page numbers recovered from a first rendering
-    pass. They become the cached results of the page-number fields; on the
-    first pass the fields are empty, and the front matter still has its final
+    pass. The automatic tables show them until Word updates the tables; on
+    the first pass they are empty, and the front matter still has its final
     length, so the numbers found in the second pass remain valid.
+    `break_before` names titles that the first pass left alone at the foot of
+    a page; they start the next page instead.
     """
     start_new_section(doc, "upperRoman", start=1)
 
@@ -266,46 +303,32 @@ def render_prelims(doc, outline, figures, tables, page_map) -> None:
     page_break(doc)
 
     _title(doc, "PËRMBAJTJA")
-    # These three are numbered in Roman numerals, which LibreOffice does not
-    # apply to a page reference, so their numbers are written out. They depend
-    # only on the front matter, which breaks pages at fixed places.
-    for title in FRONT_ENTRIES:
-        add_toc_entry(doc, title, 1, page_map.get(title))
     # The outline already carries the references entry in its correct place
     # between chapters 6 and 8, so nothing is appended here. Chapter entries
     # are in capitals, like the chapter titles they point to.
+    entries = [
+        ("toc 1", title, page_map.get(title), title_bookmark(title)) for title in FRONT_ENTRIES
+    ]
     for level, text in outline:
         number, _, name = text.partition("\t")
         label = f"{number}\t{name.upper()}" if level == 1 else text
-        add_toc_entry(doc, label, level, page_map.get(text), bookmark=heading_bookmark(number))
-    page_break(doc)
+        entries.append((f"toc {level}", label, page_map.get(text), heading_bookmark(number)))
+    add_automatic_table(doc, CONTENTS_FIELD, entries).add_run().add_break(WD_BREAK.PAGE)
 
-    _title(doc, "LISTA E FIGURAVE")
-    for number, caption in enumerate(figures, start=1):
-        add_toc_entry(
-            doc,
-            _shorten(caption),
-            1,
-            page_map.get(caption),
-            bold=False,
-            bookmark=figure_bookmark(number),
-        )
+    _listed_title(doc, "LISTA E FIGURAVE")
+    add_automatic_table(doc, FIGURE_LIST_FIELD, _list_entries(figures, figure_bookmark, page_map))
 
     # The template has the table list follow the figure list directly, not on
-    # a new page.
-    _title(doc, "LISTA E TABELAVE", space_before=18)
-    for number, caption in enumerate(tables, start=1):
-        add_toc_entry(
-            doc,
-            _shorten(caption),
-            1,
-            page_map.get(caption),
-            bold=False,
-            bookmark=table_bookmark(number),
-        )
-    page_break(doc)
+    # a new page, unless the figure list fills its page. The paragraph that
+    # closes the figure list already leaves a line between them.
+    title = "LISTA E TABELAVE"
+    _listed_title(doc, title, space_before=6, new_page=title in break_before)
+    table_list = add_automatic_table(
+        doc, TABLE_LIST_FIELD, _list_entries(tables, table_bookmark, page_map)
+    )
+    table_list.add_run().add_break(WD_BREAK.PAGE)
 
-    _title(doc, "FJALORI I TERMAVE")
+    _listed_title(doc, "FJALORI I TERMAVE")
     for term, meaning in FJALORI:
         para = doc.add_paragraph()
         para.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
@@ -318,15 +341,3 @@ def render_prelims(doc, outline, figures, tables, page_map) -> None:
         run2 = para.add_run(meaning)
         run2.font.name = "Times New Roman"
         run2.font.size = Pt(12)
-
-
-def _shorten(caption: str, limit: int = 110) -> str:
-    """The list of figures carries the first sentence of each caption, the
-    part that names the figure; reading notes after it stay with the figure."""
-    number, _, text = caption.partition(". ")
-    first = text.split(". ")[0].rstrip(".")
-    entry = f"{number}. {first}."
-    if len(entry) <= limit:
-        return entry
-    cut = entry[:limit].rsplit(" ", 1)[0]
-    return cut + "…"
