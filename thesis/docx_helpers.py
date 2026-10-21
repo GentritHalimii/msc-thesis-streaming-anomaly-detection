@@ -405,6 +405,9 @@ def add_figure(doc: Document, image_path: Path, caption: str, width_cm: float = 
     para.alignment = WD_ALIGN_PARAGRAPH.CENTER
     para.paragraph_format.space_before = Pt(10)
     para.paragraph_format.space_after = Pt(2)
+    # A picture that fills the rest of a page would otherwise leave its
+    # caption alone at the top of the next one.
+    para.paragraph_format.keep_with_next = True
     para.add_run().add_picture(str(image_path), width=Cm(width_cm))
     add_caption(doc, caption)
 
