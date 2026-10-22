@@ -128,12 +128,12 @@ def test_every_referenced_table_exists_with_its_columns():
     assert not problems, "table references do not match generated data: " + "; ".join(problems)
 
 
-# --- references and citations as Word fields --------------------------------
-# The template asks for automatic references. That means the numbers belong to
-# Word: the reference list is a numbering definition, each entry carries a
-# bookmark, and every in-text citation is a cross-reference to one. These
-# checks pin the wiring, because a broken field shows up in Word as an error
-# message where a citation should be, and never at build time.
+# --- references and citations as Word's own ---------------------------------
+# The references must not be manual. Word's own way is its source list, its
+# CITATION fields and its BIBLIOGRAPHY field, which the References tab
+# manages. These checks pin the wiring, because a broken citation shows up in
+# Word as an error message where the number should be, and never at build
+# time.
 
 
 def _field_instructions(paragraph):
@@ -155,9 +155,11 @@ def _field_results(paragraph):
     return results
 
 
-def test_adjacent_citations_become_separate_fields():
+def test_adjacent_citations_become_separate_word_citations():
+    from bibliography import source_tag
     from build_thesis import Numbering, resolve_citations
-    from docx_helpers import add_paragraph, new_document, reference_bookmark
+    from docx.oxml.ns import qn
+    from docx_helpers import add_paragraph, new_document
 
     keys = sorted(REFERENCES)[:2]
     numbering = Numbering()
@@ -165,59 +167,109 @@ def test_adjacent_citations_become_separate_fields():
     doc = new_document()
     para = add_paragraph(doc, resolve_citations(text, numbering))
 
-    instructions = _field_instructions(para)
-    assert len(instructions) == 2, "each citation needs its own field"
-    for key, instruction in zip(keys, instructions, strict=True):
-        assert reference_bookmark(key) in instruction
-        assert "\\r" in instruction, "the field must report the entry's own number"
+    assert _field_instructions(para) == [f" CITATION {source_tag(key)} \\l 1033 " for key in keys]
     assert _field_results(para) == ["[1]", "[2]"], "the cached result carries the number"
+    controls = para._p.findall(qn("w:sdt"))
+    assert len(controls) == 2, "each citation sits in a content control of its own"
+    for control in controls:
+        assert control.find(f"{qn('w:sdtPr')}/{qn('w:citation')}") is not None
     assert ", " in para.text, "IEEE separates adjacent citations with a comma"
-    assert "" not in para.text and "" not in para.text
+    assert "\ue000" not in para.text and "\ue001" not in para.text
 
 
-def test_reference_entries_are_word_numbered_and_bookmarked():
+def test_reference_list_is_word_bibliography_over_the_document_sources():
+    from bibliography import BIBLIOGRAPHY_NS, ieee_entry, source_tag, word_sources
     from docx.oxml.ns import qn
-    from docx_helpers import (
-        add_paragraph,
-        apply_list_numbering,
-        bookmark_paragraph,
-        define_reference_numbering,
-        new_document,
-        reference_bookmark,
-    )
+    from docx_helpers import add_bibliography, new_document, set_bibliography_sources
+    from lxml import etree
 
+    cited = ["liu2008", "hawkins1980", "ulb_dataset"]
     doc = new_document()
-    num_id = define_reference_numbering(doc)
-    keys = sorted(REFERENCES)[:3]
-    for index, key in enumerate(keys, start=1):
-        para = add_paragraph(doc, REFERENCES[key])
-        apply_list_numbering(para, num_id)
-        bookmark_paragraph(para, reference_bookmark(key), index)
+    entries = [(number, ieee_entry(REFERENCES[key])) for number, key in enumerate(cited, 1)]
+    add_bibliography(doc, entries)
+    set_bibliography_sources(doc, word_sources(cited))
 
-    numbering = doc.part.numbering_part.element
-    defined = [
-        el
-        for el in numbering.findall(qn("w:abstractNum"))
-        if el.get(qn("w:abstractNumId")) == str(num_id)
+    # The list is a BIBLIOGRAPHY field inside the two content controls that
+    # Word's References > Bibliography writes.
+    outer = doc.element.body.find(qn("w:sdt"))
+    gallery = outer.find(f"{qn('w:sdtPr')}/{qn('w:docPartObj')}/{qn('w:docPartGallery')}")
+    assert gallery.get(qn("w:val")) == "Bibliographies"
+    inner = outer.find(f"{qn('w:sdtContent')}/{qn('w:sdt')}")
+    assert inner.find(f"{qn('w:sdtPr')}/{qn('w:bibliography')}") is not None
+    assert [node.text for node in inner.iter(qn("w:instrText"))] == [" BIBLIOGRAPHY "]
+    labels = [
+        "".join(node.text for node in row.find(qn("w:tc")).iter(qn("w:t")))
+        for row in inner.iter(qn("w:tr"))
     ]
-    assert defined, "the reference list needs its own numbering definition"
-    level = defined[0].find(qn("w:lvl"))
-    assert level.find(qn("w:lvlText")).get(qn("w:val")) == "[%1]"
-    assert level.find(qn("w:numFmt")).get(qn("w:val")) == "decimal"
+    assert labels == ["[1]", "[2]", "[3]"]
 
-    names = {el.get(qn("w:name")) for el in doc.element.body.iter(qn("w:bookmarkStart"))}
-    assert {reference_bookmark(k) for k in keys} <= names
-    assert not any(REFERENCES[k].startswith("[") for k in keys), (
-        "the number comes from Word, so it is not written into the entry"
+    # The sources are the document's own source list, with Word's IEEE
+    # style, numbered in the order of first citation.
+    part = next(
+        rel.target_part for rel in doc.part.rels.values() if rel.reltype.endswith("/customXml")
     )
+    root = etree.fromstring(part.blob)
+    assert (root.get("StyleName"), root.get("SelectedStyle")) == (
+        "IEEE",
+        "\\IEEE2006OfficeOnline.xsl",
+    )
+    b = f"{{{BIBLIOGRAPHY_NS}}}"
+    sources = root.findall(f"{b}Source")
+    assert [source.findtext(f"{b}Tag") for source in sources] == [source_tag(k) for k in cited]
+    assert [source.findtext(f"{b}RefOrder") for source in sources] == ["1", "2", "3"]
 
-    # Word reads w:pPr only as a paragraph's first child, and w:numPr only
-    # ahead of the spacing and alignment; LibreOffice forgives both, Word may
-    # drop the number.
-    for para in doc.paragraphs[-len(keys) :]:
-        assert para._p[0].tag == qn("w:pPr"), "the bookmark must follow the properties"
-        tags = [child.tag for child in para._p.pPr]
-        assert tags.index(qn("w:numPr")) < tags.index(qn("w:spacing"))
+
+def test_sources_carry_the_fields_word_formats_them_from():
+    from bibliography import BIBLIOGRAPHY_NS, word_sources
+    from lxml import etree
+
+    b = f"{{{BIBLIOGRAPHY_NS}}}"
+    pang, liu, ecb = etree.fromstring(word_sources(["pang2021", "liu2008", "ecb2021"]))
+    names = [(p.findtext(f"{b}First"), p.findtext(f"{b}Last")) for p in pang.iter(f"{b}Person")]
+    assert names[-1] == ("A.", "van den Hengel"), "a surname of several words stays whole"
+    # Word's journal article has no article-number field; it follows the issue.
+    assert pang.findtext(f"{b}Issue") == "2, Art. no. 38"
+    assert liu.findtext(f"{b}SourceType") == "ConferenceProceedings"
+    assert liu.findtext(f"{b}ConferenceName") == "Proc. 8th IEEE Int. Conf. Data Mining (ICDM)"
+    assert liu.findtext(f"{b}Pages") == "413–422"
+    assert ecb.findtext(f".//{b}Corporate") == "European Central Bank"
+    accessed = [ecb.findtext(f"{b}{part}Accessed") for part in ("Year", "Month", "Day")]
+    assert accessed == ["2026", "September", "13"]
+
+
+def test_reference_entries_print_in_ieee_style():
+    """One source of each type, as the reference list prints it."""
+    from bibliography import ieee_entry
+
+    def text(key):
+        return "".join(piece for piece, _ in ieee_entry(REFERENCES[key]))
+
+    def italic(key):
+        return [piece for piece, slanted in ieee_entry(REFERENCES[key]) if slanted]
+
+    assert text("liu2012") == (
+        "F. T. Liu, K. M. Ting, and Z.-H. Zhou, “Isolation-based anomaly detection,” ACM Trans. "
+        "Knowledge Discovery from Data, vol. 6, no. 1, pp. 1–39, 2012."
+    )
+    assert italic("liu2012") == ["ACM Trans. Knowledge Discovery from Data"]
+    assert text("kingma2014") == (
+        "D. P. Kingma and M. Welling, “Auto-encoding variational Bayes,” in Proc. 2nd Int. Conf. "
+        "Learning Representations (ICLR), Banff, Canada, 2014."
+    )
+    assert text("aggarwal2017") == (
+        "C. C. Aggarwal, Outlier Analysis, 2nd ed. Cham, Switzerland: Springer, 2017."
+    )
+    assert italic("aggarwal2017") == ["Outlier Analysis"]
+    assert text("ulb_dataset") == (
+        "Machine Learning Group – Université Libre de Bruxelles, “Credit Card Fraud Detection "
+        "dataset,” Kaggle, 2018. Accessed: Sep. 13, 2026. [Online]. Available: "
+        "https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud"
+    )
+    # IEEE names up to six authors and cuts a longer list to "et al.".
+    assert text("li2022ecod").startswith("Z. Li, Y. Zhao, X. Hu, N. Botta, C. Ionescu, and G. H.")
+    assert text("pedregosa2011").startswith("F. Pedregosa et al., “Scikit-learn")
+    for key in REFERENCES:
+        assert text(key), key
 
 
 def test_each_section_has_one_page_number_format_before_its_columns():
@@ -380,15 +432,18 @@ def test_headings_and_captions_take_their_look_from_word_styles():
     """Word copies formatting set on a heading's or a caption's text into the
     entry it writes for the contents or the lists, so the template's look is
     in the styles and the text carries none of its own."""
+    from docx.oxml.ns import qn
     from docx.shared import Pt
-    from docx_helpers import TEXT_WIDTH_CM, add_caption, add_heading, new_document
+    from docx_helpers import TEXT_WIDTH_CM, add_caption, add_heading, heading_bookmark, new_document
 
     doc = new_document()
-    heading = add_heading(doc, "Hyrje", 1, "1")
+    heading = add_heading(doc, "Hyrje", 1, "1", bookmark=heading_bookmark("1"))
     caption = add_caption(doc, "Tabela", 1, "Një tabelë.", above=True)
     assert heading.text == "1\tHYRJE"
     for para in (heading, caption):
         assert all(run._r.rPr is None for run in para.runs), para.text
+    # Word reads w:pPr only as a paragraph's first child; the bookmark follows it.
+    assert heading._p[0].tag == qn("w:pPr")
 
     for level, size in ((1, 14), (2, 12), (3, 12)):
         style = doc.styles[f"Heading {level}"]

@@ -9,11 +9,14 @@ the body restarts at Arabic 1.
 
 The contents, the list of figures and the list of tables are Word's own
 tables, built from the Heading styles and from the captions' numbers, so Word
-can update them and a Ctrl+click on an entry goes to its page.
+can update them and a Ctrl+click on an entry goes to its page. Citations and
+the reference list are Word's own as well: the sources sit in the document's
+source list, and Word's References tab manages them.
 
 Several of these need raw OOXML because python-docx has no API for them:
 page-number fields, per-section numbering formats, bookmarks, the tables of
-contents, and the cross-reference fields behind citations and figure numbers.
+contents, Word's citation and bibliography fields with the content controls
+around them, and the cross-references behind figure numbers.
 """
 
 import functools
@@ -33,6 +36,7 @@ from docx.enum.text import (
     WD_TAB_ALIGNMENT,
     WD_TAB_LEADER,
 )
+from docx.opc.constants import RELATIONSHIP_TYPE as RT
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from docx.shared import Cm, Pt, RGBColor, Twips
@@ -51,7 +55,7 @@ MUTED = RGBColor(0x40, 0x40, 0x40)
 # A resolved citation or figure number travels through the content layer as
 # text, so it is wrapped in private-use code points that cannot occur in the
 # thesis itself. The run writers below turn each wrapped span into a Word
-# cross-reference.
+# field: a citation, which names the source's tag, or a cross-reference.
 CITE_OPEN = "\ue000"
 CITE_CLOSE = "\ue001"
 FIGURE_OPEN = "\ue002"
@@ -59,7 +63,13 @@ FIGURE_CLOSE = "\ue003"
 FIELD_RUN_RE = re.compile(
     f"{CITE_OPEN}([a-zA-Z0-9_]+)\\|([0-9]+){CITE_CLOSE}|{FIGURE_OPEN}([0-9]+){FIGURE_CLOSE}"
 )
-REFERENCE_NUM_ID = 100
+# The language Word formats citations and the reference list in. IEEE's
+# terms (vol., no., pp., Available) are English, so the list is English
+# (United States), as Word's own IEEE style writes it.
+CITATION_LANGUAGE = 1033
+# The reference list's two columns, the number and the entry, which together
+# fill the text width.
+REFERENCE_NUMBER_CM = 1.2
 # The caption labels. Word's SEQ fields count each one separately, and the
 # lists of figures and tables are built from them.
 FIGURE_LABEL = "Figura"
@@ -111,6 +121,7 @@ def new_document() -> Document:
     pf.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
     _define_heading_and_caption_styles(doc)
     _define_contents_styles(doc)
+    _define_bibliography_style(doc)
 
     for section in doc.sections:
         _apply_page_setup(section)
@@ -196,6 +207,17 @@ def _define_contents_styles(doc: Document) -> None:
             # Chapter entries are bold capitals, like the chapter titles.
             style.font.bold = True
             style.font.all_caps = True
+
+
+def _define_bibliography_style(doc: Document) -> None:
+    """Word's Bibliography style, which Word gives every paragraph of the
+    reference list it writes. It adds nothing to Normal, so the list keeps
+    the body's Times New Roman 12, justified, with 1.5 line spacing."""
+    style = doc.styles.add_style("Bibliography", WD_STYLE_TYPE.PARAGRAPH, builtin=True)
+    style.base_style = doc.styles["Normal"]
+    style.next_paragraph_style = doc.styles["Normal"]
+    style.priority = 37
+    style.unhide_when_used = True
 
 
 def _apply_page_setup(section) -> None:
@@ -294,68 +316,6 @@ def _field(paragraph, instruction: str, placeholder: str = ""):
     return run
 
 
-def define_reference_numbering(doc: Document) -> int:
-    """A list definition that prints "[1]", "[2]", ... for the reference list.
-
-    The reference numbers have to be Word's own, not text: only then does a
-    cross-reference to an entry return the number Word currently shows, and
-    only then do the numbers close up when an entry is added or removed.
-    The definition is private to the reference list, so its counter cannot be
-    disturbed by any other list in the document.
-    """
-    numbering = doc.part.numbering_part.element
-    abstract_id = str(REFERENCE_NUM_ID)
-
-    abstract = OxmlElement("w:abstractNum")
-    abstract.set(qn("w:abstractNumId"), abstract_id)
-    multi = OxmlElement("w:multiLevelType")
-    multi.set(qn("w:val"), "singleLevel")
-    abstract.append(multi)
-
-    lvl = OxmlElement("w:lvl")
-    lvl.set(qn("w:ilvl"), "0")
-    for tag, value in (
-        ("w:start", "1"),
-        ("w:numFmt", "decimal"),
-        ("w:lvlText", "[%1]"),
-        ("w:lvlJc", "left"),
-    ):
-        el = OxmlElement(tag)
-        el.set(qn("w:val"), value)
-        lvl.append(el)
-    ppr = OxmlElement("w:pPr")
-    ind = OxmlElement("w:ind")
-    ind.set(qn("w:left"), "680")  # 1.2 cm, hanging by the same amount
-    ind.set(qn("w:hanging"), "680")
-    ppr.append(ind)
-    lvl.append(ppr)
-    abstract.append(lvl)
-
-    num = OxmlElement("w:num")
-    num.set(qn("w:numId"), str(REFERENCE_NUM_ID))
-    ref = OxmlElement("w:abstractNumId")
-    ref.set(qn("w:val"), abstract_id)
-    num.append(ref)
-
-    # w:abstractNum elements must precede every w:num in the part.
-    last_abstract = numbering.findall(qn("w:abstractNum"))[-1]
-    last_abstract.addnext(abstract)
-    numbering.append(num)
-    return REFERENCE_NUM_ID
-
-
-def apply_list_numbering(para, num_id: int, level: int = 0) -> None:
-    """Attach a paragraph to a numbering definition.
-
-    The schema puts w:numPr ahead of the spacing and alignment the paragraph
-    already carries; python-docx inserts it there. Appended after them, as an
-    earlier build did, it is out of order, and Word may drop the number.
-    """
-    num_pr = para._p.get_or_add_pPr().get_or_add_numPr()
-    num_pr.get_or_add_ilvl().val = level
-    num_pr.get_or_add_numId().val = num_id
-
-
 # Bookmark ids only have to be unique within a document; one counter for the
 # whole process guarantees that, however many documents it builds.
 _BOOKMARK_IDS = itertools.count(1000)
@@ -367,7 +327,7 @@ def bookmark_paragraph(para, name: str, bookmark_id: int | None = None) -> None:
 
     The start goes after w:pPr, which must remain the paragraph's first child:
     in front of it, as an earlier build placed it, Word may ignore the
-    paragraph's properties, and with them the reference list's numbering.
+    paragraph's properties.
     """
     if bookmark_id is None:
         bookmark_id = next(_BOOKMARK_IDS)
@@ -398,10 +358,6 @@ def _close_bookmark(para, bookmark_id: int) -> None:
     para._p.append(end)
 
 
-def reference_bookmark(key: str) -> str:
-    return f"Ref_{key}"
-
-
 # Targets of the entries in the contents and in the figure and table lists.
 # Word bookmark names allow letters, digits and underscores only.
 def heading_bookmark(number: str) -> str:
@@ -424,17 +380,66 @@ def table_bookmark(number: int) -> str:
     return f"Tab_{number}"
 
 
-def _add_citation_field(para, key: str, number: int):
-    """One in-text citation, as a cross-reference to the reference entry.
+# Content controls carry an id that has to be unique within the document.
+_CONTROL_IDS = itertools.count(1_000_001)
 
-    The instruction asks for the bookmarked paragraph's number in relative
-    context, which for this list definition is the bracketed form the reader
-    sees. The cached result carries the number computed at build time, so the
-    document reads correctly before Word has refreshed anything.
+
+def _content_control(kind):
+    """A content control of the given kind (w:citation, w:bibliography, a
+    w:docPartObj), returned with the element its content goes into."""
+    control = OxmlElement("w:sdt")
+    properties = OxmlElement("w:sdtPr")
+    control_id = OxmlElement("w:id")
+    control_id.set(qn("w:val"), str(next(_CONTROL_IDS)))
+    properties.append(control_id)
+    properties.append(kind)
+    content = OxmlElement("w:sdtContent")
+    control.append(properties)
+    control.append(content)
+    return control, content
+
+
+def _field_runs(instruction: str, result: str) -> list:
+    """A field as Word writes one: the field characters, the instruction and
+    the cached result, each in a run of its own."""
+    runs = []
+    for kind, value in (
+        ("begin", None),
+        ("instr", instruction),
+        ("separate", None),
+        ("text", result),
+        ("end", None),
+    ):
+        run = OxmlElement("w:r")
+        if kind == "instr":
+            node = OxmlElement("w:instrText")
+            node.set(qn("xml:space"), "preserve")
+            node.text = value
+        elif kind == "text":
+            node = OxmlElement("w:t")
+            node.text = value
+        else:
+            node = _fld_char(kind)
+        run.append(node)
+        runs.append(run)
+    return runs
+
+
+def _add_citation(para, tag: str, number: int):
+    """One in-text citation, as Word's References > Insert Citation writes it:
+    a CITATION field naming the source's tag in the document's source list,
+    inside a citation content control.
+
+    Word numbers the citations itself, in the order the sources are first
+    cited, and updates them with the reference list. The cached result
+    carries the number computed at build time, so the document reads
+    correctly before Word has refreshed anything.
     """
-    run = _field(para, f" REF {reference_bookmark(key)} \\r \\h ", f"[{number}]")
-    run.font.name = BODY_FONT
-    return run
+    control, content = _content_control(OxmlElement("w:citation"))
+    for run in _field_runs(f" CITATION {tag} \\l {CITATION_LANGUAGE} ", f"[{number}]"):
+        content.append(run)
+    para._p.append(control)
+    return control
 
 
 def _add_figure_reference(para, number: int):
@@ -453,7 +458,7 @@ def _add_text_runs(para, text: str, *, size=None, italic: bool = False, color=No
         if match.start() > position:
             _plain_run(para, text[position : match.start()], size, italic, color)
         if match.group(1):
-            _add_citation_field(para, match.group(1), int(match.group(2)))
+            _add_citation(para, match.group(1), int(match.group(2)))
         else:
             _add_figure_reference(para, int(match.group(3)))
         position = match.end()
@@ -969,6 +974,80 @@ def add_automatic_table(doc: Document, instruction: str, entries):
         _field_start(closing, instruction)
     _field_end(closing)
     return closing
+
+
+def add_bibliography(doc: Document, entries) -> None:
+    """The reference list, as Word's own BIBLIOGRAPHY field.
+
+    Word renders the list from the document's source list, in the style the
+    list names, IEEE here, and keeps it in step with the citations: a source
+    cited for the first time joins the list, and the numbers follow the
+    order of first citation. A numbered style is laid out as a borderless
+    table of two columns, the number and the reference, in the Bibliography
+    style. The result written here has that shape, with the entries
+    formatted at build time, so the list reads correctly before Word
+    updates it.
+
+    `entries` holds (number, pieces) in order, each piece a (text, italic)
+    pair. The field sits in the two content controls that Word's References
+    > Bibliography writes around it, which is how Word finds the list when
+    it updates citations and bibliography together.
+    """
+    begin = doc.add_paragraph(style="Bibliography")
+    _field_start(begin, " BIBLIOGRAPHY ")
+    table = doc.add_table(rows=0, cols=2)
+    for number, pieces in entries:
+        row = table.add_row()
+        _row_properties(row, header=False)
+        label, reference = (cell.paragraphs[0] for cell in row.cells)
+        label.style = doc.styles["Bibliography"]
+        reference.style = doc.styles["Bibliography"]
+        label.add_run(f"[{number}]")
+        for text, italic in pieces:
+            run = reference.add_run(text)
+            _keep_hyphens(run)
+            run.italic = italic or None
+    _apply_column_widths(table, [REFERENCE_NUMBER_CM, TEXT_WIDTH_CM - REFERENCE_NUMBER_CM])
+    # No cell margins, so the numbers sit at the margin and the entries
+    # start at the second column, like a list with a hanging indent.
+    margins = OxmlElement("w:tblCellMar")
+    for side in ("w:left", "w:right"):
+        margin = OxmlElement(side)
+        margin.set(qn("w:w"), "0")
+        margin.set(qn("w:type"), "dxa")
+        margins.append(margin)
+    table._tbl.tblPr.find(qn("w:tblLayout")).addnext(margins)
+    end = doc.add_paragraph(style="Bibliography")
+    _field_end(end)
+
+    gallery = OxmlElement("w:docPartObj")
+    name = OxmlElement("w:docPartGallery")
+    name.set(qn("w:val"), "Bibliographies")
+    gallery.append(name)
+    gallery.append(OxmlElement("w:docPartUnique"))
+    outer, outer_content = _content_control(gallery)
+    inner, inner_content = _content_control(OxmlElement("w:bibliography"))
+    begin._p.addprevious(outer)
+    outer_content.append(inner)
+    for element in (begin._p, table._tbl, end._p):
+        inner_content.append(element)
+
+
+def set_bibliography_sources(doc: Document, sources: bytes) -> None:
+    """Make `sources` the document's source list, the one Word's Manage
+    Sources shows as the current list.
+
+    python-docx's template, saved by Word, already carries the part that
+    holds the list, empty, with its relationship and properties; only its
+    content changes.
+    """
+    for rel in doc.part.rels.values():
+        if rel.reltype != RT.CUSTOM_XML:
+            continue
+        if b"officeDocument/2006/bibliography" in rel.target_part.blob:
+            rel.target_part._blob = sources
+            return
+    raise RuntimeError("the document template has no source list to fill")
 
 
 LOGO_PATH = Path(__file__).parent / "assets" / "ubt-logo.png"

@@ -24,27 +24,25 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+from bibliography import ieee_entry, source_tag, word_sources  # noqa: E402
 from content.front_matter import FRONT_ENTRIES  # noqa: E402
-from docx.enum.text import WD_ALIGN_PARAGRAPH  # noqa: E402
 from docx_helpers import (  # noqa: E402
     CITE_CLOSE,
     CITE_OPEN,
     FIGURE_CLOSE,
     FIGURE_OPEN,
+    add_bibliography,
     add_bullets,
     add_equation,
     add_figure,
     add_heading,
     add_paragraph,
     add_table,
-    apply_list_numbering,
-    bookmark_paragraph,
-    define_reference_numbering,
     figure_bookmark,
     heading_bookmark,
     new_document,
     page_break,
-    reference_bookmark,
+    set_bibliography_sources,
     start_new_section,
     table_bookmark,
 )
@@ -104,9 +102,9 @@ class Numbering:
 def resolve_citations(text: str, numbering: Numbering) -> str:
     """Turn [@key] into a marked span the run writers render as a Word field.
 
-    The marker carries both the key, which names the bookmark on the reference
-    entry, and the number assigned here, which becomes the field's cached
-    result so the text reads correctly before Word refreshes anything. Figure
+    The marker carries both the source's tag, which the citation field names,
+    and the number assigned here, which becomes the field's cached result so
+    the text reads correctly before Word refreshes anything. Figure
     references written as [[fig:name]] become a marked figure number, which
     the run writers render the same way, as a field pointing at the caption.
     """
@@ -121,7 +119,7 @@ def resolve_citations(text: str, numbering: Numbering) -> str:
 
     def repl(match: re.Match) -> str:
         key = match.group(1)
-        return f"{CITE_OPEN}{key}|{numbering.cite(key)}{CITE_CLOSE}"
+        return f"{CITE_OPEN}{source_tag(key)}|{numbering.cite(key)}{CITE_CLOSE}"
 
     text = CITE_RE.sub(repl, text)
     text = THOUSANDS_RE.sub("\u00a0", text)
@@ -441,15 +439,16 @@ def build(
             page_break(doc)
         render_blocks(doc, blocks, numbering, counters)
 
-    # Chapter 7: references, ordered by first appearance.
+    # Chapter 7: references, ordered by first appearance. Word renders the
+    # list and the citations from the document's source list, so the sources
+    # are written there too.
     page_break(doc)
     add_heading(doc, "REFERENCAT", 1, "7", bookmark=heading_bookmark("7"))
-    num_id = define_reference_numbering(doc)
-    ordered = sorted(numbering.citations.items(), key=lambda kv: kv[1])
-    for key, _num in ordered:
-        para = add_paragraph(doc, REFERENCES[key], align=WD_ALIGN_PARAGRAPH.JUSTIFY, space_after=6)
-        apply_list_numbering(para, num_id)
-        bookmark_paragraph(para, reference_bookmark(key))
+    cited = [key for key, _ in sorted(numbering.citations.items(), key=lambda kv: kv[1])]
+    add_bibliography(
+        doc, [(number, ieee_entry(REFERENCES[key])) for number, key in enumerate(cited, start=1)]
+    )
+    set_bibliography_sources(doc, word_sources(cited))
 
     # Chapter 8: appendices, after the reference list as the template requires.
     page_break(doc)
