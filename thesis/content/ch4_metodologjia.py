@@ -119,8 +119,9 @@ _PROTOKOLLI = [
       gjithsej 29 dimensione. Kjo është e domosdoshme: meqë Time përcakton ndarjen, në një ndarje
       kronologjike vlerat e saj në bllokun e testimit janë gjithmonë jashtë intervalit të parë gjatë
       trajnimit, dhe pas skalimit çdo transaksion i testit do të kishte një vlerë ekstreme në këtë
-      dimension. Kjo do ta prishte renditjen e çdo detektori të bazuar në distancë ose densitet, pa
-      e prekur fare një model linear të mbikëqyrur."""),
+      dimension. Kjo do ta prishte renditjen e çdo detektori të bazuar në distancë ose densitet,
+      ndërsa një model linear i mbikëqyrur do të ndikohej shumë më pak, sepse mund t'i japë kolonës
+      një peshë të vogël."""),
     note("""Rreziku nuk është vetëm teorik. Mungesa e kolonës Time mes veçorive kontrollohet me test
       automatik, sepse ky mekanizëm do të prodhonte një rënie të cilësisë me kohën që duket njësoj
       si ajo që vërehet në të dhëna, por për një arsye krejt tjetër."""),
@@ -184,9 +185,8 @@ _PROTOKOLLI = [
     p("""Ndarja 70/30 e propozimit nuk braktiset. Modelet trajnohen edhe mbi të, rezultatet e saj
       jepen në Shtojcën D, dhe nënkapitulli 5.6 e krahason me protokollin 8-fold."""),
     h2("4.3", "Paraprocesimi si variabël eksperimentale"),
-    p("""Çdo detektor i bazuar në distancë, densitet ose rindërtim e merr nocionin e largësisë nga
-      paraprocesimi që zbatohet para tij. Në shumicën e studimeve skaluesi zgjidhet një herë dhe nuk
-      rishikohet, ndonëse mund të ndikojë më shumë se vetë zgjedhja e algoritmit. Në këtë punim
+    p("""Siç u argumentua në nënkapitullin 2.9, largësia që përdorin detektorët varet nga
+      paraprocesimi, ndonëse skaluesi zakonisht zgjidhet një herë dhe nuk rishikohet. Në këtë punim
       paraprocesimi trajtohet si variabël eksperimentale."""),
     p("""Skaluesi përshtatet mbi të gjithë dritaren e trajnimit, mashtrimet përfshirë, dhe jo vetëm
       mbi transaksionet normale. Në momentin e vendosjes etiketat e dritares aktuale nuk dihen, dhe

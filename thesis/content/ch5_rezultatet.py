@@ -97,6 +97,13 @@ _PH1 = [
       baza. Testi i integrimit kontrollon që pikët e prodhuara në rrjedhë janë të njëjta me ato
       offline për të njëjtat transaksione, kështu që rezultatet e këtij kapitulli vlejnë edhe për
       sistemin në punë."""),
+    p("""Kjo barazi i përgjigjet edhe krahasimit me përpunimin batch që kërkonte hipoteza e
+      projekt-propozimit. Në regjimin offline modelet pikëzojnë një bllok të tërë testimi në grup,
+      me 0.2 deri 55 mikrosekonda për transaksion (nënkapitulli 5.2.3), pra shumë më shpejt se në
+      rrjedhë. Përpunimi batch e jep megjithatë vendimin vetëm pasi të jetë mbledhur grupi, ndërsa
+      në rrjedhë çdo transaksion merr vendim brenda 19 deri 68 milisekondash mesatarisht nga
+      krijimi i tij. Meqë pikët janë identike, rrjedha nuk humbet asgjë në cilësi kundrejt batch-it;
+      kostoja e saj është vetëm vonesa e transportit, e cila mbetet shumë nën objektiv."""),
 ]
 
 _PH2 = [
@@ -150,7 +157,7 @@ _PH2 = [
       0.193. Raporti prej rreth 3.8 mes tyre tregon sa vlejnë etiketat historike në këtë
       problem."""),
     p("""Mes metodave unsupervised kryeson Autoencoder-i me 0.193, i ndjekur nga One-Class SVM me
-      0.151 dhe Isolation Forest me 0.091 (Figura [[fig:benchmark_ap_ranking]]). Të tria vlerat janë
+      0.150 dhe Isolation Forest me 0.091 (Figura [[fig:benchmark_ap_ranking]]). Të tria vlerat janë
       rreth 50 deri 110 herë mbi nivelin e rastësisë, i cili është afërsisht 0.0017 (nënkapitulli
       3.3), por operacionalisht mbeten modeste."""),
     fig(
@@ -237,7 +244,9 @@ _PH2 = [
     p("""Kostoja e trajnimit e rendit ndryshe: Autoencoder-i kërkon rreth 27 sekonda për fold,
       ndërsa Isolation Forest-i dhe One-Class SVM rreth një sekondë. Nëse modeli ritrajnohet një
       herë në ditë, ky dallim nuk ka rëndësi; do të kishte rëndësi vetëm me ritrajnim të
-      vazhdueshëm."""),
+      vazhdueshëm. Edhe memoria shtesë gjatë trajnimit është e vogël për të gjithë modelet: në
+      ndarjen 70/30 ajo shkon nga 48 MB për referencën e mbikëqyrur deri në 126 MB për One-Class
+      SVM-në (Shtojca D)."""),
     h3("5.2.4", "Pragu dhe buxheti i alarmeve"),
     p("""AP-ja e vlerëson renditjen pa e lidhur me një prag. Në punë sistemi ka megjithatë nevojë
       për një prag, dhe protokolli kryesor e merr atë nga percentili (1 − c) i pikëve të trajnimit,
@@ -254,7 +263,7 @@ _PH2 = [
       c deri në 0.1%, pra me 22 deri 88 alarme në një bllok testimi prej 85 443 transaksionesh,
       asnjë alarm nuk është mashtrim, sepse pikët më të larta u takojnë transaksioneve legjitime të
       pazakonta. Isolation Forest-i nuk kap asnjë mashtrim as me c = 0.2%. Precision-i i detektorëve
-      unsupervised nuk e kalon 0.17 në asnjë vlerë të c, ndërsa recall-i arrin 0.81 deri 0.89 me c =
+      unsupervised mbetet nën 0.18 në çdo vlerë të c, ndërsa recall-i arrin 0.81 deri 0.89 me c =
       5%, por me 4 500 deri 5 800 alarme."""),
     p("""F1 i Autoencoder-it dhe i One-Class SVM-së arrin kulmin me c = 0.5%, rreth 2.6 herë mbi
       normën e mashtrimit në trajnim, me 0.242 dhe 0.208; Isolation Forest-i arrin vetëm 0.075, me c
@@ -293,10 +302,9 @@ _PH2 = [
         "Recall brenda buxhetit, për 50 deri në 1000 alarme për bllok.",
         15.0,
     ),
-    p("""Pragu i fiksuar gjatë trajnimit ka një dobësi që del vetëm në rrjedhë: ai fikson një vlerë
-      të pikës, jo një ngarkesë pune. Kur shpërndarja e pikëve zhvendoset, zhvendoset edhe numri i
-      alarmeve, dhe ekipi merr një ngarkesë të paparashikueshme pikërisht kur diçka ka ndryshuar.
-      Pragu adaptiv i nënkapitullit 4.5.3 e mban pragun te një kuantil i pikëve më të fundit, pa
+    p("""Dobësia e pragut statik, e përshkruar në nënkapitullin 4.5.3, del vetëm në rrjedhë: kur
+      shpërndarja e pikëve zhvendoset, ekipi merr një ngarkesë të paparashikueshme pikërisht kur
+      diçka ka ndryshuar. Pragu adaptiv e mban pragun te një kuantil i pikëve më të fundit, pa
       përdorur asnjë etiketë."""),
     p("""Qëllimi kryesor arrihet: koeficienti i variacionit të normës së alarmeve bie mesatarisht
       nga 0.84 në 0.62, kështu që ngarkesa e hetimeve bëhet më e parashikueshme (Figura
@@ -544,7 +552,7 @@ _STUDIMET = [
       familjes së rindërtimit (nënkapitulli 2.3.3), mbetet nën Autoencoder-in në të shtatë rangjet e
       provuara, me diferencë 0.209 në rangun më të mirë të Autoencoder-it."""),
     h3("5.5.3", "One-Class SVM"),
-    p("""Te One-Class SVM kerneli RBF është qartë më i miri, me 0.151, i ndjekur nga ai sigmoid me
+    p("""Te One-Class SVM kerneli RBF është qartë më i miri, me 0.150, i ndjekur nga ai sigmoid me
       0.053 dhe ai polinomial me 0.032; kerneli linear dështon plotësisht me 0.001, në nivelin e
       rastësisë. Struktura e nevojshme është jolineare, njësoj si te Autoencoder-i. Në hapësirën
       nu–gamma vlerat e vogla të nu janë më të mira, me maksimum 0.163 për nu 0.001. Vlera 0.05 e
@@ -595,9 +603,9 @@ _PROTOKOLLI = [
       Autoencoder-i me ndarje kronologjike."""),
     p("""Zgjedhja e dytë është prerja e vetme kronologjike 70/30 e projekt-propozimit kundrejt
       protokollit 8-fold. Renditja e detektorëve është e njëjtë në të dy rastet, kështu që prerja e
-      vetme nuk e shtrembëron renditjen. Ajo që fsheh është pasiguria: devijimi standard nëpër
-      fold-e është mesatarisht 1.4 herë sa vetë mesatarja, dhe një numër i vetëm nuk e tregon fare
-      këtë. Vlerat e prerjes së vetme jepen në Shtojcën D."""),
+      vetme nuk e shtrembëron renditjen. Ajo që fsheh është pasiguria: për metodat unsupervised
+      devijimi standard nëpër fold-e është mesatarisht 1.4 herë sa vetë mesatarja, dhe një numër i
+      vetëm nuk e tregon fare këtë. Vlerat e prerjes së vetme jepen në Shtojcën D."""),
 ]
 
 BLOCKS = _HYRJE + _PH1 + _PH2 + _PH3 + _KONFIGURIMI + _STUDIMET + _PROTOKOLLI

@@ -123,7 +123,7 @@ ABSTRAKT = [
     "kryesore. Percentili 99 i vonesës end-to-end nuk e kalon 132 milisekonda në asnjë nga ritmet "
     "e testuara, deri në 2000 mesazhe në sekondë, shumë nën objektivin prej një sekonde.",
     "Në konfigurimin bazë Autoencoder-i ofron balancën më të mirë mes cilësisë dhe kostos, me AP "
-    "0.193 dhe koston më të ulët të pikëzimit, para One-Class SVM-së (0.151) dhe Isolation "
+    "0.193 dhe koston më të ulët të pikëzimit, para One-Class SVM-së (0.150) dhe Isolation "
     "Forest-it (0.091). Referenca e mbikëqyrur arrin 0.734, gjë që tregon sa vlejnë etiketat "
     "historike. Asnjë ansambël nuk e kalon modelin më të mirë individual, sepse detektorët gabojnë "
     "njësoj: me 100 alarme për bllok, 37% e mashtrimeve nuk i arrin asnjë prej tyre, ndërsa "
@@ -149,7 +149,7 @@ ABSTRACT_EN = [
     "milliseconds at every arrival rate tested, up to 2000 messages per second, far below the "
     "one-second target.",
     "In the default configuration the Autoencoder offers the best balance between quality and "
-    "cost, with an AP of 0.193 and the lowest scoring cost, ahead of One-Class SVM (0.151) and "
+    "cost, with an AP of 0.193 and the lowest scoring cost, ahead of One-Class SVM (0.150) and "
     "Isolation Forest (0.091). The supervised reference reaches 0.734, which shows what historical "
     "labels are worth. No ensemble beats the best single model, because the detectors make the "
     "same mistakes: with 100 alerts per block, 37% of the frauds are reached by none of them, "
@@ -194,14 +194,18 @@ FJALORI = [
         "testimit që e pason; 8-fold do të thotë tetë pika të tilla",
     ),
     ("FP", "False Positive, alarm i rremë"),
+    ("H1–H3", "Hipotezat e punimit, të formuluara në nënkapitullin 3.5"),
     ("IF", "Isolation Forest"),
     ("KRaft", "Kafka Raft, modaliteti i Apache Kafka-s pa ZooKeeper"),
     ("LR", "Logistic Regression, Regresioni Logjistik"),
+    ("msg/s", "Mesazhe në sekondë, njësia e ritmit të mbërritjes dhe e throughput-it"),
     ("OCSVM", "One-Class SVM, makinë me vektorë mbështetës njëklasëshe"),
     ("p50 / p95 / p99", "Percentili i 50-të, 95-të dhe 99-të i një shpërndarjeje"),
     ("PCA", "Principal Component Analysis, analiza e komponentëve kryesorë"),
+    ("PH1–PH3", "Pyetjet hulumtuese të punimit, të formuluara në nënkapitullin 1.5"),
     ("PR", "Precision-Recall"),
     ("PSI", "Population Stability Index, indeksi i stabilitetit të popullatës"),
+    ("R@100", "Recall me 100 alarme për bllok testimi"),
     ("RBF", "Radial Basis Function, kerneli gausian i përdorur nga One-Class SVM"),
     ("ROC", "Receiver Operating Characteristic"),
     (
@@ -209,6 +213,7 @@ FJALORI = [
         "Protokoll vlerësimi ku modeli trajnohet mbi të kaluarën dhe testohet mbi bllokun që vjen "
         "pas, në disa pika prerjeje të njëpasnjëshme",
     ),
+    ("s.d.", "Devijimi standard (standard deviation)"),
     ("Throughput", "Numri i mesazheve të përpunuara për sekondë"),
     ("TPE", "Tree-structured Parzen Estimator, mostruesi i përdorur nga Optuna"),
     ("ULB", "Université Libre de Bruxelles"),
@@ -217,6 +222,7 @@ FJALORI = [
         "Mësim pa etiketa gjatë trajnimit; termi ruhet në anglisht sepse përdoret ashtu edhe në "
         "titullin e temës",
     ),
+    ("µs/tx", "Mikrosekonda për transaksion, njësia e kostos së pikëzimit"),
 ]
 
 

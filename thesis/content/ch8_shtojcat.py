@@ -127,7 +127,9 @@ BLOCKS = [
     h2("8.4", "Shtojca D: rezultatet e ndarjes së vetme 70/30"),
     p("""Për krahasim me literaturën dhe me protokollin e projekt-propozimit, tabela më poshtë jep
       rezultatet e ndarjes së vetme kronologjike 70/30. Kolonat e pragut orakull janë kufi i sipërm
-      që nuk arrihet në praktikë dhe nuk duhen krahasuar me ato të pragut nga trajnimi."""),
+      që nuk arrihet në praktikë dhe nuk duhen krahasuar me ato të pragut nga trajnimi. Memoria
+      (MB) jepet si rritja e memories rezidente gjatë trajnimit, siç përcaktohet në nënkapitullin
+      4.6.3."""),
     tab(
         "metrics_main",
         "Rezultatet e ndarjes së vetme kronologjike 70/30.",
@@ -140,6 +142,7 @@ BLOCKS = [
             "f1_pct",
             "f1_oracle",
             "fit_time_s",
+            "fit_delta_rss_mb",
             "inference_us_per_tx",
         ],
         rename={
@@ -150,7 +153,8 @@ BLOCKS = [
             "recall_pct": "Recall",
             "f1_pct": "F1",
             "f1_oracle": "F1 (orakull)",
-            "fit_time_s": "Trajnimi (s)",
+            "fit_time_s": "Fit (s)",
+            "fit_delta_rss_mb": "MB",
             "inference_us_per_tx": "µs/tx",
         },
         round={
@@ -161,6 +165,7 @@ BLOCKS = [
             "f1_pct": 4,
             "f1_oracle": 4,
             "fit_time_s": 2,
+            "fit_delta_rss_mb": 1,
             "inference_us_per_tx": 3,
         },
         font_size=8.5,

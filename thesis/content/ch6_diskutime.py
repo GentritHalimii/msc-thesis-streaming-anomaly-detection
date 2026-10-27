@@ -57,9 +57,10 @@ _SINTEZA = [
       dërrmuese e alarmeve u takon transaksioneve legjitime të pazakonta."""),
     p("""Analiza e gabimeve e mbështet këtë dhe shton diçka të re. Me 100 alarme për bllok, 37% e
       mashtrimeve nuk i arrin asnjë detektor, dhe këto mashtrime ndodhen më afër popullatës
-      legjitime. Referenca e mbikëqyrur megjithatë kap 59% të tyre me të njëjtin buxhet.
-      Informacioni pra ekziston në të dhëna, por nuk ka formën që e sheh një detektor distancash:
-      ndodhet në një drejtim diskriminues që e gjen vetëm mbikëqyrja."""),
+      legjitime. Referenca e mbikëqyrur megjithatë kap 59% të tyre me të njëjtin buxhet. Kufiri
+      i metodave unsupervised këtu nuk vjen pra nga mungesa e sinjalit, por nga forma e tij: një
+      drejtim diskriminues mësohet nga etiketat, ndërsa largësia nga normaliteti nuk e zbulon
+      atë."""),
     h3("6.2.2", "Pse Isolation Forest renditet i fundit"),
     p("""Për Isolation Forest-in shpjegimi lidhet me strukturën e tij dhe u mat drejtpërsëdrejti.
       Algoritmi e zgjedh rastësisht dimensionin e ndarjes, pa marrë parasysh sa informativ është.
