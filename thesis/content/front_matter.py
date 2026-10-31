@@ -116,8 +116,8 @@ ABSTRAKT = [
     "të dhënash, ku etiketat e verifikuara vijnë me vonesë ditësh ose javësh, ndërsa vendimi duhet "
     "marrë brenda milisekondash. Ky punim dizajnon, implementon dhe vlerëson një sistem end-to-end "
     "për zbulimin e anomalive mbi një rrjedhë të simuluar transaksionesh, i cili lidh Apache "
-    "Kafka-n me tri algoritmet unsupervised të projekt-propozimit (Isolation Forest, Autoencoder "
-    "dhe One-Class SVM) dhe me Regresionin Logjistik si referencë supervised.",
+    "Kafka-n me tri algoritme unsupervised (Isolation Forest, Autoencoder dhe One-Class SVM) "
+    "dhe me Regresionin Logjistik si referencë supervised.",
     "Detektorët vlerësohen mbi dataset-in publik të ULB-së me një protokoll rolling-origin 8-fold, "
     "që rindërton skaluesin, modelet dhe pragjet në çdo fold, me Average Precision (AP) si metrikë "
     "kryesore. Percentili 99 i vonesës end-to-end nuk e kalon 132 milisekonda në asnjë nga ritmet "
@@ -140,9 +140,9 @@ ABSTRACT_EN = [
     "Credit-card fraud detection increasingly runs on continuous data streams, where verified "
     "labels arrive days or weeks late while decisions must be made within milliseconds. This "
     "thesis designs, implements and evaluates an end-to-end anomaly detection system over a "
-    "simulated transaction stream. The system connects Apache Kafka with the three unsupervised "
-    "algorithms named in the research proposal (Isolation Forest, Autoencoder and One-Class SVM) "
-    "and with Logistic Regression as a supervised reference.",
+    "simulated transaction stream. The system connects Apache Kafka with three unsupervised "
+    "algorithms (Isolation Forest, Autoencoder and One-Class SVM) and with Logistic Regression "
+    "as a supervised reference.",
     "The detectors are evaluated on the public ULB dataset with an 8-fold rolling-origin protocol "
     "that rebuilds the scaler, the models and the thresholds in every fold, with Average Precision "
     "(AP) as the primary metric. The 99th-percentile end-to-end latency stays below 132 "

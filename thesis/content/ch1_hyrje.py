@@ -51,20 +51,20 @@ BLOCKS = [
       rastësishme, ku transaksione nga e ardhmja hyjnë në trajnimin e modelit që pastaj vlerësohet
       mbi të kaluarën. Punimi mat edhe sa i fryn rezultatet kjo praktikë."""),
     p("""Fushëveprimi kufizohet në dy drejtime. Sistemi është prototip kërkimor në mjedis të
-      kontrolluar dhe jo sistem financiar në prodhim. Krahasimi përqendrohet te tri algoritmet
-      unsupervised që emërton projekt-propozimi, të cilat studiohen në thellësi."""),
+      kontrolluar dhe jo sistem financiar në prodhim. Krahasimi përqendrohet te tri algoritme
+      unsupervised, të cilat studiohen në thellësi."""),
     h2("1.4", "Thellësi në vend të gjerësisë"),
-    p("""Projekt-propozimi emërton Isolation Forest dhe Autoencoder-in si detektorët kryesorë,
-      One-Class SVM si komponent shtesë dhe Regresionin Logjistik si model bazë (baseline). Studimi
-      i përmbahet kësaj bashkësie dhe shkon në thellësi në katër drejtime. Ndarja e vetme
-      zëvendësohet me një protokoll rolling-origin 8-fold, i cili tregon nëse renditja e algoritmeve
-      mbetet e njëjtë në periudha të ndryshme. Paraprocesimi dhe hiperparametrat trajtohen si
-      variabla eksperimentale dhe jo si zgjedhje të paracaktuara. Për secilin algoritëm studiohen
-      parametrat që lidhen me mekanizmin e tij. Së fundi, analiza e gabimeve shkon deri te
-      transaksioni i veçantë, për të parë cilat mashtrime nuk kapen dhe pse."""),
+    p("""Algoritmet e krahasuara janë Isolation Forest, Autoencoder-i dhe One-Class SVM, me
+      Regresionin Logjistik si model bazë (baseline). Studimi i përmbahet kësaj bashkësie dhe shkon
+      në thellësi në katër drejtime. Në vend të një ndarjeje të vetme përdoret një protokoll
+      rolling-origin 8-fold, i cili tregon nëse renditja e algoritmeve mbetet e njëjtë në periudha
+      të ndryshme. Paraprocesimi dhe hiperparametrat trajtohen si variabla eksperimentale dhe jo si
+      zgjedhje të paracaktuara. Për secilin algoritëm studiohen parametrat që lidhen me mekanizmin e
+      tij. Së fundi, analiza e gabimeve shkon deri te transaksioni i veçantë, për të parë cilat
+      mashtrime nuk kapen dhe pse."""),
     h2("1.5", "Pyetjet hulumtuese"),
-    p("""Punimi ndërtohet rreth tri pyetjeve hulumtuese, të formuluara në projekt-propozimin e
-      miratuar dhe të pandryshuara gjatë punës:"""),
+    p("""Punimi ndërtohet rreth tri pyetjeve hulumtuese, të formuluara para fillimit të
+      eksperimenteve dhe të pandryshuara gjatë punës:"""),
     numbers(
         [
             "Si mund të implementohet një sistem për zbulimin e anomalive financiare në një mjedis "
@@ -81,10 +81,10 @@ BLOCKS = [
       përgjigje jepen edhe kushtet nën të cilat vlen, sepse disa prej tyre varen nga protokolli i
       vlerësimit dhe nga konfigurimi i algoritmeve."""),
     h2("1.6", "Objektivat e punimit"),
-    p("""Objektivat specifike janë ato të projekt-propozimit:"""),
+    p("""Punimi ka këto objektiva specifike:"""),
     numbers(
         [
-            "Rishikimi i literaturës për zbulimin e anomalive, për tri algoritmet e propozimit, "
+            "Rishikimi i literaturës për zbulimin e anomalive, për tri algoritmet e studimit, "
             "për zbulimin e mashtrimeve me karta dhe për arkitekturat streaming me Apache Kafka.",
             "Dizajnimi dhe implementimi i një arkitekture end-to-end me pesë shtresa, nga leximi i "
             "të dhënave deri te gjenerimi dhe ruajtja e alarmeve, me vonesë të matur nën ritme të "
@@ -125,12 +125,12 @@ BLOCKS = [
       disponueshmëria e lartë, autentikimi ose orkestrimi me Kubernetes. Nuk ndërtohet ritrajnim në
       kohë reale. Nuk përdoren teknika mbimostrimi si SMOTE [@chawla2002], sepse ato kërkojnë
       etiketa gjatë trajnimit. Nuk krahasohen platforma streaming mes tyre, dhe krahasimi nuk
-      zgjerohet përtej tri algoritmeve të propozimit. Punimi nuk mat as vonesën nën trafik real:
+      zgjerohet përtej tri algoritmeve të studimit. Punimi nuk mat as vonesën nën trafik real:
       ritmi i mbërritjes është sintetik dhe i kontrolluar, dhe çdo vlerë e vonesës raportohet bashkë
       me ritmin nën të cilin u mat."""),
     h2("1.9", "Struktura e punimit"),
     p("""Kapitulli 2 rishikon literaturën: mekanizmat e zbulimit të anomalive, tri algoritmet e
-      propozimit, punimet për zbulimin e mashtrimeve me karta, arkitekturat streaming dhe
+      studimit, punimet për zbulimin e mashtrimeve me karta, arkitekturat streaming dhe
       metodologjinë e vlerësimit. Kapitulli 3 e formulon problemin me saktësi, bashkë me supozimet,
       hipotezat dhe kriteret e suksesit. Kapitulli 4 përshkruan metodologjinë: dataset-in,
       protokollin e ndarjes, modelet, procedurën e pragut, metrikat dhe arkitekturën e implementuar.

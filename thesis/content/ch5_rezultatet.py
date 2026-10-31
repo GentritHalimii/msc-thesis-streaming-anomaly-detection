@@ -97,13 +97,13 @@ _PH1 = [
       baza. Testi i integrimit kontrollon që pikët e prodhuara në rrjedhë janë të njëjta me ato
       offline për të njëjtat transaksione, kështu që rezultatet e këtij kapitulli vlejnë edhe për
       sistemin në punë."""),
-    p("""Kjo barazi i përgjigjet edhe krahasimit me përpunimin batch që kërkonte hipoteza e
-      projekt-propozimit. Në regjimin offline modelet pikëzojnë një bllok të tërë testimi në grup,
-      me 0.2 deri 55 mikrosekonda për transaksion (nënkapitulli 5.2.3), pra shumë më shpejt se në
-      rrjedhë. Përpunimi batch e jep megjithatë vendimin vetëm pasi të jetë mbledhur grupi, ndërsa
-      në rrjedhë çdo transaksion merr vendim brenda 19 deri 68 milisekondash mesatarisht nga
-      krijimi i tij. Meqë pikët janë identike, rrjedha nuk humbet asgjë në cilësi kundrejt batch-it;
-      kostoja e saj është vetëm vonesa e transportit, e cila mbetet shumë nën objektiv."""),
+    p("""Kjo barazi lejon edhe një krahasim të drejtpërdrejtë me përpunimin batch. Në regjimin
+      offline modelet pikëzojnë një bllok të tërë testimi në grup, me 0.2 deri 55 mikrosekonda për
+      transaksion (nënkapitulli 5.2.3), pra shumë më shpejt se në rrjedhë. Përpunimi batch e jep
+      megjithatë vendimin vetëm pasi të jetë mbledhur grupi, ndërsa në rrjedhë çdo transaksion merr
+      vendim brenda 19 deri 68 milisekondash mesatarisht nga krijimi i tij. Meqë pikët janë
+      identike, rrjedha nuk humbet asgjë në cilësi kundrejt batch-it; kostoja e saj është vetëm
+      vonesa e transportit, e cila mbetet shumë nën objektiv."""),
 ]
 
 _PH2 = [
@@ -251,9 +251,9 @@ _PH2 = [
     p("""AP-ja e vlerëson renditjen pa e lidhur me një prag. Në punë sistemi ka megjithatë nevojë
       për një prag, dhe protokolli kryesor e merr atë nga percentili (1 − c) i pikëve të trajnimit,
       me kontaminimin c të barabartë me normën e mashtrimit në dritaren e trajnimit (nënkapitulli
-      4.5.1). Projekt-propozimi kërkonte të matej sa varen rezultatet nga kjo zgjedhje. Matja bëhet
-      në ndarjen 70/30 të propozimit, me shtatë vlera të c nga 0.05% deri në 5% (Figura
-      [[fig:contamination_sweep]])."""),
+      4.5.1). Ndjeshmëria e rezultateve ndaj kësaj zgjedhjeje matet në ndarjen e vetme 70/30, me
+      shtatë vlera të c nga 0.05% deri në 5% (Figura [[fig:contamination_sweep]]). Kjo ndarje jep të
+      njëjtën renditje të detektorëve si protokolli 8-fold (nënkapitulli 5.6)."""),
     fig(
         "contamination_sweep",
         "Precision, recall dhe F1 në ndarjen 70/30 sipas kontaminimit nga i cili merret pragu.",
@@ -601,7 +601,7 @@ _PROTOKOLLI = [
       herë është më e madhe se raporti prej 2.1 herë mes algoritmit më të mirë dhe më të dobët në
       protokollin korrekt, dhe Isolation Forest-i me ndarje të rastësishme arrin AP 0.140, sa
       Autoencoder-i me ndarje kronologjike."""),
-    p("""Zgjedhja e dytë është prerja e vetme kronologjike 70/30 e projekt-propozimit kundrejt
+    p("""Zgjedhja e dytë është prerja e vetme kronologjike 70/30 kundrejt
       protokollit 8-fold. Renditja e detektorëve është e njëjtë në të dy rastet, kështu që prerja e
       vetme nuk e shtrembëron renditjen. Ajo që fsheh është pasiguria: për metodat unsupervised
       devijimi standard nëpër fold-e është mesatarisht 1.4 herë sa vetë mesatarja, dhe një numër i

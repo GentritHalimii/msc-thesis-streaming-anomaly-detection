@@ -9,10 +9,10 @@ _DATA = [
       Përshkrimi është i hollësishëm, sepse shumë nga dallimet mes rezultateve të publikuara për
       këtë dataset nuk vijnë nga algoritmet, por nga zgjedhje metodologjike që shpesh nuk
       raportohen."""),
-    p("""Metodologjia ndjek projekt-propozimin, me dy ndryshime. Protokolli kryesor i vlerësimit
-      është rolling-origin me tetë fold-e në vend të një ndarjeje të vetme 70/30, dhe metrika
-      kryesore është Average Precision në vend të F1. Arsyet jepen në nënkapitujt 4.2.2 dhe 4.6.1;
-      ndarja 70/30 dhe F1 raportohen gjithsesi."""),
+    p("""Dy zgjedhje metodologjike meritojnë të përmenden që në fillim. Protokolli kryesor i
+      vlerësimit është rolling-origin me tetë fold-e në vend të një ndarjeje të vetme 70/30, dhe
+      metrika kryesore është Average Precision në vend të F1. Arsyet jepen në nënkapitujt 4.2.2 dhe
+      4.6.1; ndarja 70/30 dhe F1 raportohen gjithsesi."""),
     h2("4.1", "Dataset-i"),
     h3("4.1.1", "Origjina dhe struktura"),
     p("""Studimi përdor dataset-in publik Credit Card Fraud Detection të grupit Machine Learning të
@@ -126,13 +126,13 @@ _PROTOKOLLI = [
       automatik, sepse ky mekanizëm do të prodhonte një rënie të cilësisë me kohën që duket njësoj
       si ajo që vërehet në të dhëna, por për një arsye krejt tjetër."""),
     h3("4.2.2", "Protokolli rolling-origin"),
-    p("""Projekt-propozimi parashikonte një ndarje të vetme kronologjike 70/30. Një ndarje e tillë
-      jep një vlerësim për një moment të vetëm vendosjeje. Me 492 pozitivë në gjithë dataset-in ky
-      vlerësim është i zhurmshëm, dhe nga një prerje e vetme nuk mund të thuhet nëse renditja e
-      algoritmeve është e qëndrueshme apo e rastësishme. Prandaj vlerësimi përsëritet në tetë pika
-      prerjeje të njëpasnjëshme me dritare trajnimi që zgjerohet, sipas skemës rolling-origin të
-      përdorur në literaturën e parashikimit [@bergmeir2012] dhe të vlerësimit prekuencial
-      [@gama2013]. Ky protokoll quhet më poshtë rolling-origin 8-fold."""),
+    p("""Zgjidhja më e thjeshtë që e respekton renditjen kohore është një ndarje e vetme
+      kronologjike 70/30. Një ndarje e tillë jep një vlerësim për një moment të vetëm vendosjeje. Me
+      492 pozitivë në gjithë dataset-in ky vlerësim është i zhurmshëm, dhe nga një prerje e vetme
+      nuk mund të thuhet nëse renditja e algoritmeve është e qëndrueshme apo e rastësishme. Prandaj
+      vlerësimi përsëritet në tetë pika prerjeje të njëpasnjëshme me dritare trajnimi që zgjerohet,
+      sipas skemës rolling-origin të përdorur në literaturën e parashikimit [@bergmeir2012] dhe të
+      vlerësimit prekuencial [@gama2013]. Ky protokoll quhet më poshtë rolling-origin 8-fold."""),
     eq("Fold i:  trajnim [0, c_i),   testim [c_i, c_{i+1})"),
     p("""Pikat e prerjes c_i e ndajnë pjesën e rrjedhës pas 40% të parë në tetë blloqe me numër të
       njëjtë rreshtash, pra rreth 21 360 transaksione secili (Figura [[fig:diagram_protocol]]). Në
@@ -182,7 +182,7 @@ _PROTOKOLLI = [
       ndryshme, sepse dendësia e transaksioneve ndryshon me orën. Fold-i 1 dallohet me 88 mashtrime,
       gati katër herë më shumë se mesatarja e blloqeve të tjera, sepse përfshin një grumbull
       mashtrimesh që shpjegon pjesën më të madhe të variancës së rezultateve."""),
-    p("""Ndarja 70/30 e propozimit nuk braktiset. Modelet trajnohen edhe mbi të, rezultatet e saj
+    p("""Ndarja e vetme 70/30 nuk braktiset. Modelet trajnohen edhe mbi të, rezultatet e saj
       jepen në Shtojcën D, dhe nënkapitulli 5.6 e krahason me protokollin 8-fold."""),
     h2("4.3", "Paraprocesimi si variabël eksperimentale"),
     p("""Siç u argumentua në nënkapitullin 2.9, largësia që përdorin detektorët varet nga
@@ -246,11 +246,11 @@ _PROTOKOLLI = [
       përcakton sa i ngushtë është kufiri, përcakton edhe vonesën, dhe të dyja raportohen
       bashkë."""),
     h3("4.4.5", "Referenca supervised"),
-    p("""Projekt-propozimi kërkonte njëkohësisht trajnim vetëm mbi transaksione normale dhe një
-      model bazë me Regresion Logjistik, që ka nevojë për etiketa. Zgjidhja e zbatuar këtu e bën
+    p("""Siç u shpjegua në nënkapitullin 2.5, Regresioni Logjistik nuk mund të trajnohet vetëm mbi
+      transaksione normale si detektorët, sepse ka nevojë për etiketa. Zgjidhja e zbatuar këtu e bën
       këtë mospërputhje të dukshme: modeli trajnohet mbi gjithë dritaren e trajnimit me etiketat e
-      saj, përfshirë mashtrimet që ndodhen aty, dhe raportohet gjithmonë si referencë supervised.
-      Ai tregon çfarë do të arrihej nëse do të përdoreshin etiketat historike, pra shërben si kufi i
+      saj, përfshirë mashtrimet që ndodhen aty, dhe raportohet gjithmonë si referencë supervised. Ai
+      tregon çfarë do të arrihej nëse do të përdoreshin etiketat historike, pra shërben si kufi i
       sipërm."""),
 ]
 
@@ -286,11 +286,11 @@ _PRAGU = [
     h2("4.6", "Metrikat"),
     h3("4.6.1", "Metrikat e cilësisë së renditjes"),
     p("""Metrika kryesore është Average Precision, e përkufizuar në nënkapitullin 3.3, e cila
-      përmbledh kurbën precision-recall pa u lidhur me një prag. Projekt-propozimi e emërtonte F1 si
-      metrikë kryesore. F1 varet megjithatë nga pragu, dhe pragu ndryshon nga një fold në tjetrin
-      dhe nga një procedurë në tjetrën, kështu që një krahasim i bazuar vetëm në F1 do të përzinte
-      cilësinë e renditjes me zgjedhjen e pragut. Për këtë arsye F1 raportohet kudo, por algoritmet
-      renditen sipas AP-së."""),
+      përmbledh kurbën precision-recall pa u lidhur me një prag. Një alternativë e natyrshme do të
+      ishte F1, e cila bashkon precision-in dhe recall-in në një numër të vetëm. F1 varet megjithatë
+      nga pragu, dhe pragu ndryshon nga një fold në tjetrin dhe nga një procedurë në tjetrën, kështu
+      që një krahasim i bazuar vetëm në F1 do të përzinte cilësinë e renditjes me zgjedhjen e
+      pragut. Për këtë arsye F1 raportohet kudo, por algoritmet renditen sipas AP-së."""),
     p("""Në çekuilibër ekstrem kurba precision-recall jep një pamje shumë më informuese se ROC,
       sepse norma e pozitivëve të rremë mbetet e vogël edhe kur alarmet e rreme janë shumë më tepër
       se ato të vërteta [@davis2006], [@saito2015]. AUC-ROC raportohet vetëm për krahasim me
@@ -356,14 +356,14 @@ _PRAGU = [
 
 _ARKITEKTURA = [
     h2("4.9", "Arkitektura e implementuar"),
-    p("""Sistemi ndjek arkitekturën me pesë shtresa të përcaktuar në projekt-propozim (Figura
+    p("""Sistemi ndërtohet si arkitekturë me pesë shtresa (Figura
       [[fig:diagram_architecture]]). Shtresat janë module të veçanta me ndërfaqe të qarta, gjë që
       lejoi ndryshimin e modeleve pa prekur shtresën e rrjedhës dhe anasjelltas."""),
     fig("diagram_architecture", "Arkitektura e sistemit me pesë shtresa.", 15.0),
     h3("4.9.1", "Shtresa e rrjedhës"),
     p("""Apache Kafka punon në modalitetin KRaft, pa ZooKeeper, me një broker dhe një particion për
-      topic. Kafka u zgjodh në vend të alternativave si Redpanda sepse e emërtojnë titulli dhe
-      propozimi i temës, dhe sepse një shërbim KRaft me një nyje konfigurohet lehtë [@kreps2011].
+      topic. Kafka u zgjodh në vend të alternativave si Redpanda sepse është pjesë e vetë
+      temës së punimit, dhe sepse një shërbim KRaft me një nyje konfigurohet lehtë [@kreps2011].
       Mesazhet serializohen në JSON: në ritmet e testuara kostoja e kodimit është e papërfillshme,
       ndërsa mesazhet e lexueshme e bëjnë pipeline-in të lehtë për diagnostikim dhe lejojnë
       krahasimin e saktë të pikëve mes dy regjimeve."""),

@@ -10,7 +10,7 @@ _HYRJE = [
       Drejtimit të fundit i kushtohet më shumë hapësirë se zakonisht, sepse një nga përfundimet e
       studimit është metodologjik: mënyra se si vlerësohet një detektor ndikon në përfundimin se
       cili detektor është më i mirë."""),
-    p("""Rishikimi përqendrohet te tri algoritmet e propozimit dhe nuk synon të mbulojë gjithë
+    p("""Rishikimi përqendrohet te këto tri algoritme dhe nuk synon të mbulojë gjithë
       fushën e detektorëve unsupervised. Për të shpjeguar renditjen që del në Kapitullin 5 duhet
       njohur mirë mekanizmi, supozimet dhe dobësitë e njohura të secilit prej tyre; një listë e
       gjatë metodash të përshkruara shkurt nuk do të ndihmonte në këtë."""),
@@ -45,8 +45,8 @@ _HYRJE = [
       secilës veçori veç e veç, si ECOD, supozojnë pavarësinë e veçorive dhe fitojnë shpejtësi prej
       saj [@li2022ecod], ndërsa vlerësimi robust i kovariancës e modelon normalitetin si një
       elipsoid të vetëm. Të gjitha këto metoda gjenden në biblioteka të unifikuara si PyOD
-      [@zhao2019pyod]. Ato mbeten jashtë krahasimit, sepse projekt-propozimi e kufizon studimin te
-      tri algoritmet e tij."""),
+      [@zhao2019pyod]. Ato mbeten jashtë krahasimit, sepse studimi zgjedh thellësinë mbi tri
+      algoritme në vend të gjerësisë mbi shumë metoda (nënkapitulli 1.4)."""),
     p("""Tri algoritmet e studimit përdorin tri mekanizma të ndryshëm. Isolation Forest mat sa lehtë
       izolohet një pikë, Autoencoder-i sa keq rindërtohet ajo, dhe One-Class SVM se në cilën anë të
       një kufiri të mësuar ndodhet. Meqë mekanizmat ndryshojnë, diferencat në rezultate mund të
@@ -115,7 +115,8 @@ _ALGORITMET = [
       drejt një shpërndarjeje të njohur dhe lejon pikëzim me kufirin e poshtëm të evidencës ose me
       probabilitetin e rindërtimit [@kingma2014]; modelet hibride shtojnë mbi hapësirën latente një
       model densiteti që mësohet bashkë me ngjeshjen. Këto variante nuk hyjnë në krahasimin kryesor,
-      sepse propozimi emërton autoencoder-in standard, por janë drejtime të natyrshme zgjerimi."""),
+      sepse studimi përqendrohet te autoencoder-i standard, por janë drejtime të natyrshme
+      zgjerimi."""),
     h3("2.3.3", "Lidhja me analizën e komponentëve kryesorë"),
     note("""Për këtë dataset lidhja ka edhe rëndësi praktike. Veçoritë V1 deri V28 janë vetë
       komponentë kryesorë, prandaj një detektor linear rindërtimi mbi një nënhapësirë PCA nuk është
@@ -140,20 +141,20 @@ _ALGORITMET = [
       e mostrave, kështu që metoda nuk mund të zbatohet drejtpërsëdrejti mbi qindra mijëra rreshta.
       Literatura ofron dy rrugë: nën-mostrimin e të dhënave të trajnimit ose përafrimin e kernelit
       me metoda si Nyström ose me variante stokastike. Të dyja janë kompromise, dhe kostoja e tyre
-      duhet matur e jo supozuar. Ky punim zgjedh nën-mostrimin, sepse kështu ruhet metoda ekzakte e
-      emërtuar në propozim, dhe në Kapitullin 5 mat sa kushton ky kompromis me një kurbë të mësuari
+      duhet matur e jo supozuar. Ky punim zgjedh nën-mostrimin, sepse kështu ruhet metoda ekzakte pa
+      përafrim të kernelit, dhe në Kapitullin 5 mat sa kushton ky kompromis me një kurbë të mësuari
       deri në 80 000 transaksione."""),
     p("""Formulimi ka edhe një pasojë operacionale. Kostoja e pikëzimit varet nga numri i vektorëve
       mbështetës, i cili nga ana e vet varet nga ν. Kështu i njëjti hiperparametër që përcakton sa i
       ngushtë është kufiri përcakton edhe vonesën e inferencës, prandaj të dyja duhen raportuar
       bashkë."""),
     h2("2.5", "Modeli bazë supervised"),
-    p("""Propozimi kërkon njëkohësisht trajnim vetëm mbi transaksione normale dhe një model bazë me
-      Regresion Logjistik, dy kërkesa që nuk pajtohen, sepse regresioni logjistik ka nevojë për
-      etiketa. Literatura e zgjidh këtë duke e trajtuar modelin supervised si kufi të sipërm që
-      arrihet kur etiketat janë në dispozicion, jo si konkurrent të barabartë. Bhattacharyya dhe
-      bashkautorët bënë një nga krahasimet e para sistematike të metodave supervised për këtë
-      problem, mbi të dhëna reale transaksionesh [@bhattacharyya2011]."""),
+    p("""Regresioni Logjistik, i cili shërben si model bazë, nuk mund të trajnohet vetëm mbi
+      transaksione normale si detektorët, sepse ka nevojë për etiketa të të dy klasave. Literatura e
+      zgjidh këtë duke e trajtuar modelin supervised si kufi të sipërm që arrihet kur etiketat janë
+      në dispozicion, jo si konkurrent të barabartë. Bhattacharyya dhe bashkautorët bënë një nga
+      krahasimet e para sistematike të metodave supervised për këtë problem, mbi të dhëna reale
+      transaksionesh [@bhattacharyya2011]."""),
     p("""Ky punim ndjek të njëjtën logjikë. Regresioni logjistik trajnohet mbi gjithë dritaren e
       trajnimit me etiketat e saj dhe shënohet gjithmonë si referencë supervised. Ai nuk konkurron
       me detektorët; shërben për të matur sa vlejnë etiketat historike."""),
@@ -325,7 +326,8 @@ _METODOLOGJIA = [
         [
             "Studimet për këtë dataset i analizojnë modelet kryesisht në mënyrë statike, mbi një "
             "ndarje të vetme, dhe shpesh testojnë një algoritëm të vetëm unsupervised. Nuk u gjet "
-            "një krahasim i tri algoritmeve të propozimit mbi të njëjtën infrastrukturë Kafka, "
+            "një krahasim i Isolation Forest-it, Autoencoder-it dhe One-Class SVM-së mbi të "
+            "njëjtën infrastrukturë Kafka, "
             "bashkë me një referencë supervised, me vonesë të matur dhe me një protokoll "
             "rolling-origin ku çdo fold rindërton gjithë zinxhirin e paraprocesimit dhe të "
             "pragjeve.",

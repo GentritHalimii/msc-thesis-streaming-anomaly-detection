@@ -125,7 +125,7 @@ BLOCKS = [
         font_size=8.0,
     ),
     h2("8.4", "Shtojca D: rezultatet e ndarjes së vetme 70/30"),
-    p("""Për krahasim me literaturën dhe me protokollin e projekt-propozimit, tabela më poshtë jep
+    p("""Për krahasim me literaturën, tabela më poshtë jep
       rezultatet e ndarjes së vetme kronologjike 70/30. Kolonat e pragut orakull janë kufi i sipërm
       që nuk arrihet në praktikë dhe nuk duhen krahasuar me ato të pragut nga trajnimi. Memoria
       (MB) jepet si rritja e memories rezidente gjatë trajnimit, siç përcaktohet në nënkapitullin

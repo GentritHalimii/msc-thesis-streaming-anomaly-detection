@@ -143,7 +143,7 @@ _OVERVIEW = page(
         "Fushëveprimi",
         "§1.4",
         prose(
-            "Studimi kufizohet te tri algoritmet që emërton projekt-propozimi, Isolation "
+            "Studimi kufizohet te tri algoritme unsupervised, Isolation "
             "Forest, Autoencoder dhe One-Class SVM, me Regresionin Logjistik si referencë "
             "supervised. Në vend që të shtohen algoritme të tjera, secili prej tyre studiohet "
             "në thellësi: me protokoll rolling-origin, me paraprocesimin dhe hiperparametrat "
@@ -450,7 +450,7 @@ _RESULTS = page(
         "§5.2.4",
         prose(
             "Pragu merret nga percentili i pikëve të trajnimit, me kontaminim të barabartë me "
-            "normën e mashtrimit. Figura e parë tregon, mbi ndarjen 70/30 të propozimit, sa "
+            "normën e mashtrimit. Figura e parë tregon, mbi ndarjen e vetme 70/30, sa "
             "varen precision, recall dhe F1 nga kjo zgjedhje. Pastaj matet çfarë kapet kur "
             "hetohen vetëm k alarmet më të larta për bllok testimi."
         ),

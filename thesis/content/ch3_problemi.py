@@ -78,8 +78,8 @@ BLOCKS = [
         ]
     ),
     h2("3.5", "Hipotezat"),
-    p("""Projekt-propozimi formuloi tri hipoteza pune. Këtu ato riformulohen në mënyrë të
-      testueshme, me kriterin e refuzimit të përcaktuar paraprakisht."""),
+    p("""Punimi shtron tri hipoteza pune, të formuluara në mënyrë të testueshme dhe me kriterin e
+      refuzimit të përcaktuar paraprakisht."""),
     bullets(
         [
             "H1, realizueshmëria operacionale. Një pipeline me Kafka dhe inferencë unsupervised "

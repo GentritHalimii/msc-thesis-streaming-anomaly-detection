@@ -14,8 +14,8 @@ _SINTEZA = [
         font_size=8.5,
     ),
     p("""Në këtë punim u ndërtua dhe u vlerësua një sistem i plotë për zbulimin e anomalive mbi një
-      rrjedhë të simuluar transaksionesh financiare, i cili lidh Apache Kafka-n me tri algoritmet
-      unsupervised të projekt-propozimit dhe me një referencë supervised. Gjetjet kryesore janë
+      rrjedhë të simuluar transaksionesh financiare, i cili lidh Apache Kafka-n me tri algoritme
+      unsupervised dhe me një referencë supervised. Gjetjet kryesore janë
       këto:"""),
     numbers(
         [
