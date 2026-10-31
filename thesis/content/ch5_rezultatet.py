@@ -10,7 +10,7 @@ _HYRJE = [
       (5.5) dhe nga mënyra si ndahen të dhënat (5.6)."""),
     p("""Tabelat dhe figurat gjenerohen drejtpërdrejt nga rezultatet e ruajtura të eksperimenteve,
       dhe numrat në tekst janë marrë nga po këto tabela. Regresioni Logjistik shënohet kudo si
-      referencë e mbikëqyrur. Ai ka përdorur etiketat historike, prandaj nuk konkurron me metodat
+      referencë supervised. Ai ka përdorur etiketat historike, prandaj nuk konkurron me metodat
       unsupervised; tregon sa larg mund të shkohet kur këto etiketa ekzistojnë."""),
 ]
 
@@ -109,7 +109,7 @@ _PH1 = [
 _PH2 = [
     h2("5.2", "PH2: krahasimi i algoritmeve"),
     h3("5.2.1", "Rezultatet në konfigurimin bazë"),
-    p("""Tabela kryesore paraqet tri algoritmet unsupervised dhe referencën e mbikëqyrur në
+    p("""Tabela kryesore paraqet tri algoritmet unsupervised dhe referencën supervised në
       protokollin rolling-origin 8-fold, me hiperparametrat bazë dhe me StandardScaler. Ky është
       konfigurimi bazë dhe jo ai më i miri i mundshëm; nënkapitulli 5.4 tregon sa ndryshon renditja
       kur ndryshon konfigurimi."""),
@@ -152,7 +152,7 @@ _PH2 = [
     ),
     p("""Në tabelë, rangu llogaritet mbi AP-në e çdo fold-i, R@100 është recall-i me 100 alarme për
       bllok, dhe kostoja e pikëzimit jepet në mikrosekonda për transaksion në regjimin offline.
-      Rezultati i parë është hendeku me referencën: modeli i mbikëqyrur arrin AP 0.734 dhe është i
+      Rezultati i parë është hendeku me referencën: modeli supervised arrin AP 0.734 dhe është i
       pari në të tetë fold-et (rangu mesatar 1.00), ndërsa metoda më e mirë unsupervised arrin
       0.193. Raporti prej rreth 3.8 mes tyre tregon sa vlejnë etiketat historike në këtë
       problem."""),
@@ -188,7 +188,7 @@ _PH2 = [
     p("""Dallimet mes detektorëve testohen me testin e Wilcoxon-it për çifte mbi AP-në e tetë
       fold-eve, me korrigjim Holm për krahasime të shumëfishta. Gjashtë krahasimet u fiksuan në kod
       para se të shihej ndonjë rezultat: Autoencoder-i kundrejt dy detektorëve të tjerë, One-Class
-      SVM kundrejt Isolation Forest-it dhe referenca e mbikëqyrur kundrejt secilit detektor. Numri i
+      SVM kundrejt Isolation Forest-it dhe referenca supervised kundrejt secilit detektor. Numri i
       tyre u zgjodh që korrigjimi të mund të kalohej: me tetë fold-e p-vlera më e vogël e mundshme
       është 0.0078, e cila shumëzuar me gjashtë jep 0.047."""),
     tab(
@@ -218,7 +218,7 @@ _PH2 = [
     ),
     p("""Pesë nga gjashtë krahasimet e kalojnë korrigjimin. Autoencoder-i e mund Isolation Forest-in
       në shtatë nga tetë fold-e, One-Class SVM e mund Isolation Forest-in në të tetë, dhe referenca
-      e mbikëqyrur i mund të tre detektorët në të gjitha fold-et. I vetmi krahasim pa domethënie
+      supervised i mund të tre detektorët në të gjitha fold-et. I vetmi krahasim pa domethënie
       statistikore është Autoencoder kundrejt One-Class SVM: gjashtë fitore me dy, e qëndrueshme por
       jo e plotë. Renditja mes dy detektorëve të parë nuk është pra e vërtetuar statistikisht, dhe
       nënkapitulli 5.4 tregon se ajo përmbyset kur ndryshon paraprocesimi."""),
@@ -245,7 +245,7 @@ _PH2 = [
       ndërsa Isolation Forest-i dhe One-Class SVM rreth një sekondë. Nëse modeli ritrajnohet një
       herë në ditë, ky dallim nuk ka rëndësi; do të kishte rëndësi vetëm me ritrajnim të
       vazhdueshëm. Edhe memoria shtesë gjatë trajnimit është e vogël për të gjithë modelet: në
-      ndarjen 70/30 ajo shkon nga 48 MB për referencën e mbikëqyrur deri në 126 MB për One-Class
+      ndarjen 70/30 ajo shkon nga 48 MB për referencën supervised deri në 126 MB për One-Class
       SVM-në (Shtojca D)."""),
     h3("5.2.4", "Pragu dhe buxheti i alarmeve"),
     p("""AP-ja e vlerëson renditjen pa e lidhur me një prag. Në punë sistemi ka megjithatë nevojë
@@ -267,7 +267,7 @@ _PH2 = [
       5%, por me 4 500 deri 5 800 alarme."""),
     p("""F1 i Autoencoder-it dhe i One-Class SVM-së arrin kulmin me c = 0.5%, rreth 2.6 herë mbi
       normën e mashtrimit në trajnim, me 0.242 dhe 0.208; Isolation Forest-i arrin vetëm 0.075, me c
-      = 1%. Referenca e mbikëqyrur arrin kulmin me c = 0.2%, vlera e provuar më e afërt me normën e
+      = 1%. Referenca supervised arrin kulmin me c = 0.2%, vlera e provuar më e afërt me normën e
       mashtrimit, me F1 0.766. Për një model të kalibruar norma e mashtrimit është pra zgjedhja e
       duhur e pragut, ndërsa te metodat unsupervised optimumi ndodhet më lart, sepse mashtrimet nuk
       zënë majën e renditjes së tyre, por vijnë pak më poshtë."""),
@@ -309,8 +309,8 @@ _PH2 = [
     p("""Qëllimi kryesor arrihet: koeficienti i variacionit të normës së alarmeve bie mesatarisht
       nga 0.84 në 0.62, kështu që ngarkesa e hetimeve bëhet më e parashikueshme (Figura
       [[fig:adaptive_tradeoff]]). Efekti mbi cilësinë i ndan modelet në dy grupe. Për të tre
-      detektorët unsupervised F1 rritet, nga 0.124 në 0.166 mesatarisht, ndërsa për referencën e
-      mbikëqyrur bie nga 0.720 në 0.535."""),
+      detektorët unsupervised F1 rritet, nga 0.124 në 0.166 mesatarisht, ndërsa për referencën
+      supervised bie nga 0.720 në 0.535."""),
     fig(
         "adaptive_tradeoff",
         "Paqëndrueshmëria e ngarkesës dhe F1 me pragun statik dhe me atë adaptiv, për çdo model.",
@@ -320,7 +320,7 @@ _PH2 = [
       blloqet e testimit më pak alarme se sa synohet, 0.15% deri 0.20% e transaksioneve; pragu
       adaptiv e çon këtë në rreth 0.25%, ose 54 deri 56 alarme për bllok në vend të 33 deri 44.
       Recall-i rritet (te Autoencoder-i nga 0.158 në 0.312), ndërsa precision-i mbetet afërsisht i
-      njëjtë. Te referenca e mbikëqyrur alarmet rriten nga 31 në 51 për bllok, por precision-i bie
+      njëjtë. Te referenca supervised alarmet rriten nga 31 në 51 për bllok, por precision-i bie
       nga 0.756 në 0.443, sepse pragu statik i saj ishte tashmë i kalibruar mirë. Pragu adaptiv i
       shërben pra shtresës unsupervised dhe jo një modeli të kalibruar."""),
 ]
@@ -330,7 +330,7 @@ _PH3 = [
     p("""Pyetja e tretë hulumtuese testohet me pesë rregulla kombinimi mbi pikët e tri detektorëve
       unsupervised dhe me një procedurë lakmitare (greedy) që shton anëtarë një nga një për sa kohë
       rezultati përmirësohet. Procedura lakmitare i zgjedh anëtarët vetëm nga fold-et e mëparshme.
-      Referenca e mbikëqyrur nuk hyn në asnjë ansambël, sepse kjo do ta kthente kombinimin në një
+      Referenca supervised nuk hyn në asnjë ansambël, sepse kjo do ta kthente kombinimin në një
       model me etiketa."""),
     tab(
         "ensemble_summary",
@@ -387,10 +387,10 @@ _PH3 = [
     ),
     p("""Mashtrimet që nuk i arrin asnjë detektor kanë një tipar të përbashkët: ndodhen më afër
       popullatës legjitime, me distancë mediane 9.7 nga qendra e saj kundrejt 21.6 për ato që
-      arrihen (Figura [[fig:error_analysis]], djathtas). Megjithatë referenca e mbikëqyrur, me të
+      arrihen (Figura [[fig:error_analysis]], djathtas). Megjithatë referenca supervised, me të
       njëjtin buxhet, kap 59% të tyre. Informacioni që i dallon këto transaksione ekziston pra në të
       dhëna, por nuk ka formën që e sheh një detektor distancash; ndodhet në një drejtim
-      diskriminues që e gjen vetëm mbikëqyrja."""),
+      diskriminues që e gjen vetëm mësimi supervised."""),
     tab(
         "error_analysis_dark_set",
         "Mashtrimet e arritura nga të paktën një detektor dhe ato që nuk i arrin asnjë.",
@@ -438,7 +438,7 @@ _KONFIGURIMI = [
     p("""Diferenca mes paraprocesimit më të mirë dhe më të keq për të njëjtin detektor arrin deri në
       0.355, ndërsa diferenca mes tri detektorëve me StandardScaler është vetëm 0.102. Mënyra si
       përgatiten të dhënat ka pra më shumë peshë se cili nga tri algoritmet zgjidhet."""),
-    p("""Referenca e mbikëqyrur sillet ndryshe. Asnjë paraprocesim nuk e përmirëson atë në mënyrë
+    p("""Referenca supervised sillet ndryshe. Asnjë paraprocesim nuk e përmirëson atë në mënyrë
       domethënëse (katër fitore nga tetë, p = 0.84), dhe zgjedhja prekuenciale e ul rezultatin e saj
       me 0.025. Regresioni logjistik mëson një drejtim diskriminues, dhe kur veçoritë shkallëzohen
       ndryshe ai thjesht i rregullon koeficientët. Për metodat gjeometrike, përkundrazi, ndryshimi i
@@ -594,7 +594,7 @@ _PROTOKOLLI = [
         round={"fryrja": 2},
         font_size=9.5,
     ),
-    p("""Referenca e mbikëqyrur sillet përsëri ndryshe: për të ndarja e rastësishme sjell një rënie
+    p("""Referenca supervised sillet përsëri ndryshe: për të ndarja e rastësishme sjell një rënie
       të lehtë, me raport 0.92. Fryrja nuk është pra veti e dataset-it ose e metrikës, por pasojë e
       mënyrës si metodat gjeometrike përfitojnë kur transaksione të së njëjtës periudhë ndodhen
       njëkohësisht në trajnim dhe në test. Madhësia e efektit është shqetësuese: fryrja prej 3.01

@@ -107,7 +107,7 @@ BLOCKS = [
             "deri te alarmet në PostgreSQL dhe Grafana, me vonesë end-to-end të matur në katër "
             "ritme mbërritjeje.",
             "Krahasimi i unifikuar i Isolation Forest-it, Autoencoder-it dhe One-Class SVM-së me "
-            "një referencë të mbikëqyrur mbi të njëjtën infrastrukturë, me cilësinë dhe koston "
+            "një referencë supervised mbi të njëjtën infrastrukturë, me cilësinë dhe koston "
             "operacionale krahas njëra-tjetrës, në një protokoll rolling-origin 8-fold ku në çdo "
             "fold rindërtohen nga fillimi skaluesi, modelet dhe pragjet.",
             "Rezultati negativ për ansamblet, i shpjeguar në nivel transaksioni: detektorët "

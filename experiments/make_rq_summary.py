@@ -103,7 +103,7 @@ def main(cfg=None):
             "Evidenca": (
                 f"AP {best_unsup['ap_mean']:.3f} (s.d. {best_unsup['ap_std']:.3f}) në protokollin "
                 f"8-fold, me kosto pikëzimi {best_unsup['score_us_per_tx']:.2f} µs/tx"
-                f"{', më e ulëta' if cheapest else ''}. Referenca e mbikëqyrur: AP "
+                f"{', më e ulëta' if cheapest else ''}. Referenca supervised: AP "
                 f"{reference['ap_mean']:.3f}. {tuning_note}"
             ),
         },

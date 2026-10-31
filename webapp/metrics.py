@@ -72,7 +72,7 @@ def headline() -> list[dict[str, Any]]:
         if reference is not None:
             tiles.append(
                 _tile(
-                    "Referenca e mbikëqyrur",
+                    "Referenca supervised",
                     _fmt(reference),
                     "AP",
                     "kufi i sipërm kur etiketat ekzistojnë",
@@ -384,7 +384,7 @@ def tour() -> list[dict[str, Any]]:
         ),
         (
             "Etiketat historike vlejnë shumë",
-            "Nën konfigurimin bazë, referenca e mbikëqyrur mbetet dukshëm përpara çdo detektori "
+            "Nën konfigurimin bazë, referenca supervised mbetet dukshëm përpara çdo detektori "
             "unsupervised. Hendeku është kuantifikimi i vlerës së atyre etiketave.",
             ranking_claim,
             "rezultatet",
@@ -417,7 +417,7 @@ def tour() -> list[dict[str, Any]]:
         (
             "Paraprocesimi peshon më shumë se zgjedhja e algoritmit",
             "Të tria metodat e përcaktojnë anomalinë përmes largësisë, dhe largësia varet "
-            "plotësisht nga shkalla e veçorive. Referenca e mbikëqyrur nuk preket.",
+            "plotësisht nga shkalla e veçorive. Referenca supervised nuk preket.",
             scaling_claim,
             "konfigurimi",
             "paraprocesimi",

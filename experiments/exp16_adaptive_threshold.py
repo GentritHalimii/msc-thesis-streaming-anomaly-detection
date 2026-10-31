@@ -281,7 +281,7 @@ def main(cfg=None):
         f" Kjo mesatare e fsheh gjetjen, sepse dy grupet lëvizin në drejtime të kundërta. "
         f"Për të tre detektorët unsupervised F1 rritet nga {su['f1'].mean():.4f} në "
         f"{au['f1'].mean():.4f}, me përmirësim në {gained} nga {len(unsup)} prej tyre, "
-        f"ndërsa për referencën e mbikëqyrur ai bie nga {ref_s['f1'].mean():.4f} në "
+        f"ndërsa për referencën supervised ai bie nga {ref_s['f1'].mean():.4f} në "
         f"{ref_a['f1'].mean():.4f}. Shkaku i rënies së referencës është i lexueshëm te "
         f"numri i alarmeve: ai rritet nga {ref_s['n_alerts'].mean():.0f} në "
         f"{ref_a['n_alerts'].mean():.0f} për bllok, dhe precision-i bie nga "

@@ -117,17 +117,17 @@ ABSTRAKT = [
     "marrë brenda milisekondash. Ky punim dizajnon, implementon dhe vlerëson një sistem end-to-end "
     "për zbulimin e anomalive mbi një rrjedhë të simuluar transaksionesh, i cili lidh Apache "
     "Kafka-n me tri algoritmet unsupervised të projekt-propozimit (Isolation Forest, Autoencoder "
-    "dhe One-Class SVM) dhe me Regresionin Logjistik si referencë të mbikëqyrur.",
+    "dhe One-Class SVM) dhe me Regresionin Logjistik si referencë supervised.",
     "Detektorët vlerësohen mbi dataset-in publik të ULB-së me një protokoll rolling-origin 8-fold, "
     "që rindërton skaluesin, modelet dhe pragjet në çdo fold, me Average Precision (AP) si metrikë "
     "kryesore. Percentili 99 i vonesës end-to-end nuk e kalon 132 milisekonda në asnjë nga ritmet "
     "e testuara, deri në 2000 mesazhe në sekondë, shumë nën objektivin prej një sekonde.",
     "Në konfigurimin bazë Autoencoder-i ofron balancën më të mirë mes cilësisë dhe kostos, me AP "
     "0.193 dhe koston më të ulët të pikëzimit, para One-Class SVM-së (0.150) dhe Isolation "
-    "Forest-it (0.091). Referenca e mbikëqyrur arrin 0.734, gjë që tregon sa vlejnë etiketat "
+    "Forest-it (0.091). Referenca supervised arrin 0.734, gjë që tregon sa vlejnë etiketat "
     "historike. Asnjë ansambël nuk e kalon modelin më të mirë individual, sepse detektorët gabojnë "
     "njësoj: me 100 alarme për bllok, 37% e mashtrimeve nuk i arrin asnjë prej tyre, ndërsa "
-    "referenca e mbikëqyrur kap 59% të këtyre mashtrimeve.",
+    "referenca supervised kap 59% të këtyre mashtrimeve.",
     "Konfigurimi peshon më shumë se zgjedhja e algoritmit. Transformimi kuantil e rrit AP-në e "
     "One-Class SVM-së me 0.218, me përmirësim në të tetë fold-et, dhe kur secili detektor merr "
     "konfigurimin e tij më të mirë, raporti mes më të mirit dhe më të dobëtit bie nga 2.1 në 1.15. "
@@ -214,6 +214,10 @@ FJALORI = [
         "pas, në disa pika prerjeje të njëpasnjëshme",
     ),
     ("s.d.", "Devijimi standard (standard deviation)"),
+    (
+        "supervised",
+        "Mësim me etiketa gjatë trajnimit; termi ruhet në anglisht njësoj si unsupervised",
+    ),
     ("Throughput", "Numri i mesazheve të përpunuara për sekondë"),
     ("TPE", "Tree-structured Parzen Estimator, mostruesi i përdorur nga Optuna"),
     ("ULB", "Université Libre de Bruxelles"),

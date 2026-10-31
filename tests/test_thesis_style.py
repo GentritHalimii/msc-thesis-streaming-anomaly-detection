@@ -8,7 +8,7 @@ to violate again by accident:
 * No first-person singular. A thesis reports what was done, not what "I" did.
 * Technical terms that are standard in English inside Albanian technical
   writing stay in English. The title itself keeps "unsupervised", so the body
-  must not translate it either.
+  must not translate it either, nor its counterpart "supervised".
 """
 
 import re
@@ -48,6 +48,13 @@ KEEP_IN_ENGLISH = {
         "e pambikëqyrur",
         "së pambikëqyrur",
         "pambikëqyrura",
+    ],
+    "supervised": [
+        "i mbikëqyrur",
+        "të mbikëqyrur",
+        "e mbikëqyrur",
+        "së mbikëqyrur",
+        "të mbikëqyrura",
     ],
 }
 

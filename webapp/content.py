@@ -144,8 +144,8 @@ _OVERVIEW = page(
         "§1.4",
         prose(
             "Studimi kufizohet te tri algoritmet që emërton projekt-propozimi, Isolation "
-            "Forest, Autoencoder dhe One-Class SVM, me Regresionin Logjistik si referencë të "
-            "mbikëqyrur. Në vend që të shtohen algoritme të tjera, secili prej tyre studiohet "
+            "Forest, Autoencoder dhe One-Class SVM, me Regresionin Logjistik si referencë "
+            "supervised. Në vend që të shtohen algoritme të tjera, secili prej tyre studiohet "
             "në thellësi: me protokoll rolling-origin, me paraprocesimin dhe hiperparametrat "
             "si variabla eksperimentale, me parametrat kryesorë të secilit algoritëm dhe me "
             "analizën e gabimeve në nivel transaksioni.",
@@ -315,7 +315,7 @@ _RESULTS = page(
         "Krahasimi nën konfigurimin bazë",
         "§5.2.1",
         prose(
-            "Tabela kryesore krahason tri algoritmet unsupervised dhe referencën e mbikëqyrur "
+            "Tabela kryesore krahason tri algoritmet unsupervised dhe referencën supervised "
             "në tetë pika kohore prerjeje, me hiperparametrat e parazgjedhur dhe me skalim "
             "standard. Ky është konfigurimi bazë, jo ai më i mirë i arritshëm; dallimi mes "
             "tyre matet veçmas dhe rezulton i madh."
@@ -517,7 +517,7 @@ _RESULTS = page(
         figure("adaptive_tradeoff", "Kompromisi mes qëndrueshmërisë dhe cilësisë."),
         callout(
             "Për të tre detektorët unsupervised F1 rritet, kryesisht sepse pragu adaptiv "
-            "rikthen numrin e synuar të alarmeve; për referencën e mbikëqyrur ai bie. Pragu "
+            "rikthen numrin e synuar të alarmeve; për referencën supervised ai bie. Pragu "
             "statik i saj është tashmë i kalibruar, prandaj një kuantil mbi dritare "
             "rrëshqitëse vetëm sa e detyron të alarmojë më shumë se ç'duhet.",
             tone="warn",
@@ -537,7 +537,7 @@ _ENSEMBLE = page(
         "§5.3",
         prose(
             "Pesë rregulla kombinimi mbi tri pikët e detektorëve unsupervised, plus një "
-            "procedurë lakmitare që i shton anëtarët një nga një. Referenca e mbikëqyrur "
+            "procedurë lakmitare që i shton anëtarët një nga një. Referenca supervised "
             "përjashtohet nga çdo ansambël, sepse përfshirja e saj do ta shndërronte "
             "kombinimin unsupervised në një model me etiketa."
         ),
@@ -594,8 +594,8 @@ _ENSEMBLE = page(
         figure("error_analysis", "Mbulimi dhe pozicioni gjeometrik i mashtrimeve të paarritshme."),
         table("error_analysis_dark_set", "Mashtrimet e kapura kundrejt atyre të paarritshme."),
         callout(
-            "Nga mashtrimet që nuk i arrin asnjë detektor unsupervised, referenca e "
-            "mbikëqyrur i kap afërsisht gjashtëdhjetë për qind brenda të njëjtit buxhet. "
+            "Nga mashtrimet që nuk i arrin asnjë detektor unsupervised, referenca "
+            "supervised i kap afërsisht gjashtëdhjetë për qind brenda të njëjtit buxhet. "
             "Informacioni ekziston pra në të dhëna; ai thjesht nuk është i formës që një "
             "detektor distancash mund ta shohë.",
             tone="accent",
@@ -770,7 +770,7 @@ _CONFIG = page(
                 {"col": "LR (referencë)", "label": "LR (referencë)", "color": "#52514e"},
             ],
             ylabel="Average Precision (AP)",
-            title="Referenca e mbikëqyrur nuk lëviz; metodat gjeometrike po",
+            title="Referenca supervised nuk lëviz; metodat gjeometrike po",
         ),
         table(
             "scaling_prequential",

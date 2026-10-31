@@ -120,7 +120,7 @@ _PROTOKOLLI = [
       kronologjike vlerat e saj në bllokun e testimit janë gjithmonë jashtë intervalit të parë gjatë
       trajnimit, dhe pas skalimit çdo transaksion i testit do të kishte një vlerë ekstreme në këtë
       dimension. Kjo do ta prishte renditjen e çdo detektori të bazuar në distancë ose densitet,
-      ndërsa një model linear i mbikëqyrur do të ndikohej shumë më pak, sepse mund t'i japë kolonës
+      ndërsa një model linear supervised do të ndikohej shumë më pak, sepse mund t'i japë kolonës
       një peshë të vogël."""),
     note("""Rreziku nuk është vetëm teorik. Mungesa e kolonës Time mes veçorive kontrollohet me test
       automatik, sepse ky mekanizëm do të prodhonte një rënie të cilësisë me kohën që duket njësoj
@@ -245,11 +245,11 @@ _PROTOKOLLI = [
       inferencës: çdo transaksion i pikëzuar krahasohet me të gjithë ata. Kështu parametri ν, që
       përcakton sa i ngushtë është kufiri, përcakton edhe vonesën, dhe të dyja raportohen
       bashkë."""),
-    h3("4.4.5", "Referenca e mbikëqyrur"),
+    h3("4.4.5", "Referenca supervised"),
     p("""Projekt-propozimi kërkonte njëkohësisht trajnim vetëm mbi transaksione normale dhe një
       model bazë me Regresion Logjistik, që ka nevojë për etiketa. Zgjidhja e zbatuar këtu e bën
       këtë mospërputhje të dukshme: modeli trajnohet mbi gjithë dritaren e trajnimit me etiketat e
-      saj, përfshirë mashtrimet që ndodhen aty, dhe raportohet gjithmonë si referencë e mbikëqyrur.
+      saj, përfshirë mashtrimet që ndodhen aty, dhe raportohet gjithmonë si referencë supervised.
       Ai tregon çfarë do të arrihej nëse do të përdoreshin etiketat historike, pra shërben si kufi i
       sipërm."""),
 ]
@@ -264,8 +264,8 @@ _PRAGU = [
       trajnimit:"""),
     eq("τ = Kuantili_{1−c} { s(x) : x ∈ D_trajnim }"),
     p("""ku c është kontaminimi. Kur nuk jepet ndryshe, c merret i barabartë me normën e mashtrimit
-      në dritaren e trajnimit. Kjo përdor etiketa vetëm nga e kaluara, njësoj si referenca e
-      mbikëqyrur. Nënkapitulli 5.2.4 mat sa varen rezultatet nga kjo zgjedhje, duke e ndryshuar
+      në dritaren e trajnimit. Kjo përdor etiketa vetëm nga e kaluara, njësoj si referenca
+      supervised. Nënkapitulli 5.2.4 mat sa varen rezultatet nga kjo zgjedhje, duke e ndryshuar
       kontaminimin në një interval prej dy rendesh madhësie."""),
     h3("4.5.2", "Pragu orakull"),
     p("""Për krahasim raportohet edhe pragu që maksimizon F1 mbi të dhënat e testit. Ky prag nuk

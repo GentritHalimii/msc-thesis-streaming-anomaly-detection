@@ -18,7 +18,7 @@ Studimi kufizohet te algoritmet që emërton projekt-propozimi dhe i studion ato
 |---|---|
 | Detektorë primarë unsupervised | Isolation Forest, Autoencoder |
 | Komponent shtesë unsupervised | One-Class SVM |
-| Referencë e mbikëqyrur | Logistic Regression (kufi i sipërm, jo konkurrent) |
+| Referencë supervised | Logistic Regression (kufi i sipërm, jo konkurrent) |
 
 Thellësia vjen nga katër drejtime: protokolli rolling-origin me tetë fold-e, paraprocesimi dhe
 hiperparametrat si variabla eksperimentale, studimi i parametrave kryesorë të secilit
@@ -30,20 +30,20 @@ algoritëm, dhe analiza e gabimeve në nivel transaksioni.
   herë nën objektivin prej 1 s; p99 maksimal 132 ms. Një consumer i vetëm ngopet rreth 1 760
   msg/s.
 - **Krahasimi (PH2), konfigurimi bazë.** Autoencoder 0.193, One-Class SVM 0.151, Isolation
-  Forest 0.091; referenca e mbikëqyrur 0.734. Autoencoder-i ka edhe koston më të ulët të
+  Forest 0.091; referenca supervised 0.734. Autoencoder-i ka edhe koston më të ulët të
   pikëzimit; dallimi i tij nga One-Class SVM nuk është domethënës (Wilcoxon, Holm).
 - **Ansambli (PH3).** Rezultat negativ nën të dy regjimet e hiperparametrave. Detektorët gabojnë
   njësoj: me 100 alarme për bllok, 37% e mashtrimeve nuk i arrin asnjë prej tyre, ndërsa
-  referenca e mbikëqyrur kap 59% të tyre.
+  referenca supervised kap 59% të tyre.
 - **Konfigurimi peshon më shumë se algoritmi.** Transformimi kuantil e ngre One-Class SVM-në me
   +0.218 AP (në 0.368) në 8/8 fold-e, edhe kur skaluesi zgjidhet vetëm nga fold-et e mëparshme;
   akordimi e çon Autoencoder-in në 0.335 dhe Isolation Forest-in në 0.168. Me konfigurimin më të
   mirë për secilin, raporti mes më të mirit dhe më të dobëtit bie nga 2.1 në 1.15.
 - **Protokolli.** Ndarja e rastësishme e fryn AP-në unsupervised rreth 3.0 herë (4.5 herë për
-  Isolation Forest); referencën e mbikëqyrur nuk e fryn (0.92).
+  Isolation Forest); referencën supervised nuk e fryn (0.92).
 - **Pragu.** Me prag sipas normës së mashtrimit detektorët unsupervised kapin pak; F1 arrin
   kulmin me kontaminim 0.5%. Pragu adaptiv e ul paqëndrueshmërinë e ngarkesës (CV 0.84 → 0.62)
-  dhe rrit F1 unsupervised nga 0.124 në 0.166; referencës së mbikëqyrur ia ul F1-in.
+  dhe rrit F1 unsupervised nga 0.124 në 0.166; referencës supervised ia ul F1-in.
 - **Kostoja e One-Class SVM-së.** 1 000 mostra trajnimi japin të njëjtën cilësi si 20 000, me
   kohë trajnimi 160 herë dhe kosto pikëzimi 9 herë më të vogël.
 

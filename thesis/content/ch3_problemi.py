@@ -25,7 +25,7 @@ BLOCKS = [
     p("""Kjo pasqyron supozimin se historia e verifikuar ekziston për të kaluarën: një bankë e di se
       cilat transaksione të muajit të kaluar u kontestuan, por për rrjedhën aktuale nuk e di. Duhet
       thënë qartë se ky është një përdorim i etiketave historike, edhe pse i kufizuar vetëm në
-      pastrimin e të dhënave të trajnimit. Referenca e mbikëqyrur trajnohet mbi të njëjtën dritare,
+      pastrimin e të dhënave të trajnimit. Referenca supervised trajnohet mbi të njëjtën dritare,
       por me të dyja klasat dhe me etiketa, prandaj shërben si kufi i sipërm e jo si konkurrent i
       barabartë."""),
     h2("3.2", "Kufizimet që e bëjnë problemin të veçantë"),
@@ -66,8 +66,8 @@ BLOCKS = [
     numbers(
         [
             "Etiketat historike janë të disponueshme dhe të sakta. Kjo lejon llogaritjen e normës "
-            "së kontaminimit, pastrimin e të dhënave të trajnimit dhe trajnimin e referencës së "
-            "mbikëqyrur. Në realitet etiketat historike janë të paplota, kështu që referenca do të "
+            "së kontaminimit, pastrimin e të dhënave të trajnimit dhe trajnimin e referencës "
+            "supervised. Në realitet etiketat historike janë të paplota, kështu që referenca do të "
             "ishte më e dobët dhe hendeku i matur më i vogël.",
             "Transaksionet normale të dritares së trajnimit janë përfaqësuese të normalitetit. Ky "
             "është supozimi i çdo metode unsupervised, dhe analiza e zhvendosjes në Shtojcën E e "

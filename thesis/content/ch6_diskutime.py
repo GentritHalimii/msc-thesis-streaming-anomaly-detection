@@ -15,7 +15,7 @@ _SINTEZA = [
     ),
     p("""Në këtë punim u ndërtua dhe u vlerësua një sistem i plotë për zbulimin e anomalive mbi një
       rrjedhë të simuluar transaksionesh financiare, i cili lidh Apache Kafka-n me tri algoritmet
-      unsupervised të projekt-propozimit dhe me një referencë të mbikëqyrur. Gjetjet kryesore janë
+      unsupervised të projekt-propozimit dhe me një referencë supervised. Gjetjet kryesore janë
       këto:"""),
     numbers(
         [
@@ -27,11 +27,11 @@ _SINTEZA = [
             "me AP 0.193 dhe koston më të ulët të pikëzimit, i ndjekur nga One-Class SVM dhe "
             "Isolation Forest. Diferenca mes Autoencoder-it dhe Isolation Forest-it është "
             "statistikisht e qëndrueshme, ajo mes Autoencoder-it dhe One-Class SVM-së jo. "
-            "Referenca e mbikëqyrur mbetet shumë përpara, me AP 0.734, dhe e mund secilin detektor "
+            "Referenca supervised mbetet shumë përpara, me AP 0.734, dhe e mund secilin detektor "
             "në të tetë fold-et.",
             "Asnjë variant i ansamblit nuk e kalon modelin më të mirë individual, sepse detektorët "
             "gabojnë njësoj. Me 100 alarme për bllok, 37% e mashtrimeve nuk i arrin asnjë prej "
-            "tyre, ndërsa referenca e mbikëqyrur kap 59% të këtyre mashtrimeve.",
+            "tyre, ndërsa referenca supervised kap 59% të këtyre mashtrimeve.",
             "Konfigurimi peshon më shumë se algoritmi. Transformimi kuantil e rrit One-Class "
             "SVM-në me 0.218 AP në të tetë fold-et, dhe efekti mbetet kur skaluesi zgjidhet vetëm "
             "nga fold-et e mëparshme. Kur secili detektor merr konfigurimin e tij më të mirë, "
@@ -57,7 +57,7 @@ _SINTEZA = [
       dërrmuese e alarmeve u takon transaksioneve legjitime të pazakonta."""),
     p("""Analiza e gabimeve e mbështet këtë dhe shton diçka të re. Me 100 alarme për bllok, 37% e
       mashtrimeve nuk i arrin asnjë detektor, dhe këto mashtrime ndodhen më afër popullatës
-      legjitime. Referenca e mbikëqyrur megjithatë kap 59% të tyre me të njëjtin buxhet. Kufiri
+      legjitime. Referenca supervised megjithatë kap 59% të tyre me të njëjtin buxhet. Kufiri
       i metodave unsupervised këtu nuk vjen pra nga mungesa e sinjalit, por nga forma e tij: një
       drejtim diskriminues mësohet nga etiketat, ndërsa largësia nga normaliteti nuk e zbulon
       atë."""),
@@ -88,7 +88,7 @@ _SINTEZA = [
       veçorive. Kur ndryshon shkalla, ndryshon vetë problemi që zgjidh algoritmi. Efekti nuk vjen
       nga përzgjedhja pas faktit, sepse mbetet edhe kur skaluesi zgjidhet vetëm nga fold-et e
       mëparshme."""),
-    p("""Asimetria me referencën e mbikëqyrur e mbështet këtë interpretim. Regresioni logjistik
+    p("""Asimetria me referencën supervised e mbështet këtë interpretim. Regresioni logjistik
       mëson një drejtim diskriminues dhe, kur veçoritë shkallëzohen ndryshe, rregullon koeficientët,
       kështu që rezultati i tij nuk ndryshon. E njëjta asimetri u pa edhe me ndarjen e rastësishme,
       ku metodat unsupervised fituan shumë ndërsa referenca jo. Në të dy rastet metodat gjeometrike
@@ -144,9 +144,9 @@ _SINTEZA = [
       [@jurgovsky2018]. Dataset-i publik i përdorur këtu nuk ka identifikues karte, prandaj asnjë
       nga këto rrugë nuk ishte e mundur, dhe rezultatet duhen lexuar si kufi i poshtëm i asaj që
       arrihet me zbulim pikësor pa kontekst llogarie."""),
-    p("""Gjetja se pikët unsupervised mbeten shumë pas një modeli të mbikëqyrur përputhet me atë të
+    p("""Gjetja se pikët unsupervised mbeten shumë pas një modeli supervised përputhet me atë të
       Carcillo-s dhe bashkautorëve, të cilët treguan gjithashtu se këto pikë mbartin informacion
-      plotësues kur përdoren si veçori shtesë për një klasifikues të mbikëqyrur [@carcillo2021].
+      plotësues kur përdoren si veçori shtesë për një klasifikues supervised [@carcillo2021].
       Analiza e gabimeve këtu shkon në të njëjtin drejtim: shumica e mashtrimeve që nuk i arrijnë
       detektorët unsupervised kapen nga referenca, kështu që dy burimet e informacionit nuk
       mbivendosen plotësisht."""),
@@ -164,8 +164,8 @@ _SINTEZA = [
             "Kostoja e pikëzimit duhet të jetë kriter zgjedhjeje që në fillim. Dy metoda me cilësi "
             "të ngjashme mund të kenë kosto pikëzimi që ndryshon qindra herë, dhe në një rrjedhë "
             "ky dallim përcakton nëse metoda mund të vendoset.",
-            "Etiketat historike, edhe të vonuara, kanë vlerë të madhe. Hendeku me referencën e "
-            "mbikëqyrur dhe analiza e mashtrimeve që nuk kapen sugjerojnë që metodat unsupervised "
+            "Etiketat historike, edhe të vonuara, kanë vlerë të madhe. Hendeku me referencën "
+            "supervised dhe analiza e mashtrimeve që nuk kapen sugjerojnë që metodat unsupervised "
             "të përdoren si shtresë plotësuese për periudhën pa etiketa, jo si zëvendësim i "
             "përhershëm.",
             "Pragu adaptiv është i dobishëm për detektorët unsupervised, por jo për një model të "
@@ -207,7 +207,7 @@ _SINTEZA = [
             "për fold janë të zhurmshme, siç shihet në devijimet standarde të mëdha.",
             "Detektorët unsupervised trajnohen mbi transaksionet normale të dritares, të pastruara "
             "me etiketat historike, dhe kontaminimi bazë merret nga norma e mashtrimit në dritaren "
-            "e trajnimit. Të dyja përdorin etiketa historike, njësoj si referenca e mbikëqyrur; në "
+            "e trajnimit. Të dyja përdorin etiketa historike, njësoj si referenca supervised; në "
             "një sistem krejtësisht pa etiketa, dritarja e trajnimit do të përmbante edhe "
             "mashtrimet.",
             "Hiperparametrat u akorduan një herë, në dritaren e ndarjes 70/30, dhe jo brenda çdo "
@@ -237,11 +237,11 @@ _SINTEZA = [
         [
             "Vlerësimi mbi një dataset me identifikues llogarie, ku mund të ndërtohen veçori të "
             "agreguara për mbajtës. Kjo do të tregonte nëse hendeku mes metodave unsupervised dhe "
-            "atyre të mbikëqyrura ngushtohet kur konteksti është i disponueshëm; analiza e "
+            "atyre supervised ngushtohet kur konteksti është i disponueshëm; analiza e "
             "mashtrimeve që nuk kapen sugjeron se aty ndodhet pjesa më e madhe e hapësirës për "
             "përmirësim.",
             "Kombinimi hibrid në stilin e Carcillo-s dhe bashkautorëve [@carcillo2021], ku pikët "
-            "unsupervised përdoren si veçori shtesë për një model të mbikëqyrur të trajnuar mbi "
+            "unsupervised përdoren si veçori shtesë për një model supervised të trajnuar mbi "
             "etiketat e vonuara.",
             "Kërkimi i përbashkët mbi paraprocesimin dhe hiperparametrat. Meqë të dyja ndikojnë "
             "shumë dhe ndërveprojnë, optimizimi i tyre veç e veç nuk e gjen domosdoshmërisht "

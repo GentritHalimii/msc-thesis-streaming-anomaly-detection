@@ -211,7 +211,7 @@ def main(cfg=None):
         f"arrihen nga të tre njëkohësisht. Mashtrimet e paarritshme kanë distancë mediane "
         f"‖z‖ {comparison.loc[1, 'norma_z_mediane']:.1f} kundrejt "
         f"{comparison.loc[0, 'norma_z_mediane']:.1f} të atyre të kapura, pra ato ndodhen "
-        f"më afër popullatës legjitime. Referenca e mbikëqyrur i arrin "
+        f"më afër popullatës legjitime. Referenca supervised i arrin "
         f"{100 * lr_rescue:.0f}% e tyre brenda të njëjtit buxhet, çka tregon se informacioni "
         f"ekziston në të dhëna por nuk është i formës që një detektor distancash e sheh."
     )

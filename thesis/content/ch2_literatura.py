@@ -147,15 +147,15 @@ _ALGORITMET = [
       mbështetës, i cili nga ana e vet varet nga ν. Kështu i njëjti hiperparametër që përcakton sa i
       ngushtë është kufiri përcakton edhe vonesën e inferencës, prandaj të dyja duhen raportuar
       bashkë."""),
-    h2("2.5", "Modeli bazë i mbikëqyrur"),
+    h2("2.5", "Modeli bazë supervised"),
     p("""Propozimi kërkon njëkohësisht trajnim vetëm mbi transaksione normale dhe një model bazë me
       Regresion Logjistik, dy kërkesa që nuk pajtohen, sepse regresioni logjistik ka nevojë për
-      etiketa. Literatura e zgjidh këtë duke e trajtuar modelin e mbikëqyrur si kufi të sipërm që
+      etiketa. Literatura e zgjidh këtë duke e trajtuar modelin supervised si kufi të sipërm që
       arrihet kur etiketat janë në dispozicion, jo si konkurrent të barabartë. Bhattacharyya dhe
-      bashkautorët bënë një nga krahasimet e para sistematike të metodave të mbikëqyrura për këtë
+      bashkautorët bënë një nga krahasimet e para sistematike të metodave supervised për këtë
       problem, mbi të dhëna reale transaksionesh [@bhattacharyya2011]."""),
     p("""Ky punim ndjek të njëjtën logjikë. Regresioni logjistik trajnohet mbi gjithë dritaren e
-      trajnimit me etiketat e saj dhe shënohet gjithmonë si referencë e mbikëqyrur. Ai nuk konkurron
+      trajnimit me etiketat e saj dhe shënohet gjithmonë si referencë supervised. Ai nuk konkurron
       me detektorët; shërben për të matur sa vlejnë etiketat historike."""),
 ]
 
@@ -194,13 +194,13 @@ _DOMENI = [
       riprodhueshmërinë si kërkesë qendrore dhe e diskuton hapur ndarjen kohore [@leborgne2022]. Ai
       rekomandon vlerësim me ndarje kohore dhe me vonesë verifikimi, që është edhe drejtimi i
       ndjekur këtu."""),
-    h3("2.6.3", "Kombinimi i qasjes së mbikëqyrur dhe asaj unsupervised"),
+    h3("2.6.3", "Kombinimi i qasjes supervised me atë unsupervised"),
     p("""Carcillo dhe bashkautorët provuan pikët e anomalisë nga metodat unsupervised si veçori
-      shtesë për një klasifikues të mbikëqyrur dhe raportuan përmirësim [@carcillo2021]. Rezultati
+      shtesë për një klasifikues supervised dhe raportuan përmirësim [@carcillo2021]. Rezultati
       sugjeron se metodat unsupervised mbartin informacion plotësues edhe kur, të marra vetëm,
-      mbeten shumë pas një modeli të mbikëqyrur. Analiza e gabimeve në Kapitullin 5 e mbështet këtë
+      mbeten shumë pas një modeli supervised. Analiza e gabimeve në Kapitullin 5 e mbështet këtë
       nga një kënd tjetër: shumica e mashtrimeve që nuk i kap asnjë detektor unsupervised kapen nga
-      referenca e mbikëqyrur."""),
+      referenca supervised."""),
     h2("2.7", "Arkitekturat për përpunim rrjedhash"),
     h3("2.7.1", "Apache Kafka"),
     p("""Kafka u prezantua nga Kreps, Narkhede dhe Rao si sistem i shpërndarë mesazhesh për
@@ -326,7 +326,7 @@ _METODOLOGJIA = [
             "Studimet për këtë dataset i analizojnë modelet kryesisht në mënyrë statike, mbi një "
             "ndarje të vetme, dhe shpesh testojnë një algoritëm të vetëm unsupervised. Nuk u gjet "
             "një krahasim i tri algoritmeve të propozimit mbi të njëjtën infrastrukturë Kafka, "
-            "bashkë me një referencë të mbikëqyrur, me vonesë të matur dhe me një protokoll "
+            "bashkë me një referencë supervised, me vonesë të matur dhe me një protokoll "
             "rolling-origin ku çdo fold rindërton gjithë zinxhirin e paraprocesimit dhe të "
             "pragjeve.",
             "Fryrja e rezultateve nga ndarja e rastësishme përmendet shpesh si rrezik, por rrallë "
