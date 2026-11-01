@@ -209,7 +209,7 @@ _PROTOKOLLI = [
       Konventa e shenjës është e njëjtë për të gjithë: vlerë më e lartë e pikës do të thotë më
       anormale. Konventa kontrollohet me test automatik mbi të dhëna reale për secilin model, duke
       krahasuar medianën e pikëve të mashtrimeve me atë të transaksioneve legjitime. Falë kësaj,
-      harnesi i vlerësimit, ansamblet dhe konsumatori i rrjedhës nuk varen nga modeli konkret."""),
+      kodi i vlerësimit, ansamblet dhe consumer-i i rrjedhës nuk varen nga modeli konkret."""),
     tab(
         "model_zoo",
         "Detektorët, pika e anomalisë që llogarit secili dhe hiperparametrat bazë.",

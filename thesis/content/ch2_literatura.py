@@ -207,10 +207,10 @@ _DOMENI = [
     p("""Kafka u prezantua nga Kreps, Narkhede dhe Rao si sistem i shpërndarë mesazhesh për
       përpunimin e log-eve, i ndërtuar rreth një abstraksioni të vetëm: një log i qëndrueshëm, i
       ndarë në particione, ku të dhënat vetëm shtohen [@kreps2011]. Ky abstraksion i thjeshtë e bëri
-      Kafka-n shtyllë të arkitekturave moderne të të dhënave. Çdo konsumator mban vetë pozicionin e
-      tij në log, kështu që konsumatorët janë të pavarur nga njëri-tjetri dhe riprodhimi i
-      historikut është një operacion i zakonshëm [@kleppmann2017]. Kjo veti përdoret në këtë punim
-      për të simuluar një rrjedhë nga të dhëna historike."""),
+      Kafka-n shtyllë të arkitekturave moderne të të dhënave. Çdo consumer mban vetë pozicionin e
+      tij në log, kështu që consumer-at janë të pavarur nga njëri-tjetri dhe riprodhimi i historikut
+      është një operacion i zakonshëm [@kleppmann2017]. Kjo veti përdoret në këtë punim për të
+      simuluar një rrjedhë nga të dhëna historike."""),
     p("""Modaliteti KRaft e zëvendëson ZooKeeper-in me një protokoll konsensusi të brendshëm dhe e
       thjeshton vendosjen. Për një prototip kërkimor me një broker kjo do të thotë një shërbim më
       pak për t'u konfiguruar e mirëmbajtur, prandaj u zgjodh ky modalitet."""),
