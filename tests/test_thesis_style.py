@@ -1,6 +1,6 @@
 """House style for the thesis text, enforced rather than remembered.
 
-Three rules, all of which came from review feedback and all of which are easy
+Four rules, all of which came from review feedback and all of which are easy
 to violate again by accident:
 
 * No em dashes inside prose. They are not part of ordinary Albanian
@@ -9,6 +9,9 @@ to violate again by accident:
 * Technical terms that are standard in English inside Albanian technical
   writing stay in English. The title itself keeps "unsupervised", so the body
   must not translate it either, nor its counterpart "supervised".
+* Words the author replaced do not come back. "Pikëzim" reads as grading, so
+  the text says "inferencë", "përpunim" or "pikë anomalie" by meaning, and a
+  Kafka "ngjarje" is an "event".
 """
 
 import re
@@ -125,6 +128,26 @@ def test_terms_that_belong_in_english_are_not_translated(term):
     assert not offenders, f"'{term}' was translated; keep it in English:\n" + "\n".join(
         offenders[:10]
     )
+
+
+# Stems of words the author replaced, mapped to what the text uses instead.
+PREFERRED_TERMS = {
+    "pikëz": "inferencë, përpunim ose pikë anomalie",
+    "ngjarj": "event",
+}
+
+
+@pytest.mark.parametrize("stem", sorted(PREFERRED_TERMS))
+def test_replaced_terms_do_not_return(stem):
+    pattern = re.compile(rf"\b{stem}", re.IGNORECASE)
+    texts = [(name, text) for name, blocks in _blocks() for text in _texts(blocks)]
+    texts += [("front_matter", text) for text in _front_matter_texts()]
+    offenders = [
+        f"{name}: ...{text[max(0, m.start() - 50) : m.end() + 40]}..."
+        for name, text in texts
+        for m in pattern.finditer(text)
+    ]
+    assert not offenders, f"use {PREFERRED_TERMS[stem]} instead:\n" + "\n".join(offenders[:10])
 
 
 def _math_markup():

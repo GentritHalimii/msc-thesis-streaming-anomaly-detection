@@ -212,9 +212,9 @@ _PROTOKOLLI = [
       harnesi i vlerësimit, ansamblet dhe konsumatori i rrjedhës nuk varen nga modeli konkret."""),
     tab(
         "model_zoo",
-        "Detektorët, mekanizmi i pikëzimit dhe hiperparametrat bazë.",
+        "Detektorët, pika e anomalisë që llogarit secili dhe hiperparametrat bazë.",
         query="Detektori != 'PCA lineare (ablacion)'",
-        columns=["Detektori", "Familja", "Mekanizmi i pikëzimit", "Hiperparametrat"],
+        columns=["Detektori", "Familja", "Pika e anomalisë", "Hiperparametrat"],
         font_size=8.5,
     ),
     h3("4.4.2", "Isolation Forest"),
@@ -242,9 +242,8 @@ _PROTOKOLLI = [
       llogaritëse dhe jo nga një zgjedhje parimore. Studimi i thelluar e mat çmimin e tij: ndërton
       kurbën e të mësuarit deri në 80 000 transaksione dhe tregon sa AP kushton kufizimi."""),
     p("""Studimi mat gjithashtu numrin e vektorëve mbështetës, sepse ai përcakton koston e
-      inferencës: çdo transaksion i pikëzuar krahasohet me të gjithë ata. Kështu parametri ν, që
-      përcakton sa i ngushtë është kufiri, përcakton edhe vonesën, dhe të dyja raportohen
-      bashkë."""),
+      inferencës: çdo transaksion i ri krahasohet me të gjithë ata. Kështu parametri ν, që përcakton
+      sa i ngushtë është kufiri, përcakton edhe vonesën, dhe të dyja raportohen bashkë."""),
     h3("4.4.5", "Referenca supervised"),
     p("""Siç u shpjegua në nënkapitullin 2.5, Regresioni Logjistik nuk mund të trajnohet vetëm mbi
       transaksione normale si detektorët, sepse ka nevojë për etiketa. Zgjidhja e zbatuar këtu e bën
@@ -256,9 +255,9 @@ _PROTOKOLLI = [
 
 _PRAGU = [
     h2("4.5", "Përcaktimi i pragut"),
-    p("""Një funksion pikëzimi bëhet detektor vetëm kur i shtohet një prag, dhe zgjedhja e pragut
-      është vendi ku rrjedhja e informacionit hyn më lehtë e vërehet më vështirë. Në këtë punim
-      pragu caktohet me tri procedura të ndara."""),
+    p("""Një funksion që jep pikë anomalie bëhet detektor vetëm kur i shtohet një prag, dhe zgjedhja
+      e pragut është vendi ku rrjedhja e informacionit hyn më lehtë e vërehet më vështirë. Në këtë
+      punim pragu caktohet me tri procedura të ndara."""),
     h3("4.5.1", "Pragu nga percentili i trajnimit"),
     p("""Protokolli kryesor e merr pragun nga percentili (1 − c) i pikëve të dritares së
       trajnimit:"""),
@@ -305,7 +304,7 @@ _PRAGU = [
       brenda buxhetit, sepse humbja e një mashtrimi prej dy eurosh dhe e një mashtrimi prej dy mijë
       eurosh nuk janë i njëjti gabim."""),
     h3("4.6.3", "Metrikat e kostos llogaritëse"),
-    p("""Për secilin model maten koha e trajnimit, koha e pikëzimit për transaksion dhe memoria e
+    p("""Për secilin model maten koha e trajnimit, koha e inferencës për transaksion dhe memoria e
       përdorur gjatë trajnimit. Memoria matet si diferencë mes pikut të memories rezidente gjatë
       trajnimit dhe vlerës në fillim të tij, jo si piku absolut i procesit, sepse ky i fundit
       përfshin të dhënat e ngarkuara më parë dhe do të ishte pothuajse i njëjtë për të gjithë
@@ -369,8 +368,8 @@ _ARKITEKTURA = [
       krahasimin e saktë të pikëve mes dy regjimeve."""),
     p("""Producer-i riprodhon bllokun e testimit me ritëm konstant të konfigurueshëm dhe ndjek një
       orar absolut, që vonesat e vogla të mos grumbullohen në devijim të ritmit. Consumer-i mbledh
-      mikro-grupe deri në 64 mesazhe dhe i pikëzon si një matricë të vetme, me pritje të kufizuar në
-      50 milisekonda."""),
+      mikro-grupe deri në 64 mesazhe dhe i përpunon si një matricë të vetme, me pritje të kufizuar
+      në 50 milisekonda."""),
     note("""Kufiri i pritjes nuk ishte planifikuar. Në ekzekutimin e parë vonesa end-to-end dilte më
       e ulët në ritme të larta se në ritme të ulëta, gjë që nuk ka kuptim fizik; shkaku ishte se në
       ritme të ulëta vonesën e përcaktonte vetë mbledhja e mikro-grupit. Ky është një shembull se si
@@ -396,15 +395,15 @@ _ARKITEKTURA = [
       sekonda dhe në një ekzekutim prej vetëm 10 sekondash zë mbi një të dhjetën e kohës. Vetë
       consumer-i nuk mbetej pas (nënkapitulli 5.1)."""),
     h3("4.9.3", "Ruajtja dhe vizualizimi"),
-    p("""Ngjarjet e pikëzuara dhe alarmet ruhen në PostgreSQL në dy tabela, me çelës të përbërë nga
+    p("""Eventet e përpunuara dhe alarmet ruhen në PostgreSQL në dy tabela, me çelës të përbërë nga
       etiketa e ekzekutimit, identifikuesi i transaksionit dhe modeli; shkrimet bëhen në grupe që
-      ruajtja të mos ngadalësojë rrjedhën. Për çdo ngjarje ruhen pika, vendimi, etiketa, vula kohore
-      e krijimit, koha e inferencës, vonesa end-to-end dhe madhësia e mikro-grupit; për çdo alarm
+      ruajtja të mos ngadalësojë rrjedhën. Për çdo event ruhen pika, vendimi, etiketa, vula kohore e
+      krijimit, koha e inferencës, vonesa end-to-end dhe madhësia e mikro-grupit; për çdo alarm
       ruhen edhe pragu në fuqi dhe vula kohore e publikimit. Me këto të dhëna vonesa dhe vendimi
       mund të rindërtohen pas faktit."""),
     p("""Mbi këto tabela është ndërtuar një panel në Grafana OSS me nëntë grafikë: katër tregues
-      përmbledhës (ngjarjet e pikëzuara, alarmet e publikuara, alarmet që janë mashtrime të vërteta
-      dhe mashtrimet në rrjedhë), katër seri kohore (throughput-i i pikëzimit, alarmet me kalimin e
+      përmbledhës (eventet e përpunuara, alarmet e publikuara, alarmet që janë mashtrime të vërteta
+      dhe mashtrimet në rrjedhë), katër seri kohore (throughput-i i përpunimit, alarmet me kalimin e
       kohës, percentilet e vonesës end-to-end dhe percentili 95 i kohës së inferencës për model) dhe
       një tabelë me alarmet e fundit."""),
     p("""I gjithë konfigurimi i Grafana-s, burimi i të dhënave dhe vetë paneli ruhen si skedarë në

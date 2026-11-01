@@ -400,7 +400,7 @@ def _write_verdict(results_dir, summaries, arch, table):
         f"Funksioni i humbjes më i mirë është {best_loss['loss']} (AP {best_loss['ap_mean']:.4f}) "
         f"kundrejt {float(summaries['funksioni i humbjes'].iloc[-1]['ap_mean']):.4f} të "
         f"alternativës më të dobët; meqë pika e anomalisë është gjithmonë MSE, kjo tregon se "
-        f"përputhja mes objektivit të trajnimit dhe atij të pikëzimit ka rëndësi."
+        f"përputhja mes humbjes së trajnimit dhe pikës së anomalisë ka rëndësi."
     )
 
     positive = sum(1 for v in gaps.values() if v > 0)

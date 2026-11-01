@@ -123,7 +123,7 @@ ABSTRAKT = [
     "kryesore. Percentili 99 i vonesës end-to-end nuk e kalon 132 milisekonda në asnjë nga ritmet "
     "e testuara, deri në 2000 mesazhe në sekondë, shumë nën objektivin prej një sekonde.",
     "Në konfigurimin bazë Autoencoder-i ofron balancën më të mirë mes cilësisë dhe kostos, me AP "
-    "0.193 dhe koston më të ulët të pikëzimit, para One-Class SVM-së (0.150) dhe Isolation "
+    "0.193 dhe koston më të ulët të inferencës, para One-Class SVM-së (0.150) dhe Isolation "
     "Forest-it (0.091). Referenca supervised arrin 0.734, gjë që tregon sa vlejnë etiketat "
     "historike. Asnjë ansambël nuk e kalon modelin më të mirë individual, sepse detektorët gabojnë "
     "njësoj: me 100 alarme për bllok, 37% e mashtrimeve nuk i arrin asnjë prej tyre, ndërsa "
@@ -149,7 +149,7 @@ ABSTRACT_EN = [
     "milliseconds at every arrival rate tested, up to 2000 messages per second, far below the "
     "one-second target.",
     "In the default configuration the Autoencoder offers the best balance between quality and "
-    "cost, with an AP of 0.193 and the lowest scoring cost, ahead of One-Class SVM (0.150) and "
+    "cost, with an AP of 0.193 and the lowest inference cost, ahead of One-Class SVM (0.150) and "
     "Isolation Forest (0.091). The supervised reference reaches 0.734, which shows what historical "
     "labels are worth. No ensemble beats the best single model, because the detectors make the "
     "same mistakes: with 100 alerts per block, 37% of the frauds are reached by none of them, "
@@ -214,19 +214,12 @@ FJALORI = [
         "pas, në disa pika prerjeje të njëpasnjëshme",
     ),
     ("s.d.", "Devijimi standard (standard deviation)"),
-    (
-        "supervised",
-        "Mësim me etiketa gjatë trajnimit; termi ruhet në anglisht njësoj si unsupervised",
-    ),
+    ("supervised", "Mësim me etiketa gjatë trajnimit"),
     ("Throughput", "Numri i mesazheve të përpunuara për sekondë"),
     ("TPE", "Tree-structured Parzen Estimator, mostruesi i përdorur nga Optuna"),
     ("ULB", "Université Libre de Bruxelles"),
-    (
-        "unsupervised",
-        "Mësim pa etiketa gjatë trajnimit; termi ruhet në anglisht sepse përdoret ashtu edhe në "
-        "titullin e temës",
-    ),
-    ("µs/tx", "Mikrosekonda për transaksion, njësia e kostos së pikëzimit"),
+    ("unsupervised", "Mësim pa etiketa gjatë trajnimit"),
+    ("µs/tx", "Mikrosekonda për transaksion, njësia e kostos së inferencës"),
 ]
 
 

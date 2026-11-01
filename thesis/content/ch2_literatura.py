@@ -112,11 +112,11 @@ _ALGORITMET = [
       absolute dhe ajo e Huber-it janë më robuste ndaj vlerave ekstreme që ndodhen tashmë në të
       dhënat e trajnimit."""),
     p("""Variantet probabilistike shkojnë më tej. Autoencoder-i variacional e shtyn kodimin latent
-      drejt një shpërndarjeje të njohur dhe lejon pikëzim me kufirin e poshtëm të evidencës ose me
-      probabilitetin e rindërtimit [@kingma2014]; modelet hibride shtojnë mbi hapësirën latente një
-      model densiteti që mësohet bashkë me ngjeshjen. Këto variante nuk hyjnë në krahasimin kryesor,
-      sepse studimi përqendrohet te autoencoder-i standard, por janë drejtime të natyrshme
-      zgjerimi."""),
+      drejt një shpërndarjeje të njohur dhe lejon që pika e anomalisë të llogaritet me kufirin e
+      poshtëm të evidencës ose me probabilitetin e rindërtimit [@kingma2014]; modelet hibride
+      shtojnë mbi hapësirën latente një model densiteti që mësohet bashkë me ngjeshjen. Këto
+      variante nuk hyjnë në krahasimin kryesor, sepse studimi përqendrohet te autoencoder-i
+      standard, por janë drejtime të natyrshme zgjerimi."""),
     h3("2.3.3", "Lidhja me analizën e komponentëve kryesorë"),
     note("""Për këtë dataset lidhja ka edhe rëndësi praktike. Veçoritë V1 deri V28 janë vetë
       komponentë kryesorë, prandaj një detektor linear rindërtimi mbi një nënhapësirë PCA nuk është
@@ -144,7 +144,7 @@ _ALGORITMET = [
       duhet matur e jo supozuar. Ky punim zgjedh nën-mostrimin, sepse kështu ruhet metoda ekzakte pa
       përafrim të kernelit, dhe në Kapitullin 5 mat sa kushton ky kompromis me një kurbë të mësuari
       deri në 80 000 transaksione."""),
-    p("""Formulimi ka edhe një pasojë operacionale. Kostoja e pikëzimit varet nga numri i vektorëve
+    p("""Formulimi ka edhe një pasojë operacionale. Kostoja e inferencës varet nga numri i vektorëve
       mbështetës, i cili nga ana e vet varet nga ν. Kështu i njëjti hiperparametër që përcakton sa i
       ngushtë është kufiri përcakton edhe vonesën e inferencës, prandaj të dyja duhen raportuar
       bashkë."""),
@@ -216,9 +216,9 @@ _DOMENI = [
       pak për t'u konfiguruar e mirëmbajtur, prandaj u zgjodh ky modalitet."""),
     h3("2.7.2", "Platformat alternative dhe modelet e përpunimit"),
     p("""Apache Flink ofron një motor të përbashkët për përpunim rrjedhash dhe grupesh, me semantikë
-      të qartë kohore të ndërtuar rreth dallimit mes kohës së ngjarjes dhe kohës së përpunimit
+      të qartë kohore të ndërtuar rreth dallimit mes kohës së eventit dhe kohës së përpunimit
       [@carbone2015], ndërsa Spark Streaming e trajton rrjedhën si varg mikro-grupesh. Dallimi mes
-      dy kohëve vlen edhe për këtë prototip: koha e ngjarjes është kolona Time e dataset-it, ndërsa
+      dy kohëve vlen edhe për këtë prototip: koha e eventit është kolona Time e dataset-it, ndërsa
       koha e përpunimit është ora e sistemit gjatë riprodhimit, dhe të dyja masin gjëra të
       ndryshme."""),
     p("""Për zbulimin e mashtrimeve mbi rrjedha, punimi më i afërt me këtë është SCARFF i Carcillo-s

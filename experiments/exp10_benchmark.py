@@ -203,7 +203,7 @@ def figure_quality_cost(summary: pd.DataFrame, cfg):
     ax.xaxis.set_major_formatter(mpl.ticker.FuncFormatter(lambda v, _: f"{v:g}"))
     ax.set_xlim(0.05, 500)
     ax.set_ylim(0, 0.85)
-    ax.set_xlabel("Kosto e pikëzimit (mikrosekonda për transaksion, shkallë log)")
+    ax.set_xlabel("Kosto e inferencës (mikrosekonda për transaksion, shkallë log)")
     ax.set_ylabel(AX["ap"] + ", mesatare")
     ax.text(
         0.012,

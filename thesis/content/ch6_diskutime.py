@@ -24,7 +24,7 @@ _SINTEZA = [
             "konfigurimet e testuara, percentili 99 nuk e kalon 132 milisekonda, dhe inferenca zë "
             "nën 10% të vonesës edhe në rastin më të keq.",
             "Në konfigurimin bazë Autoencoder-i ofron balancën më të mirë mes cilësisë dhe kostos, "
-            "me AP 0.193 dhe koston më të ulët të pikëzimit, i ndjekur nga One-Class SVM dhe "
+            "me AP 0.193 dhe koston më të ulët të inferencës, i ndjekur nga One-Class SVM dhe "
             "Isolation Forest. Diferenca mes Autoencoder-it dhe Isolation Forest-it është "
             "statistikisht e qëndrueshme, ajo mes Autoencoder-it dhe One-Class SVM-së jo. "
             "Referenca supervised mbetet shumë përpara, me AP 0.734, dhe e mund secilin detektor "
@@ -136,7 +136,7 @@ _SINTEZA = [
       Topic-u i transaksioneve ndahet në disa particione dhe disa consumer-a punojnë në të njëjtin
       consumer group. Kafka ia cakton çdo particion vetëm një consumer-i të grupit, kështu që
       kapaciteti rritet afërsisht me numrin e consumer-ave, deri te numri i particioneve
-      [@kreps2011]. Pikëzimi nuk kërkon koordinim mes tyre, sepse çdo transaksion pikëzohet më vete
+      [@kreps2011]. Inferenca nuk kërkon koordinim mes tyre, sepse çdo transaksion trajtohet më vete
       me një skalues dhe një model që vetëm lexohen. I vetmi komponent me gjendje është pragu
       adaptiv: secili consumer do të mbante dritaren e vet, pra kuantili do të llogaritej për
       particion, gjë që mjafton kur particionet marrin trafik të ngjashëm. Ky shkallëzim nuk u mat
@@ -178,9 +178,9 @@ _SINTEZA = [
             "Paraprocesimi duhet zgjedhur bashkë me modelin. Në këtë studim ai dha përfitime më të "
             "mëdha se çdo zgjedhje algoritmi, dhe një sistem që e trajton skaluesin si detaj "
             "implementimi lë pa shfrytëzuar një përmirësim të konsiderueshëm.",
-            "Kostoja e pikëzimit duhet të jetë kriter zgjedhjeje që në fillim. Dy metoda me cilësi "
-            "të ngjashme mund të kenë kosto pikëzimi që ndryshon qindra herë, dhe në një rrjedhë "
-            "ky dallim përcakton nëse metoda mund të vendoset.",
+            "Kostoja e inferencës duhet të jetë kriter zgjedhjeje që në fillim. Dy metoda me "
+            "cilësi të ngjashme mund të kenë kosto të inferencës që ndryshon qindra herë, dhe në "
+            "një rrjedhë ky dallim përcakton nëse metoda mund të vendoset.",
             "Etiketat historike, edhe të vonuara, kanë vlerë të madhe. Hendeku me referencën "
             "supervised dhe analiza e mashtrimeve që nuk kapen sugjerojnë që metodat unsupervised "
             "të përdoren si shtresë plotësuese për periudhën pa etiketa, jo si zëvendësim i "

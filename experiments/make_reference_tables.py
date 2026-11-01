@@ -52,7 +52,7 @@ def model_zoo_table(cfg) -> pd.DataFrame:
                     if name != "logreg"
                     else "Referencë supervised"
                 ),
-                "Mekanizmi i pikëzimit": mech,
+                "Pika e anomalisë": mech,
                 "Kosto trajnimi": cost,
                 "Hiperparametrat": pretty,
             }

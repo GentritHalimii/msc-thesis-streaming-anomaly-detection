@@ -30,8 +30,7 @@ algoritëm, dhe analiza e gabimeve në nivel transaksioni.
   herë nën objektivin prej 1 s; p99 maksimal 132 ms. Consumer-i nuk mbetet pas në asnjë
   konfigurim: në 2000 msg/s throughput-i është 1 984–1 999 msg/s.
 - **Krahasimi (PH2), konfigurimi bazë.** Autoencoder 0.193, One-Class SVM 0.150, Isolation
-  Forest 0.091; referenca supervised 0.734. Autoencoder-i ka edhe koston më të ulët të
-  pikëzimit; dallimi i tij nga One-Class SVM nuk është domethënës (Wilcoxon, Holm).
+  Forest 0.091; referenca supervised 0.734. Autoencoder-i ka edhe koston më të ulët të inferencës; dallimi i tij nga One-Class SVM nuk është domethënës (Wilcoxon, Holm).
 - **Ansambli (PH3).** Rezultat negativ nën të dy regjimet e hiperparametrave. Detektorët gabojnë
   njësoj: me 100 alarme për bllok, 37% e mashtrimeve nuk i arrin asnjë prej tyre, ndërsa
   referenca supervised kap 59% të tyre.
@@ -45,7 +44,7 @@ algoritëm, dhe analiza e gabimeve në nivel transaksioni.
   kulmin me kontaminim 0.5%. Pragu adaptiv e ul paqëndrueshmërinë e ngarkesës (CV 0.84 → 0.62)
   dhe rrit F1 unsupervised nga 0.124 në 0.166; referencës supervised ia ul F1-in.
 - **Kostoja e One-Class SVM-së.** 1 000 mostra trajnimi japin të njëjtën cilësi si 20 000, me
-  kohë trajnimi 160 herë dhe kosto pikëzimi 9 herë më të vogël.
+  kohë trajnimi 160 herë dhe kosto të inferencës 9 herë më të vogël.
 
 ---
 

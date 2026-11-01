@@ -33,9 +33,9 @@ BLOCKS = [
       i përdorur këtu është publik, i dokumentuar dhe i përdorur gjerësisht, prandaj rezultatet mund
       t'i verifikojë kushdo."""),
     p("""Arsyeja e dytë, edhe më e rëndësishme nga ana metodologjike, është se riprodhimi
-      kronologjik ruan rendin e ngjarjeve. Një sistem në prodhim e sheh transaksionin e sotëm pasi
-      ka parë atë të djeshmin, kurrë anasjelltas. Ky rend ruhet plotësisht në simulim, ndërsa ndarja
-      e rastësishme që përdoret në një pjesë të literaturës e prish atë. Simulimi pra nuk e dobëson
+      kronologjik ruan rendin e eventeve. Një sistem në prodhim e sheh transaksionin e sotëm pasi ka
+      parë atë të djeshmin, kurrë anasjelltas. Ky rend ruhet plotësisht në simulim, ndërsa ndarja e
+      rastësishme që përdoret në një pjesë të literaturës e prish atë. Simulimi pra nuk e dobëson
       krahasimin statistikor të algoritmeve; ndikon vetëm në interpretimin e matjeve operacionale,
       sepse ritmi i mbërritjes caktohet nga eksperimenti dhe jo nga trafiku real."""),
     p("""Arsyeja e tretë është kontrolli. Në një mjedis të simuluar mund të ndryshohet ritmi i

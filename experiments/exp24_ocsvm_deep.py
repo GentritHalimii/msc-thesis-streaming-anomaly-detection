@@ -189,7 +189,7 @@ def summarise(cfg, results_dir, table):
         f"{at_used['ap_mean']:.4f}, ndërsa {int(at_max['train_subsample']):,} transaksione "
         f"japin {at_max['ap_mean']:.4f}; pra kompromisi kushton "
         f"{at_max['ap_mean'] - at_used['ap_mean']:+.4f} njësi AP, me kohë trajnimi që "
-        f"rritet nga {at_used['fit_s']:.1f}s në {at_max['fit_s']:.1f}s dhe kosto pikëzimi "
+        f"rritet nga {at_used['fit_s']:.1f}s në {at_max['fit_s']:.1f}s dhe kosto të inferencës "
         f"nga {at_used['us_per_tx']:.1f} në {at_max['us_per_tx']:.1f} mikrosekonda për "
         f"transaksion."
     )
@@ -253,7 +253,7 @@ def _learning_figure(cfg, table: pd.DataFrame, learning: pd.DataFrame, used: int
     for ax, column, label in (
         (ax1, "ap_mean", "AP (pikat: fold-et)"),
         (ax2, "fit_s", "Trajnimi (s)"),
-        (ax3, "us_per_tx", "Pikëzimi (µs për transaksion)"),
+        (ax3, "us_per_tx", "Inferenca (µs për transaksion)"),
     ):
         ax.plot(
             learning["train_subsample"],

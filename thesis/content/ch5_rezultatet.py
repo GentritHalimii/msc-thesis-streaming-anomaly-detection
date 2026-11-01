@@ -69,7 +69,7 @@ _PH1 = [
       gjysmë milisekonde mesatarisht në çdo ritëm, pra nën 1.5% të vonesës totale. Përjashtim bën
       Isolation Forest-i, me 5.46 milisekonda në ritmin më të ulët, që megjithatë është vetëm 9.4% e
       vonesës së tij totale. Pjesën më të madhe të vonesës e zënë transporti dhe mbledhja e
-      mesazheve, jo pikëzimi."""),
+      mesazheve, jo inferenca."""),
     p("""Kjo shpjegon edhe një vëzhgim që në pamje të parë duket i kundërt: vonesa bie kur ritmi
       rritet. Për Isolation Forest-in ajo zbret nga 58.1 milisekonda në ritmin 50 në 43.0 në ritmin
       2000, dhe për Autoencoder-in nga 30.1 në 18.9. Ndërkohë madhësia mesatare e mikro-grupit
@@ -93,13 +93,13 @@ _PH1 = [
       Isolation Forest-in (67.9 me prag statik), 29.7 për Autoencoder-in (30.2) dhe 31.9 për
       One-Class SVM-në (30.6). Dallimet janë brenda zhurmës së matjes, kështu që pragu adaptiv i
       nënkapitullit 5.2.4 nuk ka kosto operacionale të matshme."""),
-    p("""Në të njëjtat ekzekutime u kontrollua edhe ruajtja e të dhënave: transaksionet e pikëzuara
+    p("""Në të njëjtat ekzekutime u kontrollua edhe ruajtja e të dhënave: transaksionet e përpunuara
       dhe alarmet shkruhen në PostgreSQL në grupe, dhe paneli Grafana i lexon drejtpërsëdrejti nga
       baza. Testi i integrimit kontrollon që pikët e prodhuara në rrjedhë janë të njëjta me ato
       offline për të njëjtat transaksione, kështu që rezultatet e këtij kapitulli vlejnë edhe për
       sistemin në punë."""),
     p("""Kjo barazi lejon edhe një krahasim të drejtpërdrejtë me përpunimin batch. Në regjimin
-      offline modelet pikëzojnë një bllok të tërë testimi në grup, me 0.2 deri 55 mikrosekonda për
+      offline modelet përpunojnë një bllok të tërë testimi në grup, me 0.2 deri 55 mikrosekonda për
       transaksion (nënkapitulli 5.2.3), pra shumë më shpejt se në rrjedhë. Përpunimi batch e jep
       megjithatë vendimin vetëm pasi të jetë mbledhur grupi, ndërsa në rrjedhë çdo transaksion merr
       vendim brenda 19 deri 68 milisekondash mesatarisht nga krijimi i tij. Meqë pikët janë
@@ -152,7 +152,7 @@ _PH2 = [
         font_size=9.0,
     ),
     p("""Në tabelë, rangu llogaritet mbi AP-në e çdo fold-i, R@100 është recall-i me 100 alarme për
-      bllok, dhe kostoja e pikëzimit jepet në mikrosekonda për transaksion në regjimin offline.
+      bllok, dhe kostoja e inferencës jepet në mikrosekonda për transaksion në regjimin offline.
       Rezultati i parë është hendeku me referencën: modeli supervised arrin AP 0.734 dhe është i
       pari në të tetë fold-et (rangu mesatar 1.00), ndërsa metoda më e mirë unsupervised arrin
       0.193. Raporti prej rreth 3.8 mes tyre tregon sa vlejnë etiketat historike në këtë
@@ -232,11 +232,11 @@ _PH2 = [
       [[fig:benchmark_quality_cost]])."""),
     fig(
         "benchmark_quality_cost",
-        "Cilësia e zbulimit kundrejt kostos së pikëzimit (mesatare 8-fold).",
+        "Cilësia e zbulimit kundrejt kostos së inferencës (mesatare 8-fold).",
         15.0,
     ),
     p("""Në konfigurimin bazë përgjigja është e qartë. Autoencoder-i ka AP-në më të lartë mes
-      metodave unsupervised dhe njëkohësisht koston më të ulët të pikëzimit, 0.22 mikrosekonda për
+      metodave unsupervised dhe njëkohësisht koston më të ulët të inferencës, 0.22 mikrosekonda për
       transaksion. Isolation Forest-i kushton rreth 37 herë më shumë për transaksion (8.1
       mikrosekonda) dhe jep gjysmën e cilësisë, ndërsa One-Class SVM kushton rreth 250 herë më shumë
       (55.4 mikrosekonda), sepse çdo transaksion krahasohet me të gjithë vektorët mbështetës. Kjo
@@ -561,7 +561,7 @@ _STUDIMET = [
       30 herë më shumë se norma e mashtrimit."""),
     p("""Rezultati më i rëndësishëm operacionalisht vjen nga kurba e të mësuarit. Rritja e
       nën-mostrës së trajnimit nga 1000 në 80 000 transaksione e rrit AP-në vetëm nga 0.151 në
-      0.158, ndërsa koha e trajnimit rritet nga 0.006 në 50.6 sekonda dhe kostoja e pikëzimit nga
+      0.158, ndërsa koha e trajnimit rritet nga 0.006 në 50.6 sekonda dhe kostoja e inferencës nga
       5.2 në 188.2 mikrosekonda për transaksion (Figura [[fig:ocsvm_learning_curve]]). Kostoja ndjek
       numrin e vektorëve mbështetës, që rritet nga 102 në 4055."""),
     fig(
@@ -571,9 +571,9 @@ _STUDIMET = [
     ),
     p("""Pasoja praktike shkon kundër idesë se më shumë të dhëna janë gjithmonë më mirë. Këtu 1000
       transaksione trajnimi japin praktikisht të njëjtën cilësi si 20 000 e konfigurimit bazë, me
-      kosto pikëzimi nëntë herë më të ulët dhe kohë trajnimi rreth 160 herë më të shkurtër. Kostoja
-      kuadratike e kernelit, që literatura e përmend si pengesën kryesore të metodës, këtu nuk është
-      pengesë reale, sepse cilësia ngopet shumë më herët se kostoja."""),
+      kosto të inferencës nëntë herë më të ulët dhe kohë trajnimi rreth 160 herë më të shkurtër.
+      Kostoja kuadratike e kernelit, që literatura e përmend si pengesën kryesore të metodës, këtu
+      nuk është pengesë reale, sepse cilësia ngopet shumë më herët se kostoja."""),
 ]
 
 _PROTOKOLLI = [

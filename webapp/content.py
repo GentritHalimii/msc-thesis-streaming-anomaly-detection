@@ -152,8 +152,8 @@ _OVERVIEW = page(
         ),
         table(
             "model_zoo",
-            "Detektorët e krahasuar, mekanizmi i pikëzimit dhe hiperparametrat bazë.",
-            columns=["Detektori", "Familja", "Mekanizmi i pikëzimit", "Hiperparametrat"],
+            "Detektorët e krahasuar, pika e anomalisë që llogarit secili dhe hiperparametrat bazë.",
+            columns=["Detektori", "Familja", "Pika e anomalisë", "Hiperparametrat"],
             query="Detektori != 'PCA lineare (ablacion)'",
         ),
     ),
@@ -163,7 +163,7 @@ _OVERVIEW = page(
         "§4.9",
         prose(
             "Sistemi ndjek një arkitekturë pesështresore: burimi i të dhënave, shtresa e "
-            "rrjedhës me Apache Kafka në modalitetin KRaft, shtresa e pikëzimit me modelet "
+            "rrjedhës me Apache Kafka në modalitetin KRaft, shtresa e inferencës me modelet "
             "unsupervised, shtresa e alarmeve me prag, dhe shtresa e persistimit e "
             "vizualizimit me PostgreSQL dhe Grafana."
         ),
@@ -427,7 +427,7 @@ _RESULTS = page(
         "§5.2.3",
         prose(
             "Pyetja hulumtuese nuk kërkon detektorin më të saktë por atë me balancën më të "
-            "mirë. Kostoja e pikëzimit ndryshon me qindra herë mes detektorëve, dhe në rrjedhë "
+            "mirë. Kostoja e inferencës ndryshon me qindra herë mes detektorëve, dhe në rrjedhë "
             "ky dallim përcakton nëse një metodë është e vendosshme apo jo."
         ),
         chart(
@@ -437,7 +437,7 @@ _RESULTS = page(
             y="ap_mean",
             label="model",
             colorByLabel=True,
-            xlabel="Kostoja e pikëzimit (µs për transaksion)",
+            xlabel="Kostoja e inferencës (µs për transaksion)",
             ylabel="Average Precision (AP)",
             logx=True,
             title="Këndi i sipërm i majtë është pozicioni i dëshiruar",
@@ -728,7 +728,7 @@ _DEPTH = page(
             x="train_subsample",
             series=[
                 {"col": "fit_s", "label": "Koha e trajnimit (s)", "color": "#e34948"},
-                {"col": "us_per_tx", "label": "Pikëzimi (µs/tx)", "color": "#d98c1f"},
+                {"col": "us_per_tx", "label": "Inferenca (µs/tx)", "color": "#d98c1f"},
                 {"col": "support_vectors", "label": "Vektorë mbështetës", "color": "#898781"},
             ],
             xlabel="Transaksione normale në trajnim",
@@ -890,7 +890,7 @@ _STREAM = page(
         prose(
             "Për secilin model, njëzet mijë transaksione ripërsëriten mbi broker-in e vërtetë "
             "me ritëm të kontrolluar. Vonesa matet nga çasti kur producer-i e krijon mesazhin "
-            "deri kur consumer-i e ka pikëzuar atë, me orën e të njëjtit host."
+            "deri kur consumer-i e ka përpunuar atë, me orën e të njëjtit host."
         ),
         metrics("streaming"),
         chart(
@@ -968,7 +968,7 @@ _STREAM = page(
         "Çfarë ka arritur te baza e të dhënave",
         "§4.9.3",
         prose(
-            "Çdo ngjarje e pikëzuar dhe çdo alarm shkruhen në PostgreSQL me shkrime të "
+            "Çdo event i përpunuar dhe çdo alarm shkruhen në PostgreSQL me shkrime të "
             "grumbulluara. Numëruesit më poshtë lexohen drejtpërdrejt nga baza sa herë "
             "rifreskohet faqja."
         ),

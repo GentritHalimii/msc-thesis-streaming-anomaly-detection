@@ -13,7 +13,8 @@ BLOCKS = [
     eq("S = ⟨(x₁,t₁), …, (x_N,t_N)⟩,   t₁ ≤ t₂ ≤ … ≤ t_N"),
     p("""ku x_i ∈ ℝ^d është vektori i veçorive të transaksionit të i-të dhe t_i koha e tij. Çdo
       transaksioni i përgjigjet një etiketë e vërtetë y_i ∈ {0, 1}, ku 1 shënon mashtrim, por kjo
-      etiketë nuk dihet në momentin e vendimit. Kërkohet një funksion pikëzimi"""),
+      etiketë nuk dihet në momentin e vendimit. Kërkohet një funksion që i jep çdo transaksioni një
+      pikë anomalie"""),
     eq("s: ℝ^d → ℝ,   vlerë më e lartë = më anormale"),
     p("""i mësuar vetëm nga transaksionet e vëzhguara para një momenti prerjeje T, dhe një prag τ, i
       nxjerrë gjithashtu vetëm nga këto të dhëna, të tillë që vendimi ŷ_i = 1[s(x_i) ≥ τ] të jetë sa
@@ -45,9 +46,9 @@ BLOCKS = [
         ]
     ),
     h2("3.3", "Formulimi i objektivit të vlerësimit"),
-    p("""Nuk mjafton të përcaktohet funksioni i pikëzimit; duhet përcaktuar edhe çfarë do të thotë
-      që ai është i mirë. Metrika kryesore është Average Precision, e cila përmbledh kurbën
-      precision-recall pa u lidhur me një prag të vetëm:"""),
+    p("""Nuk mjafton të përcaktohet funksioni s; duhet përcaktuar edhe çfarë do të thotë që ai është
+      i mirë. Metrika kryesore është Average Precision, e cila përmbledh kurbën precision-recall pa
+      u lidhur me një prag të vetëm:"""),
     eq("AP = Σ_n (R_n − R_{n−1}) · P_n"),
     p("""ku P_n dhe R_n janë precision dhe recall në pragun e n-të të renditjes. Për një renditje
       krejt të rastësishme vlera e pritur e AP-së është e barabartë me pjesën e klasës pozitive, pra
@@ -72,7 +73,7 @@ BLOCKS = [
             "Transaksionet normale të dritares së trajnimit janë përfaqësuese të normalitetit. Ky "
             "është supozimi i çdo metode unsupervised, dhe analiza e zhvendosjes në Shtojcën E e "
             "teston atë empirikisht.",
-            "Renditja sipas kolonës Time pasqyron rendin real të ngjarjeve. Dataset-i nuk ka vula "
+            "Renditja sipas kolonës Time pasqyron rendin real të eventeve. Dataset-i nuk ka vula "
             "kohore absolute, vetëm sekonda nga transaksioni i parë, dhe ato pranohen ashtu siç "
             "janë.",
         ]
