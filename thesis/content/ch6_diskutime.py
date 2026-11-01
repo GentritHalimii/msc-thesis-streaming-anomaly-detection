@@ -125,6 +125,22 @@ _SINTEZA = [
       e algoritmit. Këtu raportohen të dyja dhe dallimi mes tyre thuhet qartë, sepse studimet që
       raportojnë vetëm të parën dhe e paraqesin si të dytën japin shpesh renditje që nuk
       përsëriten."""),
+    h3("6.2.6", "Kapaciteti i një consumer-i dhe shkallëzimi horizontal"),
+    p("""Në ritmet e testuara consumer-i nuk mbetet pas (nënkapitulli 5.1), por kapaciteti i tij ka
+      kufi. Ai i përpunon mikro-grupet njëri pas tjetrit në një proces të vetëm, kështu që
+      kapaciteti i tij varet kryesisht nga koha që i duhet për një mikro-grup dhe jo nga numri i
+      bërthamave të makinës. Consumer-i i Isolation Forest-it, më i kushtueshmi, përdori 73% të një
+      bërthame në 2000 mesazhe në sekondë, prandaj për të kufiri ndodhet mbi ritmet e testuara, por
+      jo shumë larg tyre."""),
+    p("""Kur ritmi e kalon këtë kufi, zgjidhja e natyrshme në Kafka është shkallëzimi horizontal.
+      Topic-u i transaksioneve ndahet në disa particione dhe disa consumer-a punojnë në të njëjtin
+      consumer group. Kafka ia cakton çdo particion vetëm një consumer-i të grupit, kështu që
+      kapaciteti rritet afërsisht me numrin e consumer-ave, deri te numri i particioneve
+      [@kreps2011]. Pikëzimi nuk kërkon koordinim mes tyre, sepse çdo transaksion pikëzohet më vete
+      me një skalues dhe një model që vetëm lexohen. I vetmi komponent me gjendje është pragu
+      adaptiv: secili consumer do të mbante dritaren e vet, pra kuantili do të llogaritej për
+      particion, gjë që mjafton kur particionet marrin trafik të ngjashëm. Ky shkallëzim nuk u mat
+      në këtë punim dhe mbetet ndër drejtimet e nënkapitullit 6.6."""),
     h2("6.3", "Krahasimi me literaturën"),
     p("""Vlerat absolute të raportuara këtu janë dukshëm më të ulëta se shumica e rezultateve të
       publikuara për këtë dataset. Punimi jep tri shpjegime të matura për këtë dallim."""),
@@ -156,7 +172,8 @@ _SINTEZA = [
     bullets(
         [
             "Infrastruktura nuk është pengesa. Me një broker dhe një consumer, vonesa mbetet shumë "
-            "nën objektiv deri në 1000 transaksione në sekondë. Investimi duhet drejtuar te "
+            "nën objektiv dhe consumer-i nuk mbetet pas deri në 2000 transaksione në sekondë, "
+            "ritmi më i lartë i testuar. Investimi duhet drejtuar te "
             "cilësia e modelit dhe te të dhënat, jo te optimizimi i transportit.",
             "Paraprocesimi duhet zgjedhur bashkë me modelin. Në këtë studim ai dha përfitime më të "
             "mëdha se çdo zgjedhje algoritmi, dhe një sistem që e trajton skaluesin si detaj "

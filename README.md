@@ -27,9 +27,9 @@ algoritëm, dhe analiza e gabimeve në nivel transaksioni.
 ## Rezultatet kryesore
 
 - **Vonesa (PH1).** Mesatarja end-to-end 19–68 ms në 16 konfigurime (50 deri 2000 msg/s), 15–53
-  herë nën objektivin prej 1 s; p99 maksimal 132 ms. Një consumer i vetëm ngopet rreth 1 760
-  msg/s.
-- **Krahasimi (PH2), konfigurimi bazë.** Autoencoder 0.193, One-Class SVM 0.151, Isolation
+  herë nën objektivin prej 1 s; p99 maksimal 132 ms. Consumer-i nuk mbetet pas në asnjë
+  konfigurim: në 2000 msg/s throughput-i është 1 984–1 999 msg/s.
+- **Krahasimi (PH2), konfigurimi bazë.** Autoencoder 0.193, One-Class SVM 0.150, Isolation
   Forest 0.091; referenca supervised 0.734. Autoencoder-i ka edhe koston më të ulët të
   pikëzimit; dallimi i tij nga One-Class SVM nuk është domethënës (Wilcoxon, Holm).
 - **Ansambli (PH3).** Rezultat negativ nën të dy regjimet e hiperparametrave. Detektorët gabojnë

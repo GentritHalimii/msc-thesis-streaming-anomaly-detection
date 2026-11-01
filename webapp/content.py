@@ -890,7 +890,7 @@ _STREAM = page(
         prose(
             "Për secilin model, njëzet mijë transaksione ripërsëriten mbi broker-in e vërtetë "
             "me ritëm të kontrolluar. Vonesa matet nga çasti kur producer-i e krijon mesazhin "
-            "deri kur consumer-i e ka pikëzuar atë, me orë monotonike të të njëjtit host."
+            "deri kur consumer-i e ka pikëzuar atë, me orën e të njëjtit host."
         ),
         metrics("streaming"),
         chart(
@@ -917,16 +917,16 @@ _STREAM = page(
             y="throughput_ratio",
             query="prag_adaptiv == False",
             xlabel="Ritmi i replay-it (mesazhe/s)",
-            ylabel="Kapaciteti i arritur / i synuar",
+            ylabel="Throughput / ritmi i synuar",
             logx=True,
             markers=True,
             colorByGroup=True,
             refs=[{"y": 1.0, "label": "consumer-i mban ritmin"}],
-            title="Ku fillon ngopja e një consumer-i të vetëm",
+            title="Consumer-i nuk mbetet pas në asnjë ritëm",
         ),
         table(
             "latency_summary",
-            "Vonesa, inferenca dhe kapaciteti për çdo kombinim modeli dhe ritmi.",
+            "Vonesa, inferenca dhe throughput-i për çdo kombinim modeli dhe ritmi.",
             query="prag_adaptiv == False",
             columns=[
                 "model",

@@ -375,7 +375,7 @@ _ARKITEKTURA = [
       e ulët në ritme të larta se në ritme të ulëta, gjë që nuk ka kuptim fizik; shkaku ishte se në
       ritme të ulëta vonesën e përcaktonte vetë mbledhja e mikro-grupit. Ky është një shembull se si
       një defekt matjeje mund të japë një rezultat që duket i besueshëm."""),
-    h3("4.9.2", "Matja e vonesës"),
+    h3("4.9.2", "Matja e vonesës dhe e throughput-it"),
     p("""Çdo mesazh mbart vulën kohore të krijimit nga producer-i. Consumer-i regjistron dy madhësi:
       kohën e inferencës, që mat vetëm llogaritjen e modelit dhe ndahet mbi mikro-grupin, dhe
       vonesën end-to-end, nga vula e producer-it deri në momentin kur vendimi është marrë dhe
@@ -387,6 +387,14 @@ _ARKITEKTURA = [
       është gati. Pa këtë sinkronizim, mesazhet e para do të prisnin në radhë gjatë nisjes së
       consumer-it, dhe bishti i shpërndarjes do të matte kohën e nisjes në vend të vonesës në
       gjendje të qëndrueshme."""),
+    p("""Throughput-i llogaritet si numri i mesazheve të përpunuara pjesëtuar me kohën nga krijimi
+      i mesazhit të parë deri te vendimi për të fundit. Ora e consumer-it nuk përdoret për këtë,
+      sepse ajo nis sapo consumer-i është gati, para se të niset procesi i producer-it."""),
+    note("""Në llogaritjen e parë throughput-i matej me orën e consumer-it, dhe në 2000 mesazhe në
+      sekondë dilte 86% deri 89% e ritmit, gjë që dukej si ngopje. Shkaku ishte nisja e
+      producer-it, me ngarkimin e bibliotekave dhe leximin e dataset-it, e cila zgjat 1.2 deri 2.1
+      sekonda dhe në një ekzekutim prej vetëm 10 sekondash zë mbi një të dhjetën e kohës. Vetë
+      consumer-i nuk mbetej pas (nënkapitulli 5.1)."""),
     h3("4.9.3", "Ruajtja dhe vizualizimi"),
     p("""Ngjarjet e pikëzuara dhe alarmet ruhen në PostgreSQL në dy tabela, me çelës të përbërë nga
       etiketa e ekzekutimit, identifikuesi i transaksionit dhe modeli; shkrimet bëhen në grupe që

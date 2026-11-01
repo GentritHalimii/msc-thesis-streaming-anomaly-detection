@@ -77,11 +77,12 @@ _PH1 = [
       të leximit para se të marrë një grup të vogël, dhe kjo pritje e përcakton vonesën; në ritme të
       larta grupi mbushet menjëherë dhe pritja zhduket. Në këto ritme sistemi kufizohet nga koha e
       transportit dhe jo nga kapaciteti llogaritës."""),
-    p("""Throughput-i tregon ku fillon kufiri. Deri në 1000 mesazhe në sekondë throughput-i i
-      arritur është 90% deri 99.6% e ritmit të synuar. Në 2000 mesazhe në sekondë ai bie në 86% deri
-      89%, dhe të katër modelet arrijnë rreth 1720 deri 1780 mesazhe në sekondë, gjë që tregon se
-      një consumer i vetëm ngopet afër kësaj vlere. Meqë hipoteza H1 e vendos kufirin në 1000
-      mesazhe në sekondë, ajo vlen edhe nga ky aspekt."""),
+    p("""Consumer-i nuk mbetet pas në asnjë nga 16 kombinimet. Throughput-i, i matur siç
+      përcaktohet në nënkapitullin 4.9.2, është të paktën 99% e ritmit të synuar; në 2000 mesazhe në
+      sekondë të katër modelet përpunojnë 1984 deri 1999 mesazhe në sekondë. Në këtë ritëm vonesa
+      mesatare e 10% të fundit të mesazheve ndryshon nga ajo e 10% të parë me më pak se 5
+      milisekonda, pra nuk krijohet radhë. Kufiri i një consumer-i të vetëm nuk arrihet në ritmet e
+      testuara; nënkapitulli 6.2.6 diskuton ku ndodhet ai dhe si do të kapërcehej."""),
     p("""Kostoja e burimeve është e moderuar. Përdorimi mesatar i CPU-së nuk e kalon 73% të një
       bërthame në asnjë konfigurim, dhe vlerat më të larta i ka Isolation Forest-i. Memoria
       rezidente maksimale është mes 353 dhe 360 MB dhe varet kryesisht nga interpretuesi Python dhe

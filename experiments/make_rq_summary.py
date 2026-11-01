@@ -90,9 +90,9 @@ def main(cfg=None):
                 f"Vonesa mesatare end-to-end {static['e2e_ms_mean'].min():.1f} deri "
                 f"{static['e2e_ms_mean'].max():.1f} ms në {len(static)} konfigurime "
                 f"({static['rate_msg_s'].min():.0f} deri {static['rate_msg_s'].max():.0f} msg/s); "
-                f"p99 më i lartë {static['e2e_ms_p99'].max():.0f} ms. Me "
-                f"{top_rate['rate_msg_s'].iloc[0]:.0f} msg/s throughput-i i një consumer-i "
-                f"ngopet në {top_rate['throughput_msg_s'].min():.0f} deri "
+                f"p99 më i lartë {static['e2e_ms_p99'].max():.0f} ms. Edhe me "
+                f"{top_rate['rate_msg_s'].iloc[0]:.0f} msg/s consumer-i nuk mbetet pas: "
+                f"throughput {top_rate['throughput_msg_s'].min():.0f} deri "
                 f"{top_rate['throughput_msg_s'].max():.0f} msg/s."
             ),
         },

@@ -238,10 +238,11 @@ def streaming() -> list[dict[str, Any]]:
     )
     tiles.append(
         _tile(
-            "Ngopja",
-            f"{static['throughput_msg_s'].max():.0f}",
-            "msg/s",
-            "me një consumer të vetëm",
+            "Throughput minimal",
+            f"{100 * static['throughput_ratio'].min():.1f}",
+            "%",
+            "e ritmit të synuar; consumer-i nuk mbetet pas",
+            "good",
         )
     )
     share = (static["infer_ms_mean"] / static["e2e_ms_mean"]).max()
