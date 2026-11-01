@@ -1,4 +1,4 @@
-"""Alert-budget and cost metrics against hand-computed cases."""
+"""Alert-budget, cost and throughput metrics against hand-computed cases."""
 
 import numpy as np
 import pytest
@@ -8,6 +8,7 @@ from src.evaluation.operational import (
     amount_weighted_average_precision,
     budget_metrics,
     net_savings,
+    stream_throughput,
     top_k_mask,
 )
 
@@ -65,3 +66,11 @@ def test_top_k_breaks_ties_in_favour_of_the_earlier_transaction():
     scores = np.array([1.0, 0.5, 1.0, 1.0, 0.5])
     mask = top_k_mask(scores, 2)
     assert mask.tolist() == [True, False, True, False, False]
+
+
+def test_stream_throughput_counts_only_the_live_window():
+    """1000 messages created 2 ms apart, each decided 10 ms after creation:
+    the stream is live for 999 * 2 ms + 10 ms, whatever happened before."""
+    produced = 1_700_000_000_000_000_000 + np.arange(1000, dtype=np.int64) * 2_000_000
+    e2e = np.full(1000, 10.0)
+    assert stream_throughput(produced, e2e) == pytest.approx(1000 / 2.008)

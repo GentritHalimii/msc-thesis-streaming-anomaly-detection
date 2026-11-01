@@ -14,6 +14,7 @@ import pandas as pd
 
 from src.config import REPO_ROOT, load_config
 from src.evaluation.manifest import write_manifest
+from src.evaluation.operational import stream_throughput
 from src.evaluation.report import (
     AX,
     CM,
@@ -102,6 +103,9 @@ def main(cfg=None):
     rows = []
     for path in files:
         df = pd.read_csv(path)
+        # A consumer that falls behind builds a queue, so its last messages wait
+        # longer than its first; equal latency at both ends means it kept pace.
+        tenth = max(len(df) // 10, 1)
         summary_path = lat_dir / path.name.replace("latency_", "summary_").replace(".csv", ".json")
         summary = json.loads(summary_path.read_text()) if summary_path.exists() else {}
         tag, rate = path.stem.removeprefix("latency_").rsplit("_rate", 1)
@@ -120,7 +124,9 @@ def main(cfg=None):
                 "infer_ms_mean": df["infer_ms"].mean(),
                 "infer_ms_p99": df["infer_ms"].quantile(0.99),
                 "batch_size_mean": df["batch_size"].mean(),
-                "throughput_msg_s": summary.get("throughput_msg_s"),
+                "e2e_ms_drift": df["e2e_ms"].iloc[-tenth:].mean()
+                - df["e2e_ms"].iloc[:tenth].mean(),
+                "throughput_msg_s": stream_throughput(df["produced_at_ns"], df["e2e_ms"]),
                 "cpu_percent_mean": summary.get("cpu_percent_mean"),
                 "rss_peak_mb": summary.get("rss_peak_mb"),
             }
@@ -130,7 +136,7 @@ def main(cfg=None):
     # the document shows. Keeping both avoids a lookup failure in the figure.
     table["model_key"] = table["model"]
     table["model"] = table["model_key"].map(lambda m: MODEL_LABELS.get(m, m))
-    # Achieved-vs-target throughput shows where the consumer stops keeping up.
+    # Achieved over target: 1.0 means the consumer kept pace with the arrival rate.
     table["throughput_ratio"] = table["throughput_msg_s"] / table["rate_msg_s"]
     save_table(table.drop(columns=["model_key"]), REPO_ROOT / cfg.results_dir, "latency_summary")
     print(table.drop(columns=["model_key"]).to_string(index=False))

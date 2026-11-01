@@ -160,7 +160,11 @@ def consume(
     n_processed = 0
     n_alerts = 0
     done = False
-    t_start = time.perf_counter()
+    # Throughput window: creation of the first message to the decision on the
+    # last, as in src.evaluation.operational.stream_throughput. A clock started
+    # here would also count the producer's start-up, which begins only now.
+    first_produced_ns = None
+    last_decided_ns = None
     with open(out_path, "w", newline="") as f:
         writer = csv.writer(f)
         writer.writerow(
@@ -197,6 +201,8 @@ def consume(
                 batch.append(record)
             if not batch:
                 continue
+            if first_produced_ns is None:
+                first_produced_ns = batch[0]["produced_at_ns"]
 
             X = scaler.transform(np.array([r["features"] for r in batch]))
             t0 = time.perf_counter()
@@ -254,11 +260,12 @@ def consume(
                             "batch_size": len(batch),
                         }
                     )
+            last_decided_ns = time.time_ns()
             producer.poll(0)
             writer.writerows(rows)
             n_processed += len(batch)
 
-    elapsed = time.perf_counter() - t_start
+    elapsed = (last_decided_ns - first_produced_ns) / 1e9 if first_produced_ns else 0.0
     stop.set()
     producer.flush()
     consumer.close()
