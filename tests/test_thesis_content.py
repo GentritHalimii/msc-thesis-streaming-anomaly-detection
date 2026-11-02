@@ -356,7 +356,7 @@ def test_contents_and_lists_are_word_automatic_tables():
     for title in FRONT_ENTRIES:
         assert last(title).style.name == "Heading 1", title
         assert last(title).paragraph_format.page_break_before is None
-    for title in ("ABSTRAKT", "ABSTRACT", "MIRËNJOHJE", "PËRMBAJTJA"):
+    for title in ("ABSTRAKT", "ABSTRACT", "MIRËNJOHJE/FALËNDERIME", "PËRMBAJTJA"):
         assert last(title).style.name == "Normal", title
 
     # The table list follows the figure list without a page break.

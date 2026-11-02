@@ -163,19 +163,17 @@ ABSTRACT_EN = [
 ]
 
 MIRENJOHJE = [
-    "Falënderime të veçanta i shkojnë mentorit, Dr. sc. Mehmet Shala, për udhëzimet e sakta dhe "
-    "për lirinë që kjo temë të ndiqej në thellësi, sidomos kur rezultatet e para nuk përputheshin "
-    "me pritjet.",
-    "Falënderime i shkojnë gjithashtu stafit akademik të Programit për Shkenca Kompjuterike dhe "
-    "Inxhinieri në UBT, në veçanti për lëndët Advanced Machine Learning dhe Deep Learning, të "
-    "cilat e formuan idenë se vlerësimi eksperimental është pjesë qendrore e kërkimit dhe jo hapi "
-    "i fundit i tij.",
-    "Një falënderim i takon grupit Machine Learning të Université Libre de Bruxelles për "
-    "publikimin e dataset-it që e bëri të mundur këtë studim, si dhe komunitetit të softuerit të "
-    "lirë, pa të cilin një infrastrukturë e tillë nuk do të ishte e arritshme në kuadrin e një "
-    "punimi diplome.",
-    "Së fundi, falënderime familjes për durimin dhe mbështetjen gjatë muajve kur kjo punë zuri "
-    "pjesën më të madhe të kohës.",
+    "Në radhë të parë, falënderimi i takon Allahut të Madhërishëm dhe të Gjithëdijshëm, për "
+    "forcën, durimin dhe të gjitha begatitë e dhuruara përgjatë këtij rrugëtimi.",
+    "Mirënjohje të thellë ia kushtoj familjes sime, për dashurinë e pakushtëzuar, sakrificat e "
+    "heshtura dhe besimin që nuk u lëkund asnjëherë. Përkrahja e tyre ka qenë forca pas çdo "
+    "përpjekjeje dhe mbështetja në çdo hap të këtij rrugëtimi. Një falënderim i veçantë u takon "
+    "edhe miqve të mi, për praninë, mbështetjen dhe çastet që e bënë këtë rrugëtim më të lehtë e "
+    "më të bukur.",
+    "Me respekt dhe mirënjohje të veçantë falënderoj mentorin e temës, Dr. sc. Mehmet Shala, për "
+    "udhëzimet profesionale, këshillat e vlefshme dhe besimin e treguar gjatë realizimit të këtij "
+    "punimi, si dhe për kontributin e çmuar përgjatë viteve të studimeve, përmes ligjërimit, "
+    "përkushtimit dhe ndarjes së njohurive.",
 ]
 
 FJALORI = [
@@ -300,7 +298,7 @@ def render_prelims(doc, outline, figures, tables, page_map, break_before=frozens
         add_paragraph(doc, para)
     page_break(doc)
 
-    _title(doc, "MIRËNJOHJE")
+    _title(doc, "MIRËNJOHJE/FALËNDERIME")
     for para in MIRENJOHJE:
         add_paragraph(doc, para)
     page_break(doc)
