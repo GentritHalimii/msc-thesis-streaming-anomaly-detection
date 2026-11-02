@@ -567,3 +567,36 @@ def test_table_numbers_print_with_fixed_decimals():
     ]
     grouped = _group_thousands(pd.Series([6415, 17327, "n/a"], dtype=object))
     assert list(grouped) == ["6\u00a0415", "17\u00a0327", "n/a"]
+
+
+def test_a_full_page_never_leaves_the_next_one_blank():
+    """A page break written as a paragraph of its own spills onto a new page
+    when the page before it is full, and that page stays blank. The builder
+    hands the break to the next paragraph instead."""
+    from docx.oxml.ns import qn
+    from docx_helpers import add_paragraph, fold_page_breaks, new_document, page_break
+
+    doc = new_document()
+    add_paragraph(doc, "Faqja e parë.")
+    page_break(doc)
+    add_paragraph(doc, "Faqja e dytë.")
+    page_break(doc)
+    doc.add_table(rows=1, cols=1)
+
+    assert fold_page_breaks(doc) == 1
+    paras = doc.paragraphs
+    assert [p.text for p in paras[:2]] == ["Faqja e parë.", "Faqja e dytë."]
+    assert paras[1].paragraph_format.page_break_before is True
+    # Before a table there is no paragraph to carry the break, so it stays.
+    assert len(list(doc.element.body.iter(qn("w:br")))) == 1
+
+
+def test_numbers_with_digit_groups_never_break_across_lines():
+    """The abstract once ended a line inside "284 807"; the front matter and
+    the chapters share one rule that ties the groups with a no-break space."""
+    from docx_helpers import keep_numbers_whole
+
+    text = "ULB-së (284 807 transaksione, 492 mashtrime), 20 000 rreshta, nga 2.1 në 1.15"
+    assert keep_numbers_whole(text) == (
+        "ULB-së (284\u00a0807 transaksione, 492 mashtrime), 20\u00a0000 rreshta, nga 2.1 në 1.15"
+    )

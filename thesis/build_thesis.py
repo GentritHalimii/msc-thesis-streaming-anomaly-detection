@@ -39,7 +39,9 @@ from docx_helpers import (  # noqa: E402
     add_paragraph,
     add_table,
     figure_bookmark,
+    fold_page_breaks,
     heading_bookmark,
+    keep_numbers_whole,
     new_document,
     page_break,
     set_bibliography_sources,
@@ -56,7 +58,6 @@ CITE_RE = re.compile(r"\[@([a-zA-Z0-9_]+)\]")
 # In the document the number is a cross-reference to the figure's caption.
 FIG_REF_RE = re.compile(r"\[\[fig:([a-zA-Z0-9_]+)\]\]")
 # A space that groups thousands ("284 807") must not break across lines.
-THOUSANDS_RE = re.compile(r"(?<=\d) (?=\d{3}\b)")
 # Printed stand-in for a value that does not exist, rather than "nan".
 MISSING = "n/a"  # never an em dash: the thesis reserves that character for nothing
 
@@ -122,7 +123,7 @@ def resolve_citations(text: str, numbering: Numbering) -> str:
         return f"{CITE_OPEN}{source_tag(key)}|{numbering.cite(key)}{CITE_CLOSE}"
 
     text = CITE_RE.sub(repl, text)
-    text = THOUSANDS_RE.sub("\u00a0", text)
+    text = keep_numbers_whole(text)
     # separate adjacent citations: [3][4][7] -> [3], [4], [7]
     return re.sub(f"{CITE_CLOSE}\\s*{CITE_OPEN}", f"{CITE_CLOSE}, {CITE_OPEN}", text)
 
@@ -454,6 +455,7 @@ def build(
     page_break(doc)
     render_blocks(doc, ch8_shtojcat.BLOCKS, numbering, counters)
 
+    fold_page_breaks(doc)
     doc.save(output)
     return output, numbering, fig_no["n"], tab_no["n"], eq_no["n"]
 

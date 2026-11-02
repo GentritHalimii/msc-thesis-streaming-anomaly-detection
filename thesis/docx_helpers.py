@@ -1079,8 +1079,50 @@ def add_logo(doc: Document):
     return para
 
 
+# A space between digit groups, as in "284 807". Typeset as a no-break space so
+# that a line never ends inside a number.
+THOUSANDS_RE = re.compile(r"(?<=\d) (?=\d{3}\b)")
+
+
+def keep_numbers_whole(text: str) -> str:
+    return THOUSANDS_RE.sub("\u00a0", text)
+
+
 def page_break(doc: Document):
     doc.add_paragraph().add_run().add_break(WD_BREAK.PAGE)
+
+
+def _is_break_only(p) -> bool:
+    """A paragraph whose only content is one run holding a page break."""
+    content = [c for c in p if c.tag != qn("w:pPr")]
+    if len(content) != 1 or content[0].tag != qn("w:r"):
+        return False
+    inner = [c for c in content[0] if c.tag != qn("w:rPr")]
+    return len(inner) == 1 and inner[0].tag == qn("w:br") and inner[0].get(qn("w:type")) == "page"
+
+
+def fold_page_breaks(doc: Document) -> int:
+    """Turn each paragraph that holds only a page break into "page break
+    before" on the paragraph that follows it.
+
+    A break paragraph is itself a line of text. When the page before it is
+    full, the line moves to a page of its own and the break then leaves that
+    page blank, which is how the abstract once left page II empty. "Page break
+    before" belongs to the next paragraph and cannot do that. A break followed
+    by a table or by another break stays as it is.
+    """
+    from docx.text.paragraph import Paragraph
+
+    body = doc.element.body
+    folded = 0
+    for p in list(body.iterchildren(qn("w:p"))):
+        nxt = p.getnext()
+        if not _is_break_only(p) or nxt is None or nxt.tag != qn("w:p") or _is_break_only(nxt):
+            continue
+        Paragraph(nxt, doc).paragraph_format.page_break_before = True
+        body.remove(p)
+        folded += 1
+    return folded
 
 
 def _apply_column_widths(table, col_widths: list[float]) -> None:
