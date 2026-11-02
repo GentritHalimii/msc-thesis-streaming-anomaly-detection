@@ -114,27 +114,27 @@ def render_cover(doc) -> None:
 
 ABSTRAKT = [
     "Zbulimi i mashtrimeve me karta krediti kërkon vendime brenda milisekondash, ndërsa etiketat "
-    "e verifikuara vijnë me vonesë ditësh ose javësh. Ky punim dizajnon, implementon dhe "
-    "vlerëson një sistem end-to-end për zbulimin e anomalive mbi një rrjedhë të simuluar "
-    "transaksionesh, i cili lidh Apache Kafka-n me tri algoritme unsupervised (Isolation Forest, "
-    "Autoencoder dhe One-Class SVM) dhe me Regresionin Logjistik si referencë supervised. "
-    "Vlerësimi bëhet mbi dataset-in publik të ULB-së (284 807 transaksione, 492 mashtrime) me "
-    "protokoll rolling-origin 8-fold pa rrjedhje informacioni dhe me Average Precision (AP) si "
-    "metrikë kryesore.",
-    "Vonesa end-to-end mbetet shumë nën objektivin prej një sekonde: percentili 99 nuk e kalon "
-    "132 milisekonda deri në 2000 mesazhe në sekondë. Në konfigurimin bazë Autoencoder-i ofron "
+    "e verifikuara vijnë me vonesë ditësh ose javësh. Ky punim dizajnon, implementon dhe vlerëson "
+    "një sistem end-to-end për zbulimin e anomalive mbi një rrjedhë të simuluar transaksionesh, i "
+    "cili lidh Apache Kafka-n me tri algoritme unsupervised (Isolation Forest, Autoencoder dhe "
+    "One-Class SVM) dhe me Regresionin Logjistik si referencë supervised. Vlerësimi bëhet mbi "
+    "dataset-in publik të ULB-së (284 807 transaksione, 492 mashtrime) me protokoll "
+    "rolling-origin 8-fold pa rrjedhje informacioni dhe me Average Precision (AP) si metrikë "
+    "kryesore.",
+    "Percentili 99 i vonesës end-to-end nuk e kalon 132 milisekonda deri në 2000 mesazhe në "
+    "sekondë, shumë nën objektivin prej një sekonde. Në konfigurimin bazë Autoencoder-i ofron "
     "balancën më të mirë mes cilësisë dhe kostos, me AP 0.193 dhe koston më të ulët të "
     "inferencës, para One-Class SVM-së (0.150) dhe Isolation Forest-it (0.091), ndërsa referenca "
     "supervised arrin 0.734. Asnjë ansambël nuk e kalon modelin më të mirë individual, sepse "
-    "detektorët gabojnë njësoj: me 100 alarme për bllok, 37% e mashtrimeve nuk i arrin asnjë "
-    "prej tyre.",
-    "Konfigurimi peshon më shumë se algoritmi: me konfigurimin më të mirë për secilin, raporti "
-    "mes detektorit më të mirë dhe më të dobët bie nga 2.1 në 1.15, dhe One-Class SVM me "
+    "detektorët gabojnë njësoj. Me 100 alarme për bllok, 37% e mashtrimeve nuk i arrin asnjë prej "
+    "tyre.",
+    "Konfigurimi peshon më shumë se algoritmi. Me konfigurimin më të mirë për secilin detektor, "
+    "raporti mes më të mirit dhe më të dobëtit bie nga 2.1 në 1.15, dhe One-Class SVM me "
     "transformim kuantil kalon në krye (AP 0.368). Ndarja e rastësishme, e zakonshme në "
-    "literaturë, e fryn AP-në e metodave unsupervised rreth tri herë. Një prag adaptiv me "
-    "dritare rrëshqitëse e bën ngarkesën e hetimeve më të qëndrueshme dhe rrit F1 për detektorët "
+    "literaturë, e fryn AP-në e metodave unsupervised rreth tri herë. Një prag adaptiv me dritare "
+    "rrëshqitëse e bën ngarkesën e hetimeve më të qëndrueshme dhe rrit F1 për detektorët "
     "unsupervised.",
-    "Përfundimi kryesor është se infrastruktura streaming nuk është pengesa: cilësia varet më "
+    "Përfundimi kryesor është se infrastruktura streaming nuk është pengesa, por cilësia varet më "
     "shumë nga konfigurimi dhe nga etiketat historike sesa nga algoritmi, prandaj metodat "
     "unsupervised vlejnë si shtresë plotësuese për periudhën pa etiketa.",
 ]
