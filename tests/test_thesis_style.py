@@ -85,7 +85,6 @@ def _front_matter_texts():
     from content import front_matter
 
     yield from front_matter.ABSTRAKT
-    yield from front_matter.ABSTRACT_EN
     yield from (meaning for _, meaning in front_matter.FJALORI)
 
 

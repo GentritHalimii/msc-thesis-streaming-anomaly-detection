@@ -118,10 +118,11 @@ ABSTRAKT = [
     "për zbulimin e anomalive mbi një rrjedhë të simuluar transaksionesh, i cili lidh Apache "
     "Kafka-n me tri algoritme unsupervised (Isolation Forest, Autoencoder dhe One-Class SVM) "
     "dhe me Regresionin Logjistik si referencë supervised.",
-    "Detektorët vlerësohen mbi dataset-in publik të ULB-së me një protokoll rolling-origin 8-fold, "
-    "që rindërton skaluesin, modelet dhe pragjet në çdo fold, me Average Precision (AP) si metrikë "
-    "kryesore. Percentili 99 i vonesës end-to-end nuk e kalon 132 milisekonda në asnjë nga ritmet "
-    "e testuara, deri në 2000 mesazhe në sekondë, shumë nën objektivin prej një sekonde.",
+    "Detektorët vlerësohen mbi dataset-in publik të ULB-së (284 807 transaksione, nga të cilat 492 "
+    "mashtrime) me një protokoll rolling-origin 8-fold që rindërton skaluesin, modelet dhe pragjet "
+    "në çdo fold, me Average Precision (AP) si metrikë kryesore. Percentili 99 i vonesës "
+    "end-to-end nuk e kalon 132 milisekonda në asnjë nga ritmet e testuara, deri në 2000 "
+    "mesazhe në sekondë, shumë nën objektivin prej një sekonde.",
     "Në konfigurimin bazë Autoencoder-i ofron balancën më të mirë mes cilësisë dhe kostos, me AP "
     "0.193 dhe koston më të ulët të inferencës, para One-Class SVM-së (0.150) dhe Isolation "
     "Forest-it (0.091). Referenca supervised arrin 0.734, gjë që tregon sa vlejnë etiketat "
@@ -134,32 +135,10 @@ ABSTRAKT = [
     "Ndarja e rastësishme e të dhënave, e zakonshme në literaturë, e rrit AP-në e metodave "
     "unsupervised rreth tri herë. Një prag adaptiv me dritare rrëshqitëse e bën ngarkesën e "
     "hetimeve më të qëndrueshme dhe rrit F1 për të tre detektorët unsupervised.",
-]
-
-ABSTRACT_EN = [
-    "Credit-card fraud detection increasingly runs on continuous data streams, where verified "
-    "labels arrive days or weeks late while decisions must be made within milliseconds. This "
-    "thesis designs, implements and evaluates an end-to-end anomaly detection system over a "
-    "simulated transaction stream. The system connects Apache Kafka with three unsupervised "
-    "algorithms (Isolation Forest, Autoencoder and One-Class SVM) and with Logistic Regression "
-    "as a supervised reference.",
-    "The detectors are evaluated on the public ULB dataset with an 8-fold rolling-origin protocol "
-    "that rebuilds the scaler, the models and the thresholds in every fold, with Average Precision "
-    "(AP) as the primary metric. The 99th-percentile end-to-end latency stays below 132 "
-    "milliseconds at every arrival rate tested, up to 2000 messages per second, far below the "
-    "one-second target.",
-    "In the default configuration the Autoencoder offers the best balance between quality and "
-    "cost, with an AP of 0.193 and the lowest inference cost, ahead of One-Class SVM (0.150) and "
-    "Isolation Forest (0.091). The supervised reference reaches 0.734, which shows what historical "
-    "labels are worth. No ensemble beats the best single model, because the detectors make the "
-    "same mistakes: with 100 alerts per block, 37% of the frauds are reached by none of them, "
-    "while the supervised reference catches 59% of those frauds.",
-    "Configuration matters more than the choice of algorithm. A quantile transform raises the AP "
-    "of One-Class SVM by 0.218, improving all eight folds, and when each detector receives its "
-    "best configuration the ratio between the best and the weakest falls from 2.1 to 1.15. A "
-    "shuffled split, common in the literature, inflates the AP of the unsupervised methods about "
-    "threefold. A sliding-window adaptive threshold makes the investigation workload steadier and "
-    "raises F1 for all three unsupervised detectors.",
+    "Përfundimi kryesor është se infrastruktura streaming nuk është pengesa: cilësia e zbulimit "
+    "varet më shumë nga konfigurimi dhe nga etiketat historike sesa nga zgjedhja e algoritmit. "
+    "Prandaj metodat unsupervised i shërbejnë më mirë sistemit si shtresë plotësuese për "
+    "periudhën pa etiketa sesa si zëvendësim i një modeli supervised.",
 ]
 
 MIRENJOHJE = [
@@ -290,11 +269,6 @@ def render_prelims(doc, outline, figures, tables, page_map, break_before=frozens
 
     _title(doc, "ABSTRAKT")
     for para in ABSTRAKT:
-        add_paragraph(doc, para)
-    page_break(doc)
-
-    _title(doc, "ABSTRACT")
-    for para in ABSTRACT_EN:
         add_paragraph(doc, para)
     page_break(doc)
 
