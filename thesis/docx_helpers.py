@@ -52,17 +52,13 @@ TEXT_WIDTH_CM = 15.0
 INK = RGBColor(0, 0, 0)
 MUTED = RGBColor(0x40, 0x40, 0x40)
 
-# A resolved citation or figure number travels through the content layer as
-# text, so it is wrapped in private-use code points that cannot occur in the
-# thesis itself. The run writers below turn each wrapped span into a Word
-# field: a citation, which names the source's tag, or a cross-reference.
+# A resolved citation travels through the content layer as text, so it is
+# wrapped in private-use code points that cannot occur in the thesis itself.
+# The run writers below turn each wrapped span into a Word citation field,
+# which names the source's tag.
 CITE_OPEN = "\ue000"
 CITE_CLOSE = "\ue001"
-FIGURE_OPEN = "\ue002"
-FIGURE_CLOSE = "\ue003"
-FIELD_RUN_RE = re.compile(
-    f"{CITE_OPEN}([a-zA-Z0-9_]+)\\|([0-9]+){CITE_CLOSE}|{FIGURE_OPEN}([0-9]+){FIGURE_CLOSE}"
-)
+FIELD_RUN_RE = re.compile(f"{CITE_OPEN}([a-zA-Z0-9_]+)\\|([0-9]+){CITE_CLOSE}")
 # The language Word formats citations and the reference list in. IEEE's
 # terms (vol., no., pp., Available) are English, so the list is English
 # (United States), as Word's own IEEE style writes it.
@@ -370,11 +366,11 @@ def title_bookmark(title: str) -> str:
 
 
 # A figure's or table's bookmark covers the label and the number in its
-# caption, "Figura 3", and is named the way Word names the bookmarks behind
-# its own cross-references: hidden, "_Ref" and digits. The lists jump to it
-# and report its page, and a reference in the text repeats it. A bookmark
-# around the number alone was lost when Word updated the fields, and every
-# reference in the text then read "Error! Reference source not found".
+# caption, "Figura 3", and is named the way Word names its own: hidden,
+# "_Ref" and digits. The lists jump to it and report its page. References in
+# the text are plain text, not fields: Word lost these bookmarks when it
+# updated the fields, and every cross-reference then read "Error! Reference
+# source not found".
 def figure_bookmark(number: int) -> str:
     return f"_Ref{510_000_000 + number}"
 
@@ -445,29 +441,13 @@ def _add_citation(para, tag: str, number: int):
     return control
 
 
-def _add_figure_reference(para, number: int):
-    """A reference in the text, "Figura 3", written as Word writes a
-    cross-reference to a caption's label and number: a REF field, each part
-    in a run of its own, whose result is the text of the caption's bookmark.
-    Word renumbers the caption and the reference together, and a Ctrl+click
-    on the reference goes to the figure."""
-    from docx.text.run import Run
-
-    for run in _field_runs(f" REF {figure_bookmark(number)} \\h ", f"{FIGURE_LABEL} {number}"):
-        para._p.append(run)
-        Run(run, para).font.name = BODY_FONT
-
-
 def _add_text_runs(para, text: str, *, size=None, italic: bool = False, color=None):
-    """Text plus any citations and figure numbers it carries, as runs."""
+    """Text plus any citations it carries, as runs."""
     position = 0
     for match in FIELD_RUN_RE.finditer(text):
         if match.start() > position:
             _plain_run(para, text[position : match.start()], size, italic, color)
-        if match.group(1):
-            _add_citation(para, match.group(1), int(match.group(2)))
-        else:
-            _add_figure_reference(para, int(match.group(3)))
+        _add_citation(para, match.group(1), int(match.group(2)))
         position = match.end()
     if position < len(text) or position == 0:
         _plain_run(para, text[position:], size, italic, color)
@@ -612,8 +592,8 @@ def add_heading(
     """
     title = text.upper() if level == 1 else text
     label = f"{number}\t{title}" if number else title
-    if CITE_OPEN in label or FIGURE_OPEN in label:  # pragma: no cover - guarded by tests
-        raise ValueError("a heading cannot carry a cross-reference: the contents copies it")
+    if CITE_OPEN in label:  # pragma: no cover - guarded by tests
+        raise ValueError("a heading cannot carry a citation: the contents copies it")
     para = doc.add_paragraph(style=f"Heading {level}")
     _keep_hyphens(para.add_run(label))
     if bookmark:
@@ -667,8 +647,8 @@ def add_caption(
     sentence, the one that names the figure; any reading notes after it
     follow in a paragraph of their own.
     """
-    if CITE_OPEN in text or FIGURE_OPEN in text:  # pragma: no cover - guarded by tests
-        raise ValueError("a caption cannot carry a cross-reference: the lists copy it")
+    if CITE_OPEN in text:  # pragma: no cover - guarded by tests
+        raise ValueError("a caption cannot carry a citation: the lists copy it")
     title, note = split_caption(text)
     para = doc.add_paragraph(style="Caption")
     pf = para.paragraph_format

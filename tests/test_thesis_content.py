@@ -424,12 +424,15 @@ def test_captions_are_numbered_by_word():
     ], "label, then the field one part per run"
 
 
-def test_figure_number_in_the_text_is_a_cross_reference():
-    """ "Figura [[fig:name]]" becomes one REF field to the caption's bookmark,
-    whose result is the label and the number, as Word's cross-reference
-    "Only label and number" writes it."""
+def test_figure_number_in_the_text_is_plain_text():
+    """Word lost the bookmarks a cross-reference field needs, and every
+    reference read "Error! Reference source not found". "Figura [[fig:name]]"
+    is therefore plain text, the label and the number from the same count as
+    the captions, joined by a no-break space so a line never ends between
+    them. No field and no link."""
     from build_thesis import Numbering, resolve_citations
-    from docx_helpers import add_paragraph, figure_bookmark, new_document
+    from docx.oxml.ns import qn
+    from docx_helpers import add_paragraph, new_document
 
     numbering = Numbering()
     numbering.figure_numbers["arkitektura"] = 4
@@ -437,9 +440,9 @@ def test_figure_number_in_the_text_is_a_cross_reference():
     para = add_paragraph(
         doc, resolve_citations("Siç tregon Figura [[fig:arkitektura]].", numbering)
     )
-    assert _field_instructions(para) == [f" REF {figure_bookmark(4)} \\h "]
-    assert _field_results(para) == ["Figura 4"]
-    assert para.text == "Siç tregon Figura 4."
+    assert _field_instructions(para) == []
+    assert not list(para._p.iter(qn("w:hyperlink")))
+    assert para.text == "Siç tregon Figura\u00a04."
 
 
 def test_a_figure_reference_without_its_label_is_refused():
