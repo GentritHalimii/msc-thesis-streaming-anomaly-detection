@@ -121,21 +121,21 @@ ABSTRAKT = [
     "dataset-in publik të ULB-së (284 807 transaksione, 492 mashtrime) me protokoll "
     "rolling-origin 8-fold pa rrjedhje informacioni dhe me Average Precision (AP) si metrikë "
     "kryesore.",
-    "Percentili 99 i vonesës end-to-end nuk e kalon 132 milisekonda deri në 2000 mesazhe në "
-    "sekondë, shumë nën objektivin prej një sekonde. Në konfigurimin bazë Autoencoder-i ofron "
-    "balancën më të mirë mes cilësisë dhe kostos, me AP 0.193 dhe koston më të ulët të "
-    "inferencës, para One-Class SVM-së (0.150) dhe Isolation Forest-it (0.091), ndërsa referenca "
-    "supervised arrin 0.734. Asnjë ansambël nuk e kalon modelin më të mirë individual, sepse "
-    "detektorët gabojnë njësoj. Me 100 alarme për bllok, 37% e mashtrimeve nuk i arrin asnjë prej "
-    "tyre.",
+    "Percentili 99 i vonesës end-to-end mbetet nën 132 milisekonda, duke përmbushur me rezultat "
+    "të kënaqshëm objektivin e përcaktuar prej një sekonde, edhe në ngarkesa deri në 2000 mesazhe "
+    "në sekondë. Në konfigurimin bazë Autoencoder-i ofron balancën më të mirë mes cilësisë dhe "
+    "kostos, me AP 0.193 dhe koston më të ulët të inferencës, para One-Class SVM-së (0.150) dhe "
+    "Isolation Forest-it (0.091), ndërsa referenca supervised arrin 0.734. Asnjë ansambël nuk e "
+    "kalon modelin më të mirë individual, sepse detektorët gabojnë njësoj. Me 100 alarme për "
+    "bllok, 37% e mashtrimeve nuk i arrin asnjë prej tyre.",
     "Konfigurimi peshon më shumë se algoritmi. Me konfigurimin më të mirë për secilin detektor, "
     "raporti mes më të mirit dhe më të dobëtit bie nga 2.1 në 1.15, dhe One-Class SVM me "
     "transformim kuantil kalon në krye (AP 0.368). Ndarja e rastësishme, e zakonshme në "
     "literaturë, e fryn AP-në e metodave unsupervised rreth tri herë. Një prag adaptiv me dritare "
     "rrëshqitëse e bën ngarkesën e hetimeve më të qëndrueshme dhe rrit F1 për detektorët "
     "unsupervised.",
-    "Përfundimi kryesor është se infrastruktura streaming nuk është pengesa, por cilësia varet më "
-    "shumë nga konfigurimi dhe nga etiketat historike sesa nga algoritmi, prandaj metodat "
+    "Përfundimi kryesor është se infrastruktura streaming nuk është pengesë, ndërsa cilësia varet "
+    "më shumë nga konfigurimi dhe nga etiketat historike sesa nga algoritmi, prandaj metodat "
     "unsupervised vlejnë si shtresë plotësuese për periudhën pa etiketa.",
 ]
 
