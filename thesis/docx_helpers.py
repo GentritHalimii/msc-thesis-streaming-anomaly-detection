@@ -369,15 +369,18 @@ def title_bookmark(title: str) -> str:
     return "Toc_" + "_".join(title.split())
 
 
-# A figure's or table's bookmark covers the number in its caption, so the
-# same bookmark serves the lists, which jump to it and report its page, and
-# a reference in the text, which repeats the number.
+# A figure's or table's bookmark covers the label and the number in its
+# caption, "Figura 3", and is named the way Word names the bookmarks behind
+# its own cross-references: hidden, "_Ref" and digits. The lists jump to it
+# and report its page, and a reference in the text repeats it. A bookmark
+# around the number alone was lost when Word updated the fields, and every
+# reference in the text then read "Error! Reference source not found".
 def figure_bookmark(number: int) -> str:
-    return f"Fig_{number}"
+    return f"_Ref{510_000_000 + number}"
 
 
 def table_bookmark(number: int) -> str:
-    return f"Tab_{number}"
+    return f"_Ref{520_000_000 + number}"
 
 
 # Content controls carry an id that has to be unique within the document.
@@ -443,12 +446,16 @@ def _add_citation(para, tag: str, number: int):
 
 
 def _add_figure_reference(para, number: int):
-    """A figure number in the text, as a cross-reference to the number in the
-    figure's caption. Word renumbers the caption and the reference together,
-    and a Ctrl+click on the number goes to the figure."""
-    run = _field(para, f" REF {figure_bookmark(number)} \\h ", str(number))
-    run.font.name = BODY_FONT
-    return run
+    """A reference in the text, "Figura 3", written as Word writes a
+    cross-reference to a caption's label and number: a REF field, each part
+    in a run of its own, whose result is the text of the caption's bookmark.
+    Word renumbers the caption and the reference together, and a Ctrl+click
+    on the reference goes to the figure."""
+    from docx.text.run import Run
+
+    for run in _field_runs(f" REF {figure_bookmark(number)} \\h ", f"{FIGURE_LABEL} {number}"):
+        para._p.append(run)
+        Run(run, para).font.name = BODY_FONT
 
 
 def _add_text_runs(para, text: str, *, size=None, italic: bool = False, color=None):
@@ -668,9 +675,12 @@ def add_caption(
     pf.space_before = Pt(8 if above else 2)
     pf.space_after = Pt(4 if above else 10)
     pf.keep_with_next = above
-    para.add_run(f"{label} ")
+    # As Word's Insert Caption writes it: the bookmark holds the label and the
+    # number, and each part of the SEQ field sits in a run of its own.
     bookmark_id = _open_bookmark(para, bookmark) if bookmark else None
-    _field(para, f" SEQ {label} \\* ARABIC ", str(number))
+    para.add_run(f"{label} ")
+    for run in _field_runs(f" SEQ {label} \\* ARABIC ", str(number)):
+        para._p.append(run)
     if bookmark_id is not None:
         _close_bookmark(para, bookmark_id)
     _keep_hyphens(para.add_run(f". {title}"))

@@ -30,6 +30,7 @@ from docx_helpers import (  # noqa: E402
     CITE_CLOSE,
     CITE_OPEN,
     FIGURE_CLOSE,
+    FIGURE_LABEL,
     FIGURE_OPEN,
     add_bibliography,
     add_bullets,
@@ -57,7 +58,9 @@ CITE_RE = re.compile(r"\[@([a-zA-Z0-9_]+)\]")
 # prose can say "Figura 12" without the number going stale when figures move.
 # In the document the number is a cross-reference to the figure's caption.
 FIG_REF_RE = re.compile(r"\[\[fig:([a-zA-Z0-9_]+)\]\]")
-# A space that groups thousands ("284 807") must not break across lines.
+# A reference names its figure with the caption's label in front, "Figura
+# [[fig:name]]": the cross-reference Word updates repeats label and number.
+LABELLED_FIG_REF_RE = re.compile(rf"{FIGURE_LABEL}[ \u00a0]\[\[fig:([a-zA-Z0-9_]+)\]\]")
 # Printed stand-in for a value that does not exist, rather than "nan".
 MISSING = "n/a"  # never an em dash: the thesis reserves that character for nothing
 
@@ -105,9 +108,10 @@ def resolve_citations(text: str, numbering: Numbering) -> str:
 
     The marker carries both the source's tag, which the citation field names,
     and the number assigned here, which becomes the field's cached result so
-    the text reads correctly before Word refreshes anything. Figure
-    references written as [[fig:name]] become a marked figure number, which
-    the run writers render the same way, as a field pointing at the caption.
+    the text reads correctly before Word refreshes anything. A figure
+    reference, written "Figura [[fig:name]]", becomes a marked figure number,
+    which the run writers render as a field that repeats the caption's label
+    and number.
     """
 
     def figure(match: re.Match) -> str:
@@ -116,7 +120,9 @@ def resolve_citations(text: str, numbering: Numbering) -> str:
             raise KeyError(f"reference to unknown figure: {name}")
         return f"{FIGURE_OPEN}{numbering.figure_numbers[name]}{FIGURE_CLOSE}"
 
-    text = FIG_REF_RE.sub(figure, text)
+    text = LABELLED_FIG_REF_RE.sub(figure, text)
+    if bare := FIG_REF_RE.search(text):
+        raise ValueError(f"write a figure reference as 'Figura {bare.group(0)}'")
 
     def repl(match: re.Match) -> str:
         key = match.group(1)

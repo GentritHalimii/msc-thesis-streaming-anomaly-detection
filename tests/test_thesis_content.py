@@ -390,9 +390,11 @@ def test_a_title_left_alone_at_the_foot_of_a_page_moves_to_the_next(monkeypatch)
 
 def test_captions_are_numbered_by_word():
     """A caption's number is a SEQ field, which Word renumbers and builds the
-    lists from, inside the bookmark that the lists and the text point to.
-    The paragraph Word lists keeps the first sentence; a reading note
-    follows in a paragraph of its own."""
+    lists from. As Word's Insert Caption writes it, a hidden "_Ref" bookmark
+    holds the label and the number, and each part of the field sits in a run
+    of its own; a bookmark around the number alone did not survive Word's
+    field update. The paragraph Word lists keeps the first sentence; a
+    reading note follows in a paragraph of its own."""
     from docx.oxml.ns import qn
     from docx_helpers import add_caption, figure_bookmark, new_document
 
@@ -406,14 +408,26 @@ def test_captions_are_numbered_by_word():
 
     children = list(para._p)
     start = next(i for i, el in enumerate(children) if el.tag == qn("w:bookmarkStart"))
+    end = next(i for i, el in enumerate(children) if el.tag == qn("w:bookmarkEnd"))
     assert children[start].get(qn("w:name")) == figure_bookmark(3)
-    assert children[start + 2].tag == qn("w:bookmarkEnd"), "the bookmark holds the number only"
-    number = children[start + 1]
-    assert [el.text for el in number.iter(qn("w:instrText"))] == [" SEQ Figura \\* ARABIC "]
-    assert [el.text for el in number.iter(qn("w:t"))] == ["3"]
+    assert figure_bookmark(3).startswith("_Ref")
+    inside = children[start + 1 : end]
+    assert "".join(t.text for el in inside for t in el.iter(qn("w:t"))) == "Figura 3"
+    kinds = [[c.tag for c in run if c.tag != qn("w:rPr")] for run in inside]
+    assert kinds == [
+        [qn("w:t")],
+        [qn("w:fldChar")],
+        [qn("w:instrText")],
+        [qn("w:fldChar")],
+        [qn("w:t")],
+        [qn("w:fldChar")],
+    ], "label, then the field one part per run"
 
 
 def test_figure_number_in_the_text_is_a_cross_reference():
+    """ "Figura [[fig:name]]" becomes one REF field to the caption's bookmark,
+    whose result is the label and the number, as Word's cross-reference
+    "Only label and number" writes it."""
     from build_thesis import Numbering, resolve_citations
     from docx_helpers import add_paragraph, figure_bookmark, new_document
 
@@ -424,8 +438,31 @@ def test_figure_number_in_the_text_is_a_cross_reference():
         doc, resolve_citations("Siç tregon Figura [[fig:arkitektura]].", numbering)
     )
     assert _field_instructions(para) == [f" REF {figure_bookmark(4)} \\h "]
-    assert _field_results(para) == ["4"]
+    assert _field_results(para) == ["Figura 4"]
     assert para.text == "Siç tregon Figura 4."
+
+
+def test_a_figure_reference_without_its_label_is_refused():
+    """The reference repeats the caption's label, so a bare [[fig:name]]
+    would read as a number with no label; the build stops instead."""
+    from build_thesis import Numbering, resolve_citations
+
+    numbering = Numbering()
+    numbering.figure_numbers["arkitektura"] = 4
+    with pytest.raises(ValueError, match="Figura"):
+        resolve_citations("Siç tregon [[fig:arkitektura]].", numbering)
+
+
+def test_figure_references_in_the_thesis_carry_their_label():
+    chapters = all_chapters()
+    bare = [
+        text[max(0, m.start() - 30) : m.end()]
+        for blocks in chapters.values()
+        for text in _texts(blocks)
+        for m in re.finditer(r"\[\[fig:[a-zA-Z0-9_]+\]\]", text)
+        if not text[: m.start()].endswith(("Figura ", "Figura\u00a0"))
+    ]
+    assert not bare, f"write these as 'Figura [[fig:name]]': {bare}"
 
 
 def test_headings_and_captions_take_their_look_from_word_styles():
