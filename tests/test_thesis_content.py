@@ -509,11 +509,90 @@ def test_every_figure_and_table_is_referenced_in_the_text():
     assert not missing, f"never referenced in the text: {missing}"
 
 
+ALBANIAN_ALPHABET = [
+    "a",
+    "b",
+    "c",
+    "ç",
+    "d",
+    "dh",
+    "e",
+    "ë",
+    "f",
+    "g",
+    "gj",
+    "h",
+    "i",
+    "j",
+    "k",
+    "l",
+    "ll",
+    "m",
+    "n",
+    "nj",
+    "o",
+    "p",
+    "q",
+    "r",
+    "rr",
+    "s",
+    "sh",
+    "t",
+    "th",
+    "u",
+    "v",
+    "w",
+    "x",
+    "xh",
+    "y",
+    "z",
+    "zh",
+]
+
+
+def albanian_sort_key(text: str) -> list[tuple[int, int]]:
+    """Order of the Albanian alphabet, as in the CLDR collation for Albanian:
+    the digraphs are letters of their own, so a term starting with "th" comes
+    after every term starting with "t", and case does not count. Spaces and
+    punctuation come before digits, digits before letters, and a letter of
+    another script, such as µ, after the Latin ones."""
+    rank = {letter: i for i, letter in enumerate(ALBANIAN_ALPHABET)}
+    s, key, i = text.casefold(), [], 0
+    while i < len(s):
+        letter = s[i : i + 2] if s[i : i + 2] in rank else s[i]
+        if letter in rank:
+            key.append((2, rank[letter]))
+        elif letter.isdigit():
+            key.append((1, int(letter)))
+        else:
+            key.append((3 if letter.isalpha() else 0, ord(letter)))
+        i += len(letter)
+    return key
+
+
+def test_albanian_sort_key_treats_digraphs_as_letters():
+    words = ["Throughput", "TPE", "dhe", "dy", "çelës", "cikël", "ëndërr", "emër", "AP", "AE"]
+    assert sorted(words, key=albanian_sort_key) == [
+        "AE",
+        "AP",
+        "cikël",
+        "çelës",
+        "dy",
+        "dhe",
+        "emër",
+        "ëndërr",
+        "TPE",
+        "Throughput",
+    ]
+
+
 def test_glossary_is_in_alphabetical_order():
+    """The mentor asked for the terms in alphabetical order (AE before AP);
+    in an Albanian text that is the Albanian alphabet."""
     from content.front_matter import FJALORI
 
     terms = [term for term, _ in FJALORI]
-    assert terms == sorted(terms, key=str.casefold)
+    assert terms == sorted(terms, key=albanian_sort_key)
 
 
 def test_keywords_follow_the_apa_form():
