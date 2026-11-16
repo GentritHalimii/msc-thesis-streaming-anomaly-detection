@@ -273,20 +273,20 @@ def _title(doc, text: str):
 
 
 def _keywords(doc, label: str, words: str) -> None:
-    """The keywords under an abstract: the label in bold on a line of its own
-    and the terms below it, so the abstract needs no colon."""
-    head = doc.add_paragraph()
-    head.alignment = WD_ALIGN_PARAGRAPH.LEFT
-    pf = head.paragraph_format
+    """The keywords line under an abstract, in the form of the APA Abstract
+    and Keywords Guide (7th ed.): the label in italics with its colon, then
+    on the same line the terms in roman type, lowercase except for proper
+    names, separated by commas and with no full stop after the last one."""
+    para = doc.add_paragraph()
+    para.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    pf = para.paragraph_format
     pf.line_spacing = 1.5
-    pf.space_before = Pt(6)
     pf.space_after = Pt(0)
-    pf.keep_with_next = True
-    run = head.add_run(label)
-    run.font.name = "Times New Roman"
-    run.font.size = Pt(12)
-    run.bold = True
-    add_paragraph(doc, words, align=WD_ALIGN_PARAGRAPH.LEFT)
+    for text, italic in ((f"{label}:", True), (f" {words}", False)):
+        run = para.add_run(text)
+        run.font.name = "Times New Roman"
+        run.font.size = Pt(12)
+        run.italic = italic
 
 
 def _listed_title(doc, text: str, *, space_before: int = 0, new_page: bool = False):

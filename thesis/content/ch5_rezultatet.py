@@ -568,7 +568,7 @@ _KONFIGURIMI = [
     p("""Krahasimi i drejtë është me paraprocesimin e konfigurimit bazë, StandardScaler, dhe jo me
       opsionin më të keq, i cili për One-Class SVM-në është mungesa e skalimit (AP 0.014), e
       papërshtatshme për një kernel RBF. Kundrejt StandardScaler, paraprocesimi më i mirë e rrit
-      AP-në me 0.218 për One-Class SVM-në, me 0.104 për Autoencoder-in dhe me 0.065 për Isolation
+      AP-në me 0.218 për One-Class SVM-në, me 0.103 për Autoencoder-in dhe me 0.065 për Isolation
       Forest-in, ndërsa diferenca mes tri detektorëve me StandardScaler është 0.102. Për One-Class
       SVM-në zgjedhja e paraprocesimit peshon pra më shumë se zgjedhja e algoritmit, për
       Autoencoder-in afërsisht njësoj, dhe për Isolation Forest-in më pak. Përfitimet prekuenciale
@@ -668,7 +668,7 @@ _STUDIMET = [
       0.193 në 0.354, me 84%, dhe ky konfigurim është më i mirë në shtatë nga tetë fold-e (Figura
       [[fig:autoencoder_architecture]]). Diferenca mes arkitekturës më të mirë dhe më të dobët është
       0.223, më e madhe se diferenca prej 0.102 mes tri algoritmeve në konfigurimin bazë. Edhe
-      thellësia ndihmon: me shtresë 32 dhe dimension latent 8, enkoderi me dy shtresa arrin 0.304
+      thellësia ndihmon: me shtresë 32 dhe dimension latent 8, enkoderi me dy shtresa arrin 0.303
       kundrejt 0.222 me një shtresë."""),
     fig(
         "autoencoder_architecture",
@@ -784,17 +784,19 @@ _PROTOKOLLI = [
         round={"AP_normalet": 3, "AP_gjithe_dritarja": 3, "delta": 3, "p_value": 3},
     ),
     p("""Rezultati i ndan detektorët qartë. Isolation Forest-i nuk ndikohet: AP-ja e tij lëviz nga
-      0.091 në 0.097, pa dallim domethënës (p = 0.20). Autoencoder-i dhe One-Class SVM, përkundrazi,
-      bien në të tetë fold-et, Autoencoder-i nga 0.193 në 0.047 dhe One-Class SVM nga 0.150 në 0.111
-      (p = 0.008 për të dy). Renditja përmbyset: pa pastrim, One-Class SVM del i pari, Isolation
-      Forest-i i dyti dhe Autoencoder-i i fundit; One-Class SVM është i pari dhe Autoencoder-i i
-      fundit në shtatë nga tetë fold-et."""),
+      0.091 në 0.097, pa dallim domethënës (p = 0.195). Autoencoder-i dhe One-Class SVM,
+      përkundrazi, bien në të tetë fold-et, Autoencoder-i nga 0.193 në 0.047 dhe One-Class SVM nga
+      0.150 në 0.111 (p = 0.008 për të dy). Renditja përmbyset: pa pastrim, One-Class SVM del i
+      pari, Isolation Forest-i i dyti dhe Autoencoder-i i fundit; One-Class SVM është i pari dhe
+      Autoencoder-i i fundit në shtatë nga tetë fold-et."""),
     p("""Shpjegimi më i mundshëm lidhet me mekanizmin e secilit algoritëm. Autoencoder-i mëson të
       rindërtojë atë që sheh; me disa qindra mashtrime në dritare ai mëson t'i rindërtojë edhe ato,
       dhe gabimi i tyre i rindërtimit, që është pika e anomalisë, bie. Edhe kufiri i One-Class
       SVM-së mësohet bashkë me mashtrimet e dritares. Isolation Forest-i, përkundrazi, e ndërton çdo
-      pemë mbi një nën-mostër prej 256 transaksionesh, ku me 0.2% mashtrime rrallë hyn ndonjë
-      mashtrim, kështu që pemët e tij mbeten pothuajse të njëjta. Pasoja praktike është e
+      pemë mbi një nën-mostër prej 256 transaksionesh. Me rreth 0.2% mashtrime, afërsisht gjashtë
+      nga dhjetë pemë nuk shohin asnjë mashtrim, ndërsa të tjerat zakonisht shohin vetëm një.
+      Nën-mostra e vogël e kufizon pra maskimin e përshkruar në nënkapitullin 2.2.2 [@liu2008], dhe
+      pemët e tij ndryshojnë pak. Pasoja praktike është e
       rëndësishme. Rezultatet e konfigurimit bazë, dhe sidomos përparësia e Autoencoder-it, vlejnë
       për një sistem që i ka etiketat historike për ta pastruar dritaren e trajnimit; për një sistem
       pa asnjë etiketë, Isolation Forest-i dhe One-Class SVM janë zgjedhjet më të sigurta."""),

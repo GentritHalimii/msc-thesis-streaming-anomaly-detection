@@ -516,6 +516,27 @@ def test_glossary_is_in_alphabetical_order():
     assert terms == sorted(terms, key=str.casefold)
 
 
+def test_keywords_follow_the_apa_form():
+    """One line under each abstract: the label in italics with its colon, then
+    the terms in roman type, lowercase except proper names, separated by
+    commas, with no full stop after the last one."""
+    from content.front_matter import FJALET_KYCE, KEYWORDS_EN, _keywords
+    from docx_helpers import new_document
+
+    names = {"Apache Kafka", "Isolation Forest", "Autoencoder", "One-Class SVM"}
+    for words in (FJALET_KYCE, KEYWORDS_EN):
+        assert not words.endswith((".", ",", ";"))
+        terms = words.split(", ")
+        assert all(term[0].islower() for term in terms if term not in names), terms
+
+    doc = new_document()
+    _keywords(doc, "Fjalët kyçe", FJALET_KYCE)
+    (para,) = doc.paragraphs
+    label, words = para.runs
+    assert (label.text, label.italic, label.bold) == ("Fjalët kyçe:", True, None)
+    assert (words.text, words.italic) == (f" {FJALET_KYCE}", False)
+
+
 def test_headings_and_captions_take_their_look_from_word_styles():
     """Word copies formatting set on a heading's or a caption's text into the
     entry it writes for the contents or the lists, so the template's look is
