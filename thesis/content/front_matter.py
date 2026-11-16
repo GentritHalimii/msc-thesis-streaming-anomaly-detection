@@ -1,242 +1,205 @@
 """Cover pages, abstracts, acknowledgements, contents and glossary.
 
-The layout follows the faculty template literally: two title pages, an
-abstract confined to a single page and carrying no chapter number, page
-numbering that starts here in Roman numerals, and contents / figure / table
-lists generated as Word fields so they stay correct after any edit.
+The layout follows the faculty template literally: two title pages set in
+Times New Roman 14 with the template's spacing, an abstract confined to a
+single page and carrying no chapter number, page numbering that starts there
+in Roman numerals, and a contents page that opens with the figure list, the
+table list and the glossary. The contents and the two lists are Word's own
+automatic tables, so Word updates them and a Ctrl+click on an entry goes to
+the page it names.
 """
 
-from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_BREAK
 from docx.shared import Pt
 from docx_helpers import (
-    add_page_number_footer,
+    CONTENTS_FIELD,
+    FIGURE_LIST_FIELD,
+    TABLE_LIST_FIELD,
+    add_automatic_table,
+    add_heading,
+    add_logo,
     add_paragraph,
-    add_toc_entry,
+    figure_bookmark,
+    heading_bookmark,
+    keep_numbers_whole,
     page_break,
-    set_page_numbering,
+    split_caption,
     start_new_section,
+    table_bookmark,
+    title_bookmark,
 )
 
 TITULLI = (
-    "ZBULIMI I ANOMALIVE NË RRJEDHA TË SIMULUARA TË TRANSAKSIONEVE "
-    "FINANCIARE DUKE PËRDORUR APACHE KAFKA DHE UNSUPERVISED MACHINE "
-    "LEARNING: STUDIM RASTI ME TRANSAKSIONE TË KARTAVE TË KREDITIT"
+    "ZBULIMI I ANOMALIVE NË RRJEDHA TË SIMULUARA TË TRANSAKSIONEVE FINANCIARE DUKE PËRDORUR APACHE "
+    "KAFKA DHE UNSUPERVISED MACHINE LEARNING: STUDIM RASTI ME TRANSAKSIONE TË KARTAVE TË KREDITIT"
 )
 STUDENTI = "Gentrit Halimi"
 MENTORI = "Dr. sc. Mehmet Shala"
 PROGRAMI = "Programi për Shkenca Kompjuterike dhe Inxhinieri"
-DATA = "Gusht 2026"
+DATA = "Nëntor 2026"
 VITI_AKADEMIK = "Viti akademik 2024 – 2025"
 
 
-def _center(doc, text, size=12, bold=False, space_after=6, caps=False):
+# The template sets every line of both title pages in Times New Roman 14.
+COVER_SIZE = Pt(14)
+STATEMENT = (
+    "Ky punim është përpiluar dhe dorëzuar në përmbushjen e kërkesave të pjesshme për Shkallën "
+    "e Magjistraturës"
+)
+
+
+def _line(doc, text: str = "", bold: bool = False):
+    """One single-spaced, centred line of a title page.
+
+    An empty line is one of the template's "S" spacers. It holds a space so
+    that it takes the height of a 14 pt line, not of the default font.
+    """
     para = doc.add_paragraph()
     para.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    para.paragraph_format.line_spacing = 1.5
-    para.paragraph_format.space_after = Pt(space_after)
-    run = para.add_run(text.upper() if caps else text)
+    pf = para.paragraph_format
+    pf.line_spacing = 1.0
+    pf.space_before = Pt(0)
+    pf.space_after = Pt(0)
+    run = para.add_run(text or " ")
     run.font.name = "Times New Roman"
-    run.font.size = Pt(size)
+    run.font.size = COVER_SIZE
     run.bold = bold
     return para
 
 
-def _blank(doc, n=1):
-    for _ in range(n):
-        para = doc.add_paragraph()
-        para.paragraph_format.space_after = Pt(0)
-        para.paragraph_format.line_spacing = 1.0
+def _spacers(doc, count: int) -> None:
+    for _ in range(count):
+        _line(doc)
 
 
 def render_cover(doc) -> None:
-    """Two title pages; neither carries a page number."""
+    """The template's two title pages, line for line; neither is numbered.
+
+    Only the title is bold. The template's title takes one line and this one
+    four, so the first page drops one spacer from each of its three gaps; that
+    keeps the template's proportions and leaves room at the foot of the page.
+    The second page fits with the template's spacing unchanged.
+    """
     section = doc.sections[0]
     section.different_first_page_header_footer = False
 
-    _center(doc, PROGRAMI, size=13, bold=True)
-    _blank(doc, 5)
-    _center(doc, TITULLI, size=14, bold=True)
-    _blank(doc, 2)
-    _center(doc, "Shkalla e Magjistraturës", size=12)
-    _blank(doc, 6)
-    _center(doc, STUDENTI, size=12, bold=True)
-    _blank(doc, 4)
-    _center(doc, DATA, size=12)
-    _center(doc, "Prishtinë", size=12)
+    add_logo(doc)
+    _line(doc, PROGRAMI)
+    _spacers(doc, 10)
+    _line(doc, TITULLI, bold=True)
+    _line(doc, "Shkalla e Magjistraturës")
+    _spacers(doc, 7)
+    _line(doc, STUDENTI)
+    _spacers(doc, 7)
+    _line(doc, DATA)
+    _line(doc, "Prishtinë")
     page_break(doc)
 
-    _center(doc, PROGRAMI, size=13, bold=True)
-    _blank(doc, 1)
-    _center(doc, "Punim Diplome", size=12, bold=True)
-    _center(doc, VITI_AKADEMIK, size=12)
-    _blank(doc, 4)
-    _center(doc, STUDENTI, size=12, bold=True)
-    _blank(doc, 2)
-    _center(doc, TITULLI, size=14, bold=True)
-    _blank(doc, 3)
-    _center(doc, f"Mentori: {MENTORI}", size=12)
-    _blank(doc, 5)
-    _center(doc, DATA, size=12)
-    _blank(doc, 3)
-    para = doc.add_paragraph()
-    para.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    para.paragraph_format.line_spacing = 1.5
-    run = para.add_run(
-        "Ky punim është përpiluar dhe dorëzuar në përmbushjen e kërkesave "
-        "të pjesshme për Shkallën e Magjistraturës"
-    )
-    run.font.name = "Times New Roman"
-    run.font.size = Pt(11)
-    run.italic = True
+    add_logo(doc)
+    _line(doc, PROGRAMI)
+    _spacers(doc, 2)
+    _line(doc, "Punim Diplome")
+    _line(doc, VITI_AKADEMIK)
+    _spacers(doc, 5)
+    _line(doc, STUDENTI)
+    _spacers(doc, 1)
+    _line(doc, TITULLI, bold=True)
+    _spacers(doc, 1)
+    _line(doc, f"Mentori: {MENTORI}")
+    _spacers(doc, 6)
+    _line(doc, DATA)
+    _spacers(doc, 7)
+    _line(doc, STATEMENT)
 
 
 ABSTRAKT = [
-    "Zbulimi i mashtrimeve me karta krediti kryhet gjithnjë e më shumë mbi "
-    "rrjedha të vazhdueshme të dhënash, ku etiketat e verifikuara mbërrijnë "
-    "me vonesë ditësh ose javësh dhe ku vendimi duhet marrë brenda "
-    "milisekondash. Ky punim dizajnon, implementon dhe vlerëson "
-    "eksperimentalisht një sistem end-to-end për zbulimin e anomalive mbi një "
-    "rrjedhë të simuluar transaksionesh financiare, duke integruar Apache "
-    "Kafka në modalitetin KRaft me tri algoritmet unsupervised të "
-    "projekt-propozimit, Isolation Forest, Autoencoder dhe One-Class SVM, si "
-    "dhe me një referencë të mbikëqyrur me Regresion Logjistik.",
-    "Studimi zgjedh thellësinë në vend të gjerësisë. Në vend që të shtohen "
-    "algoritme të tjera, secili prej tri detektorëve i nënshtrohet një studimi "
-    "të veçantë të ndërtuar rreth mekanizmit të tij, dhe i gjithë vlerësimi "
-    "kryhet me protokoll rolling-origin në tetë pika kohore prerjeje, ku çdo "
-    "fold rindërton nga fillimi skalimin, modelet dhe pragjet. Përpara çdo "
-    "modelimi matet kufiri i sipërm gjeometrik i vetë problemit me një "
-    "detektor pa parametra.",
-    "Ai kufi rezulton vendimtar për interpretimin. Mashtrimet ndodhen "
-    "mesatarisht 7.9 herë më larg klasës legjitime sesa një transaksion tipik "
-    "legjitim, por vetëm distanca jep Average Precision 0.30, sepse bishti i "
-    "vetë klasës legjitime e mbush të njëjtin rajon; mashtrimi median kërkon "
-    "shqyrtimin e rreth 530 alarmeve. Në nivel transaksioni, 37 për qind e "
-    "mashtrimeve nuk arrihen nga asnjë detektor unsupervised brenda një "
-    "buxheti prej njëqind alarmesh, ndërsa referenca e mbikëqyrur i kap 59 për "
-    "qind të tyre, çka tregon se informacioni ekziston në të dhëna por nuk "
-    "është i formës që një detektor distancash e sheh.",
-    "Dy gjetje metodologjike e ndryshojnë mënyrën si duhen lexuar renditjet e "
-    "publikuara. Zgjedhja e paraprocesimit ka ndikim më të madh se zgjedhja e "
-    "algoritmit: transformimi kuantil e ngre One-Class SVM-në me 0.218 njësi "
-    "AP në të tetë fold-et, ndërsa referencën e mbikëqyrur nuk e prek fare. "
-    "Ndarja e rastësishme e të dhënave, praktikë e zakonshme në literaturë, e "
-    "fryn Average Precision e metodave unsupervised rreth 3.0 herë. Përgjigjja "
-    "për pyetjen se cili algoritëm është më i miri është pra e kushtëzuar nga "
-    "protokolli, jo veti e pandryshueshme e algoritmit.",
-    "Nga ana operacionale sistemi arrin vonesë end-to-end dukshëm nën "
-    "objektivin prej një sekonde në të gjitha ritmet e testuara, dhe pragu "
-    "adaptiv me dritare rrëshqitëse, i propozuar këtu, e stabilizon ngarkesën "
-    "hetimore dhe e përmirëson cilësinë e zbulimit për të tre detektorët "
-    "unsupervised. Qasja ensemble "
-    "nuk e tejkalon modelin më të mirë individual, dhe analiza e gabimeve në "
-    "nivel transaksioni e shpjegon pse. Analiza e zhvendosjes tregon se "
-    "degradimi nuk vjen nga vjetërimi i modelit të normalitetit, por nga "
-    "ndryshimi i vetë popullatës së mashtrimeve, dallim me pasoja praktike të "
-    "kundërta.",
-]
-
-ABSTRACT_EN = [
-    "Credit-card fraud detection increasingly happens on continuous data "
-    "streams, where verified labels arrive days or weeks late and the "
-    "decision itself must be made in milliseconds. This thesis designs, "
-    "implements and experimentally evaluates an end-to-end anomaly detection "
-    "system over a simulated stream of financial transactions, integrating "
-    "Apache Kafka in KRaft mode with the three unsupervised algorithms named "
-    "in the research proposal, Isolation Forest, Autoencoder and One-Class "
-    "SVM, together with a supervised Logistic Regression reference.",
-    "The study buys depth rather than breadth. Instead of adding further "
-    "algorithms, each of the three detectors receives a dedicated study built "
-    "around its own mechanism, and the whole evaluation runs under a "
-    "rolling-origin protocol at eight successive cut points in which every "
-    "fold rebuilds the scaler, the models and the thresholds from scratch. "
-    "Before any model is fitted, the geometric ceiling of the problem itself "
-    "is measured with a parameter-free detector.",
-    "That ceiling turns out to govern the interpretation. Frauds sit on "
-    "average 7.9 times farther from the legitimate class than a typical "
-    "legitimate transaction, yet distance alone yields an Average Precision "
-    "of 0.30, because the tail of the legitimate class fills the same region; "
-    "the median fraud costs roughly 530 alerts to reach. At the transaction "
-    "level, 37 per cent of frauds are found by no unsupervised detector "
-    "within a budget of one hundred alerts, while the supervised reference "
-    "recovers 59 per cent of them, showing that the information is present in "
-    "the data but not in a form a distance-based detector can see.",
-    "Two methodological findings change how published rankings should be "
-    "read. The preprocessing choice matters more than the choice of "
-    "algorithm: a quantile transform lifts One-Class SVM by 0.218 AP in all "
-    "eight folds, while leaving the supervised reference untouched. A "
-    "shuffled split, common in the literature, inflates the Average Precision "
-    "of the unsupervised methods by roughly a factor of 3.0. Which algorithm "
-    "is best is therefore conditional on the protocol rather than a fixed "
-    "property of the algorithm.",
-    "Operationally the system stays far below the one-second latency target "
-    "at every arrival rate tested, and the sliding-window adaptive threshold "
-    "proposed here stabilises the investigation workload and improves "
-    "detection quality for all three unsupervised detectors. No ensemble "
-    "variant beats the best single model, "
-    "and the per-transaction error analysis explains why. Drift analysis "
-    "shows that degradation comes not from a stale model of normality but "
-    "from a change in the fraud population itself, a distinction with "
-    "opposite practical consequences.",
+    "Zbulimi i mashtrimeve me karta krediti kërkon vendime brenda milisekondash, ndërsa etiketat "
+    "e verifikuara vijnë me vonesë ditësh ose javësh. Ky punim dizajnon, implementon dhe vlerëson "
+    "një sistem end-to-end për zbulimin e anomalive mbi një rrjedhë të simuluar transaksionesh, i "
+    "cili lidh Apache Kafka-n me tri algoritme unsupervised (Isolation Forest, Autoencoder dhe "
+    "One-Class SVM) dhe me Regresionin Logjistik si referencë supervised. Vlerësimi bëhet mbi "
+    "dataset-in publik të ULB-së (284 807 transaksione, 492 mashtrime) me protokoll "
+    "rolling-origin 8-fold pa rrjedhje informacioni dhe me Average Precision (AP) si metrikë "
+    "kryesore.",
+    "Percentili 99 i vonesës end-to-end mbetet nën 132 milisekonda, duke përmbushur me rezultat "
+    "të kënaqshëm objektivin e përcaktuar prej një sekonde, edhe në ngarkesa deri në 2000 mesazhe "
+    "në sekondë. Në konfigurimin bazë Autoencoder-i ofron balancën më të mirë mes cilësisë dhe "
+    "kostos, me AP 0.193 dhe koston më të ulët të inferencës, para One-Class SVM-së (0.150) dhe "
+    "Isolation Forest-it (0.091), ndërsa referenca supervised arrin 0.734. Asnjë ansambël nuk e "
+    "kalon modelin më të mirë individual, sepse detektorët gabojnë njësoj. Me 100 alarme për "
+    "bllok, 37% e mashtrimeve nuk i arrin asnjë prej tyre.",
+    "Konfigurimi peshon më shumë se algoritmi. Me konfigurimin më të mirë për secilin detektor, "
+    "raporti mes më të mirit dhe më të dobëtit bie nga 2.1 në 1.15, dhe One-Class SVM me "
+    "transformim kuantil kalon në krye (AP 0.368). Ndarja e rastësishme, e zakonshme në "
+    "literaturë, e fryn AP-në e metodave unsupervised rreth tri herë. Një prag adaptiv me dritare "
+    "rrëshqitëse e bën ngarkesën e hetimeve më të qëndrueshme dhe rrit F1 për detektorët "
+    "unsupervised.",
+    "Përfundimi kryesor është se infrastruktura streaming nuk është pengesë, ndërsa cilësia varet "
+    "më shumë nga konfigurimi dhe nga etiketat historike sesa nga algoritmi, prandaj metodat "
+    "unsupervised vlejnë si shtresë plotësuese për periudhën pa etiketa.",
 ]
 
 MIRENJOHJE = [
-    "Falënderime i shkojnë mentorit, Dr. sc. Mehmet Shala, për udhëzimet e "
-    "sakta dhe për lirinë e dhënë që kjo temë të ndiqej në thellësi, "
-    "veçanërisht atëherë kur rezultatet e para nuk përkonin me pritshmëritë "
-    "fillestare.",
-    "Falënderime i shkojnë gjithashtu stafit akademik të Programit për "
-    "Shkenca Kompjuterike dhe Inxhinieri në UBT, në veçanti për lëndët "
-    "Advanced Machine Learning dhe Deep Learning, të cilat e formuan mënyrën "
-    "si kuptohet sot vlerësimi eksperimental: jo si hap final verifikimi, por "
-    "si pjesa më e rëndësishme e vetë kërkimit.",
-    "Një falënderim i veçantë i takon grupit Machine Learning të Université "
-    "Libre de Bruxelles për publikimin e dataset-it që e bëri të mundur këtë "
-    "studim, si dhe komunitetit të softuerit të lirë, pa punën e të cilit një "
-    "infrastrukturë e tillë nuk do të ishte e arritshme brenda kornizës së "
-    "një punimi diplome.",
-    "Së fundi, falënderime i shkojnë familjes për durimin gjatë muajve kur "
-    "kjo punë zuri pjesën më të madhe të kohës.",
+    "Në radhë të parë, falënderimi i takon Allahut të Madhërishëm dhe të Gjithëdijshëm, për "
+    "forcën, durimin dhe të gjitha begatitë e dhuruara përgjatë këtij rrugëtimi.",
+    "Mirënjohje të thellë ia kushtoj familjes sime, për dashurinë e pakushtëzuar, sakrificat e "
+    "heshtura dhe besimin që nuk u lëkund asnjëherë. Përkrahja e tyre ka qenë forca pas çdo "
+    "përpjekjeje dhe mbështetja në çdo hap të këtij rrugëtimi. Një falënderim i veçantë u takon "
+    "edhe miqve të mi, për praninë, mbështetjen dhe çastet që e bënë këtë rrugëtim më të lehtë e "
+    "më të bukur.",
+    "Me respekt dhe mirënjohje të veçantë falënderoj mentorin e temës, Dr. sc. Mehmet Shala, për "
+    "udhëzimet profesionale, këshillat e vlefshme dhe besimin e treguar gjatë realizimit të këtij "
+    "punimi, si dhe për kontributin e çmuar përgjatë viteve të studimeve, përmes ligjërimit, "
+    "përkushtimit dhe ndarjes së njohurive.",
 ]
 
 FJALORI = [
     (
         "AP",
-        "Average Precision, sipërfaqja nën kurbën precision-recall; metrika "
-        "kryesore e këtij punimi",
+        "Average Precision, sipërfaqja nën kurbën precision-recall; metrika kryesore e këtij "
+        "punimi",
     ),
     ("AE", "Autoencoder, rrjet nervor që mëson të rindërtojë hyrjen e vet"),
     ("AUC", "Area Under the Curve, sipërfaqja nën kurbë"),
-    ("CD", "Critical Difference, diferenca kritike në testin post-hoc të Nemenyi-t"),
     ("CV", "Coefficient of Variation, koeficienti i variacionit"),
-    ("EM", "Excess-Mass, kriter unsupervised për vlerësimin e funksioneve të pikëzimit"),
     ("FN", "False Negative, mashtrim i pazbuluar"),
+    (
+        "Fold",
+        "Një nga pikat e prerjes së protokollit rolling-origin: një dritare trajnimi dhe blloku i "
+        "testimit që e pason; 8-fold do të thotë tetë pika të tilla",
+    ),
     ("FP", "False Positive, alarm i rremë"),
-    ("ID", "Intrinsic Dimension, dimensioni i brendshëm i një bashkësie të dhënash"),
+    ("H1–H3", "Hipotezat e punimit, të formuluara në nënkapitullin 3.5"),
     ("IF", "Isolation Forest"),
     ("KRaft", "Kafka Raft, modaliteti i Apache Kafka-s pa ZooKeeper"),
-    ("KS", "Kolmogorov-Smirnov, test dy-mostror i barazisë së shpërndarjeve"),
     ("LR", "Logistic Regression, Regresioni Logjistik"),
-    ("MV", "Mass-Volume, kriter unsupervised, plotësues i EM-së"),
+    ("msg/s", "Mesazhe në sekondë, njësia e ritmit të mbërritjes dhe e throughput-it"),
     ("OCSVM", "One-Class SVM, makinë me vektorë mbështetës njëklasëshe"),
     ("p50 / p95 / p99", "Percentili i 50-të, 95-të dhe 99-të i një shpërndarjeje"),
     ("PCA", "Principal Component Analysis, analiza e komponentëve kryesorë"),
+    ("PH1–PH3", "Pyetjet hulumtuese të punimit, të formuluara në nënkapitullin 1.5"),
     ("PR", "Precision-Recall"),
     ("PSI", "Population Stability Index, indeksi i stabilitetit të popullatës"),
+    ("R@100", "Recall me 100 alarme për bllok testimi"),
     ("RBF", "Radial Basis Function, kerneli gausian i përdorur nga One-Class SVM"),
     ("ROC", "Receiver Operating Characteristic"),
-    ("RSS", "Resident Set Size, memoria rezidente e procesit"),
-    ("SHAP", "SHapley Additive exPlanations"),
-    ("TP", "True Positive, mashtrim i zbuluar saktë"),
-    ("TPE", "Tree-structured Parzen Estimator, mostruesi i përdorur nga Optuna"),
-    ("TwoNN", "Vlerësues i dimensionit të brendshëm i bazuar në dy fqinjët më të afërt"),
-    ("ULB", "Université Libre de Bruxelles"),
     (
-        "unsupervised",
-        "Mësim pa etiketa gjatë trajnimit; termi ruhet në anglisht sepse "
-        "përdoret ashtu edhe në titullin e temës",
+        "Rolling-origin",
+        "Protokoll vlerësimi ku modeli trajnohet mbi të kaluarën dhe testohet mbi bllokun që vjen "
+        "pas, në disa pika prerjeje të njëpasnjëshme",
     ),
+    ("s.d.", "Devijimi standard (standard deviation)"),
+    ("supervised", "Mësim me etiketa gjatë trajnimit"),
+    ("Throughput", "Numri i mesazheve të përpunuara për sekondë"),
+    ("TPE", "Tree-structured Parzen Estimator, mostruesi i përdorur nga Optuna"),
+    ("ULB", "Université Libre de Bruxelles"),
+    ("unsupervised", "Mësim pa etiketa gjatë trajnimit"),
+    ("µs/tx", "Mikrosekonda për transaksion, njësia e kostos së inferencës"),
 ]
+
+
+# The contents opens with these three, as the template's example shows.
+FRONT_ENTRIES = ("LISTA E FIGURAVE", "LISTA E TABELAVE", "FJALORI I TERMAVE")
 
 
 def contents_entries(outline, figures, tables):
@@ -245,49 +208,100 @@ def contents_entries(outline, figures, tables):
     return [text for _, text in outline] + figures + tables
 
 
-def render_prelims(doc, outline, figures, tables, page_map) -> None:
+def _title(doc, text: str):
+    """A front-matter title that the contents leaves out, as the template
+    asks for the abstracts and the acknowledgements. The template asks every
+    title for Times New Roman 14, bold capitals, aligned left, so these are
+    set like chapter titles, but as ordinary paragraphs rather than headings,
+    which Word's contents would collect."""
+    para = doc.add_paragraph()
+    para.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    pf = para.paragraph_format
+    pf.line_spacing = 1.5
+    pf.space_before = Pt(0)
+    pf.space_after = Pt(12)
+    pf.keep_with_next = True
+    run = para.add_run(text)
+    run.font.name = "Times New Roman"
+    run.font.size = Pt(14)
+    run.bold = True
+    return para
+
+
+def _listed_title(doc, text: str, *, space_before: int = 0, new_page: bool = False):
+    """A front-matter title that the contents lists. It is a Heading 1 with
+    no number, which is how the template marks these three and how Word's
+    contents finds them, spaced like the other front-matter titles."""
+    para = add_heading(doc, text, 1, bookmark=title_bookmark(text))
+    para.paragraph_format.space_before = Pt(space_before)
+    para.paragraph_format.space_after = Pt(12)
+    para.paragraph_format.page_break_before = new_page or None
+    return para
+
+
+def _list_entries(captions, bookmark, page_map):
+    """The lines of the figure or table list: the label, the number and the
+    first sentence of each caption, which is the caption paragraph that Word
+    copies when it updates the list."""
+    entries = []
+    for number, caption in enumerate(captions, start=1):
+        label, _, text = caption.partition(". ")
+        title, _ = split_caption(text)
+        entries.append(
+            ("table of figures", f"{label}. {title}", page_map.get(caption), bookmark(number))
+        )
+    return entries
+
+
+def render_prelims(doc, outline, figures, tables, page_map, break_before=frozenset()) -> None:
     """Everything between the title pages and chapter 1.
 
     `page_map` carries printed page numbers recovered from a first rendering
-    pass; on the first pass it is empty and the entries are written without
-    numbers, which keeps the front matter at its final length so the numbers
-    found in the second pass remain valid.
+    pass. The automatic tables show them until Word updates the tables; on
+    the first pass they are empty, and the front matter still has its final
+    length, so the numbers found in the second pass remain valid.
+    `break_before` names titles that the first pass left alone at the foot of
+    a page; they start the next page instead.
     """
-    section = start_new_section(doc, "upperRoman", start=1)
-    set_page_numbering(section, "upperRoman", 1)
-    add_page_number_footer(section)
+    start_new_section(doc, "upperRoman", start=1)
 
-    _center(doc, "ABSTRAKT", size=14, bold=True, space_after=12)
+    _title(doc, "ABSTRAKT")
     for para in ABSTRAKT:
-        add_paragraph(doc, para)
+        add_paragraph(doc, keep_numbers_whole(para))
     page_break(doc)
 
-    _center(doc, "ABSTRACT", size=14, bold=True, space_after=12)
-    for para in ABSTRACT_EN:
-        add_paragraph(doc, para)
-    page_break(doc)
-
-    _center(doc, "MIRËNJOHJE", size=14, bold=True, space_after=12)
+    _title(doc, "MIRËNJOHJE/FALËNDERIME")
     for para in MIRENJOHJE:
-        add_paragraph(doc, para)
+        add_paragraph(doc, keep_numbers_whole(para))
     page_break(doc)
 
-    _center(doc, "PËRMBAJTJA", size=14, bold=True, space_after=12)
+    _title(doc, "PËRMBAJTJA")
     # The outline already carries the references entry in its correct place
-    # between chapters 6 and 8, so nothing is appended here.
+    # between chapters 6 and 8, so nothing is appended here. Chapter entries
+    # are in capitals, like the chapter titles they point to.
+    entries = [
+        ("toc 1", title, page_map.get(title), title_bookmark(title)) for title in FRONT_ENTRIES
+    ]
     for level, text in outline:
-        add_toc_entry(doc, text, level, page_map.get(text))
-    page_break(doc)
+        number, _, name = text.partition("\t")
+        label = f"{number}\t{name.upper()}" if level == 1 else text
+        entries.append((f"toc {level}", label, page_map.get(text), heading_bookmark(number)))
+    add_automatic_table(doc, CONTENTS_FIELD, entries).add_run().add_break(WD_BREAK.PAGE)
 
-    _center(doc, "LISTA E FIGURAVE", size=14, bold=True, space_after=12)
-    for caption in figures:
-        add_toc_entry(doc, _shorten(caption), 1, page_map.get(caption))
-    _center(doc, "LISTA E TABELAVE", size=14, bold=True, space_after=12)
-    for caption in tables:
-        add_toc_entry(doc, _shorten(caption), 1, page_map.get(caption))
-    page_break(doc)
+    _listed_title(doc, "LISTA E FIGURAVE")
+    add_automatic_table(doc, FIGURE_LIST_FIELD, _list_entries(figures, figure_bookmark, page_map))
 
-    _center(doc, "FJALORI I TERMAVE", size=14, bold=True, space_after=12)
+    # The template has the table list follow the figure list directly, not on
+    # a new page, unless the figure list fills its page. The paragraph that
+    # closes the figure list already leaves a line between them.
+    title = "LISTA E TABELAVE"
+    _listed_title(doc, title, space_before=6, new_page=title in break_before)
+    table_list = add_automatic_table(
+        doc, TABLE_LIST_FIELD, _list_entries(tables, table_bookmark, page_map)
+    )
+    table_list.add_run().add_break(WD_BREAK.PAGE)
+
+    _listed_title(doc, "FJALORI I TERMAVE")
     for term, meaning in FJALORI:
         para = doc.add_paragraph()
         para.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
@@ -300,12 +314,3 @@ def render_prelims(doc, outline, figures, tables, page_map) -> None:
         run2 = para.add_run(meaning)
         run2.font.name = "Times New Roman"
         run2.font.size = Pt(12)
-
-
-def _shorten(caption: str, limit: int = 95) -> str:
-    """Figure and table captions are full sentences; the lists need the
-    identifying head of each, not the whole explanation."""
-    if len(caption) <= limit:
-        return caption
-    cut = caption[:limit].rsplit(" ", 1)[0]
-    return cut + "…"

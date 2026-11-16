@@ -57,8 +57,7 @@ models:
     class_weight: balanced
 
 # Hyperparameter search. Selection never sees test labels: candidates are
-# ranked either on an inner validation slice of the TRAINING window, or by a
-# fully unsupervised criterion (Excess-Mass / Mass-Volume).
+# ranked on an inner validation slice of the TRAINING window.
 tuning:
   # 60 trials, not the 25 an all-families study could afford. Narrowing the
   # comparison to the three algorithms of the proposal buys depth everywhere,
@@ -70,9 +69,6 @@ tuning:
   # for the deep models; the winning configuration is then refitted on the
   # full window before it is evaluated anywhere.
   fit_subsample: 60000
-  em_subspaces: 8                    # random feature subspaces for EM/MV
-  em_subspace_dim: 5
-  em_mv_samples: 20000               # Monte-Carlo volume samples
 
 ensemble:
   # The three unsupervised detectors of the proposal; the supervised reference

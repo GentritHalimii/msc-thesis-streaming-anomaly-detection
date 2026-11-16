@@ -13,13 +13,27 @@ protocol change *which detector wins*, does it change *the absolute numbers*,
 and does a single split let you know how uncertain its own answer is?
 """
 
-import numpy as np
 import pandas as pd
+from matplotlib.lines import Line2D
 from scipy.stats import spearmanr
 
 from src.config import REPO_ROOT, load_config
 from src.evaluation.manifest import write_manifest
-from src.evaluation.report import AX, MODEL_LABELS, model_color, new_figure, save_figure, save_table
+from src.evaluation.report import (
+    AX,
+    CM,
+    FULL_WIDTH,
+    INK,
+    MODEL_LABELS,
+    MUTED,
+    legend_above,
+    model_color,
+    new_figure,
+    save_figure,
+    save_table,
+    strip,
+    value_grid,
+)
 from src.models.build import UNSUPERVISED
 
 LABEL_TO_KEY = {v: k for k, v in MODEL_LABELS.items()}
@@ -96,57 +110,47 @@ def main(cfg=None):
         )
 
     # --- Figure: single-split estimate against the fold distribution -------
-    fig, ax = new_figure(figsize=(7.0, 4.6))
-    order = table.sort_values("AP_8_folde")
-    y = np.arange(len(order))
-    for i, row in enumerate(order.itertuples(index=False)):
-        key = LABEL_TO_KEY[row.Detektori]
+    per_fold = pd.read_csv(results_dir / "benchmark_per_fold.csv")
+    order = [LABEL_TO_KEY[d] for d in table.sort_values("AP_8_folde")["Detektori"]]
+    fig, ax = new_figure(figsize=(FULL_WIDTH, 5.4 * CM))
+    for y, key in enumerate(order):
+        color = model_color(key)
+        values = per_fold.loc[per_fold["model"] == key, "ap"].to_numpy()
+        strip(ax, y, values, color, jitter=0.08, seed=y)
         ax.plot(
-            [max(row.AP_8_folde - row.sd_nder_folde, 0), row.AP_8_folde + row.sd_nder_folde],
-            [i, i],
-            color=model_color(key),
-            linewidth=5,
-            alpha=0.30,
-            solid_capstyle="round",
-        )
-        ax.plot(
-            row.AP_8_folde,
-            i,
-            "o",
-            color=model_color(key),
+            values.mean(),
+            y,
+            marker="D",
             markersize=7,
-            markeredgecolor="white",
-            markeredgewidth=1.2,
-            zorder=3,
+            color=color,
+            markeredgecolor="#ffffff",
+            markeredgewidth=0.9,
+            zorder=4,
         )
-        ax.plot(row.AP_ndarje_e_vetme, i, "X", color="#0b0b0b", markersize=7, zorder=4)
-    ax.set_yticks(y, order["Detektori"])
+        ax.plot(
+            single.loc[key, "ap"],
+            y,
+            marker="X",
+            markersize=8,
+            color=INK,
+            markeredgecolor="#ffffff",
+            markeredgewidth=0.8,
+            zorder=5,
+        )
+    ax.set_yticks(range(len(order)), [MODEL_LABELS[k] for k in order])
+    ax.tick_params(axis="y", length=0)
+    ax.set_ylim(-0.6, len(order) - 0.4)
+    ax.set_xlim(0, 0.8)
     ax.set_xlabel(AX["ap"])
-    ax.grid(axis="y", visible=False)
-    from matplotlib.lines import Line2D
-
-    ax.legend(
+    value_grid(ax, "x")
+    legend_above(
+        ax,
         handles=[
-            Line2D(
-                [],
-                [],
-                marker="o",
-                color="#898781",
-                linestyle="",
-                markersize=7,
-                label="Mesatarja mbi 8 fold-e (±1 s.d.)",
-            ),
-            Line2D(
-                [],
-                [],
-                marker="X",
-                color="#0b0b0b",
-                linestyle="",
-                markersize=7,
-                label="Vlerësimi nga një ndarje e vetme 70/30",
-            ),
+            Line2D([], [], marker="o", color=MUTED, linestyle="", markersize=4, alpha=0.6),
+            Line2D([], [], marker="D", color=MUTED, linestyle="", markersize=6),
+            Line2D([], [], marker="X", color=INK, linestyle="", markersize=7),
         ],
-        loc="lower right",
+        labels=["Fold-et", "Mesatarja mbi 8 fold-e", "Prerja e vetme 70/30"],
     )
     save_figure(fig, REPO_ROOT / cfg.results_dir, "protocol_comparison")
 

@@ -27,7 +27,7 @@ MECHANISM = {
     ),
     "ocsvm": ("Distanca nga hiperplani ndarës në hapësirën e kernelit RBF", "O(n²–n³)"),
     "logreg": (
-        "Probabiliteti i klasës pozitive nga një model i mbikëqyrur me etiketa historike",
+        "Probabiliteti i klasës pozitive nga një model supervised me etiketa historike",
         "O(i·n·d)",
     ),
     "pca_recon": (
@@ -50,9 +50,9 @@ def model_zoo_table(cfg) -> pd.DataFrame:
                 "Familja": (
                     FAMILY_LABELS.get(FAMILY_OF.get(name, ""), "Referencë")
                     if name != "logreg"
-                    else "Referencë e mbikëqyrur"
+                    else "Referencë supervised"
                 ),
-                "Mekanizmi i pikëzimit": mech,
+                "Pika e anomalisë": mech,
                 "Kosto trajnimi": cost,
                 "Hiperparametrat": pretty,
             }

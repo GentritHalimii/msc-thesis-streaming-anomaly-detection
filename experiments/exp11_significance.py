@@ -16,7 +16,18 @@ import pandas as pd
 
 from src.config import REPO_ROOT, load_config
 from src.evaluation.manifest import write_manifest
-from src.evaluation.report import AX, MODEL_LABELS, model_color, new_figure, save_figure, save_table
+from src.evaluation.report import (
+    AX,
+    CM,
+    FULL_WIDTH,
+    INK,
+    INK_2,
+    MODEL_LABELS,
+    model_color,
+    new_figure,
+    save_figure,
+    save_table,
+)
 from src.evaluation.stats import (
     average_ranks,
     friedman,
@@ -36,53 +47,60 @@ PRE_REGISTERED_PAIRS = [
 
 
 def critical_difference_diagram(ranks: pd.Series, cd: float, n_folds: int, cfg, fname: str):
-    """Average ranks on a line; detectors whose ranks differ by less than the
-    critical difference are joined by a bar and are indistinguishable."""
+    """Average ranks on a line, in the layout Demšar introduced.
+
+    The better half of the detectors is labelled on the left and the rest on
+    the right, each joined to its rank by an elbow. A thick bar joins
+    detectors whose ranks differ by less than the critical difference, which
+    is drawn to scale above the axis so the reader can compare it with any
+    gap by eye.
+    """
     ranks = ranks.sort_values()
     names = list(ranks.index)
     values = ranks.to_numpy()
     k = len(names)
+    margin = 1.55  # rank units left free on each side for the labels
+    height_cm = 2.55 + 0.55 * ((k + 1) // 2 - 1)
 
-    fig, ax = new_figure(figsize=(7.4, 0.34 * k + 2.0))
-    ax.set_xlim(0.5, k + 0.5)
-    ax.set_ylim(0, 1)
+    fig, ax = new_figure(figsize=(FULL_WIDTH, height_cm * CM))
+    fig.set_layout_engine("none")
+    ax.set_position((0, 0, 1, 1))
+    ax.set_xlim(1 - margin, k + margin)
+    ax.set_ylim(-height_cm, 0)
     ax.axis("off")
 
-    y_axis = 0.86
-    ax.plot([1, k], [y_axis, y_axis], color="#52514e", lw=1.2)
+    y_axis = -1.0
+    ax.plot([1, k], [y_axis, y_axis], color=INK_2, lw=0.9)
     for tick in range(1, k + 1):
-        ax.plot([tick, tick], [y_axis, y_axis + 0.02], color="#52514e", lw=1.0)
-        ax.text(tick, y_axis + 0.045, str(tick), ha="center", fontsize=8, color="#52514e")
-    ax.text(
-        (1 + k) / 2,
-        y_axis + 0.11,
-        f"{AX['rank']} (1 = më i miri)",
-        ha="center",
-        fontsize=9.5,
-        color="#52514e",
-    )
+        ax.plot([tick, tick], [y_axis, y_axis + 0.12], color=INK_2, lw=0.9)
+        ax.text(tick, y_axis + 0.2, str(tick), ha="center", va="bottom", fontsize=8, color=INK_2)
+    # The critical difference to scale, starting at rank 1.
+    y_cd = -0.32
+    ax.plot([1, 1 + cd], [y_cd, y_cd], color=INK, lw=1.0)
+    for end in (1, 1 + cd):
+        ax.plot([end, end], [y_cd - 0.08, y_cd + 0.08], color=INK, lw=1.0)
+    ax.text(1 + cd + 0.06, y_cd, f"CD = {cd:.2f}", ha="left", va="center", fontsize=8, color=INK)
 
-    # Labels alternate left/right of the axis to avoid collisions.
     half = (k + 1) // 2
     for i, (name, val) in enumerate(zip(names, values, strict=True)):
         left = i < half
         row = i if left else k - 1 - i
-        y_label = y_axis - 0.10 - 0.055 * row
-        x_end = 0.7 if left else k + 0.3
-        ax.plot([val, val], [y_axis, y_label], color=model_color(name), lw=1.1)
-        ax.plot([val, x_end], [y_label, y_label], color=model_color(name), lw=1.1)
+        y_label = y_axis - 0.75 - 0.55 * row
+        x_end = 1 - 0.25 if left else k + 0.25
+        color = model_color(name)
+        ax.plot([val, val, x_end], [y_axis, y_label, y_label], color=color, lw=1.1)
         ax.text(
-            x_end + (-0.08 if left else 0.08),
+            x_end + (-0.06 if left else 0.06),
             y_label,
-            f"{MODEL_LABELS.get(name, name)} ({val:.2f})",
+            f"{MODEL_LABELS.get(name, name)}  {val:.2f}",
             ha="right" if left else "left",
             va="center",
-            fontsize=8.5,
-            color="#0b0b0b",
+            fontsize=8.2,
+            color=INK,
         )
 
-    # Cliques of statistically indistinguishable detectors.
-    y_bar = y_axis - 0.045
+    # Groups of detectors that the test cannot tell apart.
+    y_bar = y_axis - 0.3
     drawn = []
     for i in range(k):
         j = i
@@ -91,20 +109,21 @@ def critical_difference_diagram(ranks: pd.Series, cd: float, n_folds: int, cfg, 
         if j > i and not any(a <= i and j <= b for a, b in drawn):
             drawn.append((i, j))
             ax.plot(
-                [values[i] - 0.03, values[j] + 0.03],
+                [values[i] - 0.04, values[j] + 0.04],
                 [y_bar, y_bar],
-                color="#0b0b0b",
-                lw=3.2,
+                color=INK,
+                lw=3.0,
                 solid_capstyle="round",
             )
-            y_bar -= 0.028
-
+            y_bar -= 0.22
     ax.text(
-        1,
-        0.03,
-        f"CD = {cd:.2f}  (Nemenyi, α=0.05, k={k}, N={n_folds} fold-e)",
-        fontsize=8.5,
-        color="#898781",
+        (1 + k) / 2,
+        -height_cm + 0.06,
+        f"{AX['rank']} i AP-së nëpër {n_folds} fold-e (1 = më i miri)",
+        ha="center",
+        va="bottom",
+        fontsize=8,
+        color=INK_2,
     )
     save_figure(fig, REPO_ROOT / cfg.results_dir, fname)
 

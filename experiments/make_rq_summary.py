@@ -32,9 +32,10 @@ def main(cfg=None):
     reference = bench[bench["key"] == "logreg"].iloc[0]
 
     static = lat[~lat["prag_adaptiv"]]
-    core_rates = static[static["rate_msg_s"] <= 1000]
+    top_rate = static[static["rate_msg_s"] == static["rate_msg_s"].max()]
     best_ens = ens.sort_values("ap_mean", ascending=False).iloc[0]
     b100 = budget[budget["budget_k"] == 100].sort_values("recall_at_k", ascending=False)
+    cheapest = bench.sort_values("score_us_per_tx").iloc[0]["key"] == best_unsup["key"]
 
     # Read the tuning effect off exp18 rather than restating a number that
     # can go stale the moment the search is re-run.
@@ -44,49 +45,76 @@ def main(cfg=None):
         te = te[te["Detektori"] != reference["model"]].sort_values("AP_i_akorduar", ascending=False)
         order_default = list(te.sort_values("AP_default", ascending=False)["Detektori"])
         order_tuned = list(te["Detektori"])
-        changed = order_default != order_tuned
         tuning_note = (
-            f"Pas akordimit renditja {'ndryshon' if changed else 'nuk ndryshon'}: "
-            f"{' > '.join(order_default)} bëhet {' > '.join(order_tuned)}, dhe "
-            f"{te.iloc[0]['Detektori']} arrin AP {te.iloc[0]['AP_i_akorduar']:.3f}."
+            f"Pas akordimit renditja bëhet {', '.join(order_tuned)}."
+            if order_default != order_tuned
+            else "Akordimi nuk e ndryshon renditjen."
         )
     else:
         tuning_note = "Efekti i akordimit nuk është matur ende."
+    best_effort = _read(results_dir, "best_effort_interaction")
+    if best_effort is not None:
+        be = best_effort.sort_values("AP më i mirë i arritshëm", ascending=False)
+        tuning_note += (
+            " Në konfigurimin më të mirë të secilit: "
+            + ", ".join(
+                f"{r['Detektori']} {r['AP më i mirë i arritshëm']:.3f}" for _, r in be.iterrows()
+            )
+            + "."
+        )
+
+    corr = _read(results_dir, "ensemble_rank_correlation_per_fold")
+    corr_note = ""
+    if corr is not None:
+        pair_means = corr.groupby(["model_a", "model_b"])["spearman"].mean()
+        corr_note = (
+            f" Korrelacioni i renditjeve mes anëtarëve: {pair_means.min():.2f} deri "
+            f"{pair_means.max():.2f}."
+        )
+    greedy = _read(results_dir, "ensemble_per_fold")
+    greedy_note = ""
+    if greedy is not None:
+        picks = greedy[(greedy["pool"] == "greedy") & (greedy["fold"] > 0)]["members"]
+        if len(picks) and (picks == picks.iloc[0]).all() and "+" not in picks.iloc[0]:
+            greedy_note = (
+                f" Procedura lakmitare zgjedh vetëm {MODEL_LABELS.get(picks.iloc[0])}-in në çdo "
+                f"fold me histori."
+            )
 
     rows = [
         {
             "Pyetja": "PH1",
             "Formulimi": "A arrihet vonesë mesatare nën 1 sekondë?",
-            "Përgjigjja": "PO",
+            "Përgjigjja": "Po",
             "Evidenca": (
-                f"Vonesa mesatare fund-më-fund {core_rates['e2e_ms_mean'].min():.0f}–"
-                f"{core_rates['e2e_ms_mean'].max():.0f} ms në {len(core_rates)} "
-                f"konfigurime deri në 1000 msg/s; p99 maksimal "
-                f"{core_rates['e2e_ms_p99'].max():.0f} ms. Ngopja rreth "
-                f"{static['throughput_msg_s'].max():.0f} msg/s."
+                f"Vonesa mesatare end-to-end {static['e2e_ms_mean'].min():.1f} deri "
+                f"{static['e2e_ms_mean'].max():.1f} ms në {len(static)} konfigurime "
+                f"({static['rate_msg_s'].min():.0f} deri {static['rate_msg_s'].max():.0f} msg/s); "
+                f"p99 më i lartë {static['e2e_ms_p99'].max():.0f} ms. Edhe me "
+                f"{top_rate['rate_msg_s'].iloc[0]:.0f} msg/s consumer-i nuk mbetet pas: "
+                f"throughput {top_rate['throughput_msg_s'].min():.0f} deri "
+                f"{top_rate['throughput_msg_s'].max():.0f} msg/s."
             ),
         },
         {
             "Pyetja": "PH2",
             "Formulimi": "Cili algoritëm ofron balancën më të mirë?",
-            "Përgjigjja": f"{best_unsup['model']} (me parazgjedhje)",
+            "Përgjigjja": f"{best_unsup['model']} (konfigurimi bazë)",
             "Evidenca": (
-                f"AP {best_unsup['ap_mean']:.3f} ± {best_unsup['ap_std']:.3f} mbi 8 fold-e, "
-                f"me koston e dytë më të ulët të pikëzimit "
-                f"({best_unsup['score_us_per_tx']:.2f} µs/tx). Referenca e mbikëqyrur "
-                f"mbetet përpara me AP {reference['ap_mean']:.3f}. {tuning_note}"
+                f"AP {best_unsup['ap_mean']:.3f} (s.d. {best_unsup['ap_std']:.3f}) në protokollin "
+                f"8-fold, me koston e inferencës {best_unsup['score_us_per_tx']:.2f} µs/tx"
+                f"{', më e ulëta' if cheapest else ''}. Referenca supervised: AP "
+                f"{reference['ap_mean']:.3f}. {tuning_note}"
             ),
         },
         {
             "Pyetja": "PH3",
             "Formulimi": "A e përmirëson ansambli zbulimin?",
-            "Përgjigjja": "JO",
+            "Përgjigjja": "Jo",
             "Evidenca": (
-                f"Varianti më i mirë nga {len(ens)} i testuar arrin AP "
-                f"{best_ens['ap_mean']:.3f} kundrejt {best_unsup['ap_mean']:.3f} të modelit "
-                f"më të mirë individual, duke fituar vetëm në "
-                f"{int(best_ens['fold_wins_vs_best_single'])}/8 fold-e. Shkaku: "
-                f"korrelacion i lartë i rangjeve mes anëtarëve."
+                f"Më i miri nga {len(ens)} variantet arrin AP {best_ens['ap_mean']:.3f} kundrejt "
+                f"{best_unsup['ap_mean']:.3f} të modelit më të mirë individual."
+                f"{greedy_note}{corr_note}"
             ),
         },
     ]

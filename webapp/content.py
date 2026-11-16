@@ -131,8 +131,8 @@ _OVERVIEW = page(
         "Argumenti me radhë",
         "Kapitujt 5 dhe 6",
         prose(
-            "Nëntë gjetjet e studimit, në rendin në të cilin varen nga njëra-tjetra. Secila "
-            "shoqërohet me numrin e vet të lexuar nga dosja e rezultateve dhe me lidhjen te "
+            "Tetë gjetjet e studimit, në rendin e punimit. Secila shoqërohet me numrin e vet të "
+            "lexuar nga dosja e rezultateve dhe me lidhjen te "
             "seksioni që e provon. Kjo është edhe rruga më e shkurtër për ta kuptuar punimin, "
             "edhe skeleti i një prezantimi."
         ),
@@ -140,22 +140,21 @@ _OVERVIEW = page(
     ),
     section(
         "fushëveprimi",
-        "Fushëveprimi dhe pse është i ngushtë",
-        "§1.4, §2.13",
+        "Fushëveprimi",
+        "§1.4",
         prose(
-            "Studimi kufizohet te tri algoritmet që emërton projekt-propozimi, Isolation "
-            "Forest, Autoencoder dhe One-Class SVM, plus një referencë e mbikëqyrur me "
-            "Regresion Logjistik dhe një ablacion linear me PCA. Ngushtimi nuk është kufizim "
-            "i imponuar por kusht: studimi mekanicist i një algoritmi kërkon proba të "
-            "ndërtuara posaçërisht për të, dhe kjo punë nuk shkallëzohet në dhjetëra metoda.",
-            "Ka edhe një arsye statistikore që matet. Diferenca kritike e testit post-hoc "
-            "rritet me numrin e metodave të krahasuara, prandaj mbi tetë fold-e një bashkësi "
-            "e gjerë detektorësh e bën testin të paaftë të refuzojë çfarëdo hipoteze. Me tre "
-            "detektorë ajo bie nën gjerësinë e rangjeve dhe testi bëhet i përdorshëm.",
+            "Studimi kufizohet te tri algoritme unsupervised, Isolation "
+            "Forest, Autoencoder dhe One-Class SVM, me Regresionin Logjistik si referencë "
+            "supervised. Në vend që të shtohen algoritme të tjera, secili prej tyre studiohet "
+            "në thellësi: me protokoll rolling-origin, me paraprocesimin dhe hiperparametrat "
+            "si variabla eksperimentale, me parametrat kryesorë të secilit algoritëm dhe me "
+            "analizën e gabimeve në nivel transaksioni.",
         ),
         table(
             "model_zoo",
-            "Detektorët e krahasuar, mekanizmi i tyre dhe kostoja asimptotike.",
+            "Detektorët e krahasuar, pika e anomalisë që llogarit secili dhe hiperparametrat bazë.",
+            columns=["Detektori", "Familja", "Pika e anomalisë", "Hiperparametrat"],
+            query="Detektori != 'PCA lineare (ablacion)'",
         ),
     ),
     section(
@@ -164,7 +163,7 @@ _OVERVIEW = page(
         "§4.9",
         prose(
             "Sistemi ndjek një arkitekturë pesështresore: burimi i të dhënave, shtresa e "
-            "rrjedhës me Apache Kafka në modalitetin KRaft, shtresa e pikëzimit me modelet "
+            "rrjedhës me Apache Kafka në modalitetin KRaft, shtresa e inferencës me modelet "
             "unsupervised, shtresa e alarmeve me prag, dhe shtresa e persistimit e "
             "vizualizimit me PostgreSQL dhe Grafana."
         ),
@@ -175,12 +174,12 @@ _OVERVIEW = page(
 
 _DATASET = page(
     "dataseti",
-    "Dataset-i dhe gjeometria",
-    "Çfarë përmbajnë të dhënat, dhe sa i ndashëm është problemi para çdo modeli.",
+    "Dataset-i",
+    "Çfarë përmbajnë të dhënat, dhe sa larg klasës legjitime ndodhen mashtrimet.",
     section(
         "eda",
         "Analiza eksploruese",
-        "§4.1",
+        "§4.1.2",
         metrics("dataset"),
         table(
             "eda_overview",
@@ -202,66 +201,15 @@ _DATASET = page(
             color="#2a78d6",
             title="Sinjali njëvariablësh për veçori, pesëmbëdhjetë më të fortat",
         ),
-        runner("exp0_eda"),
-    ),
-    section(
-        "gjeometria",
-        "Kufiri i sipërm gjeometrik",
-        "§5.1",
         prose(
-            "Të tria metodat unsupervised e përcaktojnë anomalinë përmes një nocioni largësie "
-            "ose ngjeshjeje. Prandaj pyetja e parë nuk është se cila prej tyre është më e "
-            "mirë, por se sa larg mund të shkojë çdo metodë e kësaj natyre mbi këto të dhëna. "
-            "Përgjigja merret pa përshtatur asnjë model: një detektor që pikëzon thjesht sipas "
-            "distancës nga fqinjët legjitimë."
-        ),
-        verdict("geometry"),
-        table(
-            "geometry_summary",
-            "Karakterizimi gjeometrik i të dyja dritareve.",
-            columns=[
-                "dritarja",
-                "rreshta",
-                "mashtrime",
-                "id_twonn_normale",
-                "knn_distanca_normale",
-                "knn_distanca_mashtrime",
-                "raporti_distancave",
-                "ap_vetem_distance",
-                "rangu_median_i_mashtrimit",
-                "mashtrime_ne_top100",
-            ],
-            labels={
-                "dritarja": "Dritarja",
-                "rreshta": "Rreshta",
-                "mashtrime": "Mashtrime",
-                "id_twonn_normale": "Dim. i brendshëm",
-                "knn_distanca_normale": "kNN legjitime",
-                "knn_distanca_mashtrime": "kNN mashtrime",
-                "raporti_distancave": "Raporti",
-                "ap_vetem_distance": "AP vetëm distancë",
-                "rangu_median_i_mashtrimit": "Rangu median",
-                "mashtrime_ne_top100": "Në top-100",
-            },
-            round_={
-                "id_twonn_normale": 2,
-                "knn_distanca_normale": 2,
-                "knn_distanca_mashtrime": 2,
-                "raporti_distancave": 2,
-                "ap_vetem_distance": 3,
-                "rangu_median_i_mashtrimit": 0,
-            },
+            "Mashtrimet ndodhen vërtet larg klasës legjitime: distanca mediane e një mashtrimi "
+            "nga dhjetë fqinjët e tij legjitimë më të afërt është rreth tetë herë ajo e një "
+            "transaksioni tipik. Kjo largësi nuk sjell megjithatë zbulim të lehtë, sepse 5% e "
+            "transaksioneve legjitime që ndodhen më larg janë rreth 10 000, shumë më tepër se "
+            "384 mashtrimet e dritares, dhe zënë të njëjtin rajon."
         ),
         figure("geometry_knn_distance", "Distanca deri te dhjetë fqinjët legjitimë më të afërt."),
-        figure("geometry_cost_to_catch", "Sa alarme kushton secili mashtrim."),
-        callout(
-            "Ky nënkapitull përcakton kornizën e leximit për gjithçka tjetër. Nëse një "
-            "detektor i trajnuar arrin AP në rendin 0.1 deri 0.3 mbi këto të dhëna, ai nuk "
-            "është domosdoshmërisht i dobët; ai ndodhet afër kufirit që gjeometria e lejon.",
-            tone="accent",
-            title="Si duhet lexuar çdo rezultat që vjen pas kësaj",
-        ),
-        runner("exp20_data_geometry"),
+        runner("exp0_eda", "exp20_data_geometry"),
     ),
 )
 
@@ -298,7 +246,7 @@ _PROTOCOL = page(
     section(
         "rrjedhja",
         "Katër rrugët e rrjedhjes së informacionit",
-        "§3.7",
+        "§3.6",
         prose(
             "Ndarja, paraprocesimi, pragu dhe zgjedhja e hiperparametrave janë katër rrugë të "
             "veçanta përmes të cilave bashkësia e testimit mund të ndikojë modelin. Secila ka "
@@ -309,7 +257,7 @@ _PROTOCOL = page(
     section(
         "krahasimi",
         "Sa peshojnë vendimet e protokollit",
-        "§5.10",
+        "§5.6",
         verdict("protocol"),
         chart(
             "grouped",
@@ -327,19 +275,47 @@ _PROTOCOL = page(
         table("protocol_comparison", "Prerja e vetme kundrejt protokollit me tetë fold-e."),
         runner("exp6_shuffled_split", "exp17_protocol_comparison"),
     ),
+    section(
+        "zhvendosja",
+        "Zhvendosja: cila popullatë lëviz",
+        "Shtojca E",
+        prose(
+            "Degradimi me kohën vërehet lehtë; pyetja e dobishme është cila popullatë lëviz. "
+            "Nëse lëviz ajo legjitime, ritrajnimi ndihmon. Nëse lëviz ajo e mashtrimeve, "
+            "ritrajnimi mbi të dhëna të reja normale nuk ndryshon asgjë."
+        ),
+        verdict("drift"),
+        chart(
+            "line",
+            "drift_per_fold",
+            x="fold",
+            series=[
+                {"col": "psi_normals_mean", "label": "Transaksione legjitime", "color": "#2a78d6"},
+                {"col": "psi_frauds_mean", "label": "Mashtrime", "color": "#e34948"},
+            ],
+            xlabel="Fold-i kohor",
+            ylabel="Indeksi PSI (mesatar mbi veçoritë)",
+            markers=True,
+            logy=True,
+            refs=[{"y": 0.25, "label": "pragu i zhvendosjes së moderuar"}],
+            title="Një rend madhësie dallim mes dy popullatave",
+        ),
+        figure("drift_psi_decomposition", "Dekompozimi i zhvendosjes sipas popullatës."),
+        runner("exp13_drift"),
+    ),
 )
 
 
 _RESULTS = page(
     "rezultatet",
-    "Rezultatet kryesore",
+    "Krahasimi i algoritmeve",
     "PH2: cili algoritëm ofron balancën më të mirë mes performancës dhe efikasitetit.",
     section(
         "kryesore",
         "Krahasimi nën konfigurimin bazë",
-        "§5.3.1",
+        "§5.2.1",
         prose(
-            "Tabela kryesore krahason tri algoritmet unsupervised dhe referencën e mbikëqyrur "
+            "Tabela kryesore krahason tri algoritmet unsupervised dhe referencën supervised "
             "në tetë pika kohore prerjeje, me hiperparametrat e parazgjedhur dhe me skalim "
             "standard. Ky është konfigurimi bazë, jo ai më i mirë i arritshëm; dallimi mes "
             "tyre matet veçmas dhe rezulton i madh."
@@ -414,14 +390,12 @@ _RESULTS = page(
     section(
         "domethenia",
         "A janë dallimet statistikisht të qëndrueshme",
-        "§5.3.2",
+        "§5.2.2",
         prose(
-            "Testi omnibus i Friedman-it refuzon hipotezën se detektorët janë ekuivalentë. "
             "Krahasimet dyshe të paradeklaruara bëhen me testin e çiftuar të Wilcoxon-it mbi "
-            "fold-et, me korrigjim Holm për gjashtë krahasime."
+            "fold-et, me korrigjim Holm për gjashtë krahasime. Me tetë fold-e p-vlera më e "
+            "vogël e mundshme është 0.0078, e cila e kalon korrigjimin për gjashtë krahasime."
         ),
-        table("significance_omnibus", "Testi omnibus dhe diferenca kritike e Nemenyi-t."),
-        figure("significance_cd_core", "Diagrami i diferencës kritike."),
         table(
             "significance_wilcoxon",
             "Krahasimet e paradeklaruara dyshe me korrigjim Holm.",
@@ -450,10 +424,10 @@ _RESULTS = page(
     section(
         "kostoja",
         "Cilësia përballë kostos",
-        "§5.3.3",
+        "§5.2.3",
         prose(
             "Pyetja hulumtuese nuk kërkon detektorin më të saktë por atë me balancën më të "
-            "mirë. Kostoja e pikëzimit ndryshon me qindra herë mes detektorëve, dhe në rrjedhë "
+            "mirë. Kostoja e inferencës ndryshon me qindra herë mes detektorëve, dhe në rrjedhë "
             "ky dallim përcakton nëse një metodë është e vendosshme apo jo."
         ),
         chart(
@@ -463,7 +437,7 @@ _RESULTS = page(
             y="ap_mean",
             label="model",
             colorByLabel=True,
-            xlabel="Kostoja e pikëzimit (µs për transaksion)",
+            xlabel="Kostoja e inferencës (µs për transaksion)",
             ylabel="Average Precision (AP)",
             logx=True,
             title="Këndi i sipërm i majtë është pozicioni i dëshiruar",
@@ -472,14 +446,18 @@ _RESULTS = page(
     ),
     section(
         "buxheti",
-        "Vlerësimi në buxhet alarmesh",
-        "§5.3.4",
+        "Pragu dhe buxheti i alarmeve",
+        "§5.2.4",
         prose(
-            "Average Precision përmbledh të gjithë renditjen, por asnjë ekip nuk e shqyrton "
-            "atë të tërën. Këtu matet çfarë kapet kur investigohen vetëm k alarmet më të larta "
-            "për bllok testimi."
+            "Pragu merret nga percentili i pikëve të trajnimit, me kontaminim të barabartë me "
+            "normën e mashtrimit. Figura e parë tregon, mbi ndarjen e vetme 70/30, sa "
+            "varen precision, recall dhe F1 nga kjo zgjedhje. Pastaj matet çfarë kapet kur "
+            "hetohen vetëm k alarmet më të larta për bllok testimi."
         ),
-        verdict("budget"),
+        figure(
+            "contamination_sweep",
+            "Precision, recall dhe F1 në ndarjen 70/30 sipas kontaminimit.",
+        ),
         chart(
             "line",
             "budget_summary",
@@ -495,28 +473,56 @@ _RESULTS = page(
         ),
         table(
             "budget_summary",
-            "Cilësia dhe rikuperimi monetar në buxhet prej njëqind alarmesh.",
+            "Cilësia dhe vlera e kapur në buxhet prej njëqind alarmesh.",
+            columns=["model", "precision_at_k", "recall_at_k", "amount_recall_at_k"],
             query="budget_k == 100",
             labels={
                 "model": "Detektori",
-                "budget_k": "k",
-                "precision_at_k": "Precision@k",
-                "recall_at_k": "Recall@k",
+                "precision_at_k": "Precision@100",
+                "recall_at_k": "Recall@100",
                 "amount_recall_at_k": "Vlera e kapur",
-                "net_savings_eur": "Kursime neto (EUR)",
-                "savings_ratio": "Raporti",
             },
-            round_={
-                "precision_at_k": 3,
-                "recall_at_k": 3,
-                "amount_recall_at_k": 3,
-                "net_savings_eur": 0,
-                "savings_ratio": 3,
-            },
+            round_={"precision_at_k": 3, "recall_at_k": 3, "amount_recall_at_k": 3},
             highlight="recall_at_k",
         ),
-        figure("budget_savings", "Raporti i kursimeve neto sipas buxhetit."),
-        runner("exp14_alert_budget"),
+        runner("exp2_contamination_sweep", "exp14_alert_budget"),
+    ),
+    section(
+        "pragu",
+        "Pragu adaptiv me dritare rrëshqitëse",
+        "§5.2.4",
+        prose(
+            "Një prag i fiksuar nga kuantili i pikëve të trajnimit e ka një dobësi që del "
+            "vetëm në rrjedhë: kur shpërndarja zhvendoset, numri i alarmeve zhvendoset bashkë "
+            "me të, dhe ekipi hetimor merr ngarkesë të paparashikueshme pikërisht kur diçka "
+            "ka ndryshuar."
+        ),
+        verdict("adaptive_threshold"),
+        chart(
+            "grouped",
+            "adaptive_threshold_summary",
+            index="model",
+            pivot={"column": "regjimi", "value": "f1"},
+            ylabel="F1",
+            title="F1 nën pragun statik kundrejt atij adaptiv",
+        ),
+        chart(
+            "grouped",
+            "adaptive_threshold_summary",
+            index="model",
+            pivot={"column": "regjimi", "value": "alert_rate_cv"},
+            ylabel="Koeficienti i variacionit të ngarkesës",
+            title="Sa e parashikueshme bëhet ngarkesa hetimore",
+        ),
+        figure("adaptive_tradeoff", "Kompromisi mes qëndrueshmërisë dhe cilësisë."),
+        callout(
+            "Për të tre detektorët unsupervised F1 rritet, kryesisht sepse pragu adaptiv "
+            "rikthen numrin e synuar të alarmeve; për referencën supervised ai bie. Pragu "
+            "statik i saj është tashmë i kalibruar, prandaj një kuantil mbi dritare "
+            "rrëshqitëse vetëm sa e detyron të alarmojë më shumë se ç'duhet.",
+            tone="warn",
+        ),
+        runner("exp16_adaptive_threshold"),
     ),
 )
 
@@ -528,10 +534,10 @@ _ENSEMBLE = page(
     section(
         "ansambli",
         "A ndihmon kombinimi i detektorëve",
-        "§5.4",
+        "§5.3",
         prose(
             "Pesë rregulla kombinimi mbi tri pikët e detektorëve unsupervised, plus një "
-            "procedurë lakmitare që i shton anëtarët një nga një. Referenca e mbikëqyrur "
+            "procedurë lakmitare që i shton anëtarët një nga një. Referenca supervised "
             "përjashtohet nga çdo ansambël, sepse përfshirja e saj do ta shndërronte "
             "kombinimin unsupervised në një model me etiketa."
         ),
@@ -551,15 +557,12 @@ _ENSEMBLE = page(
             title="Variantet e ansamblit kundrejt anëtarit më të mirë",
         ),
         figure("ensemble_vs_single", "Ansamblet kundrejt modelit më të mirë individual."),
-        figure(
-            "ensemble_rank_correlation", "Korrelacioni i renditjeve mes çifteve të detektorëve."
-        ),
         runner("exp12_ensembles", "exp12_ensembles_tuned"),
     ),
     section(
         "gabimet",
         "Cilat mashtrime nuk kapen",
-        "§5.14",
+        "§5.3",
         prose(
             "Metrikat e grumbulluara e fshehin identitetin e transaksioneve. Këtu secili "
             "mashtrim ndiqet individualisht nëpër tetë fold-et, dhe regjistrohet nga sa "
@@ -591,8 +594,8 @@ _ENSEMBLE = page(
         figure("error_analysis", "Mbulimi dhe pozicioni gjeometrik i mashtrimeve të paarritshme."),
         table("error_analysis_dark_set", "Mashtrimet e kapura kundrejt atyre të paarritshme."),
         callout(
-            "Nga mashtrimet që nuk i arrin asnjë detektor unsupervised, referenca e "
-            "mbikëqyrur i kap afërsisht gjashtëdhjetë për qind brenda të njëjtit buxhet. "
+            "Nga mashtrimet që nuk i arrin asnjë detektor unsupervised, referenca "
+            "supervised i kap afërsisht gjashtëdhjetë për qind brenda të njëjtit buxhet. "
             "Informacioni ekziston pra në të dhëna; ai thjesht nuk është i formës që një "
             "detektor distancash mund ta shohë.",
             tone="accent",
@@ -604,7 +607,7 @@ _ENSEMBLE = page(
 
 _DEPTH = page(
     "thellesia",
-    "Studimet për algoritëm",
+    "Studimet për secilin algoritëm",
     "Brenda secilit detektor: cila levë e lëviz rezultatin, dhe pse sillet siç sillet.",
     section(
         "iforest",
@@ -643,7 +646,7 @@ _DEPTH = page(
     ),
     section(
         "autoencoder",
-        "Autoencoder: ngushtica, humbja dhe mbitrajnimi",
+        "Autoencoder: arkitektura, humbja dhe trajnimi",
         "§5.5.2",
         prose(
             "Gjashtë leva u ndryshuan veç e veç mbi të njëjtat tetë fold-e: gjerësia e "
@@ -666,13 +669,10 @@ _DEPTH = page(
             color="#1baf7a",
             title="Zgjidh studimin për të parë konfigurimet e tij",
         ),
-        figure("autoencoder_vs_linear", "Enkoderi jolinear kundrejt dyshemesë lineare."),
-        figure("autoencoder_training", "Humbja e trajnimit kundrejt cilësisë së zbulimit."),
         callout(
-            "Dy gjetje me interes teorik: dimensioni latent optimal është rreth tri herë "
-            "dimensioni i brendshëm i vlerësuar, pra heuristika që i barazon të dyja nuk vlen "
-            "për zbulim; dhe mbitrajnimi e dëmton zbulimin ndërsa humbja e trajnimit vazhdon "
-            "të bjerë, prandaj kriteri i ndalimit nuk mund të jetë humbja e trajnimit.",
+            "Dy gjetje praktike: arkitektura peshon më shumë se çdo levë tjetër, dhe humbjet "
+            "robuste, absolute ose Huber, e dëmtojnë detektorin, sepse zbusin pikërisht gabimet "
+            "e mëdha që mbartin sinjalin.",
             tone="accent",
         ),
         runner("exp23_autoencoder_deep", "exp23_autoencoder_rebuild"),
@@ -728,7 +728,7 @@ _DEPTH = page(
             x="train_subsample",
             series=[
                 {"col": "fit_s", "label": "Koha e trajnimit (s)", "color": "#e34948"},
-                {"col": "us_per_tx", "label": "Pikëzimi (µs/tx)", "color": "#d98c1f"},
+                {"col": "us_per_tx", "label": "Inferenca (µs/tx)", "color": "#d98c1f"},
                 {"col": "support_vectors", "label": "Vektorë mbështetës", "color": "#898781"},
             ],
             xlabel="Transaksione normale në trajnim",
@@ -746,12 +746,12 @@ _DEPTH = page(
 
 _CONFIG = page(
     "konfigurimi",
-    "Paraprocesimi, akordimi, kapaciteti",
+    "Paraprocesimi dhe akordimi",
     "Sa nga dallimi mes algoritmeve është vërtet dallim algoritmi.",
     section(
         "paraprocesimi",
         "Paraprocesimi si variabël eksperimentale",
-        "§5.6",
+        "§5.4.1",
         prose(
             "Të tria metodat e përcaktojnë anomalinë përmes një nocioni largësie, dhe ai "
             "nocion varet plotësisht nga shkalla e veçorive. Prandaj zgjedhja e transformimit "
@@ -770,12 +770,17 @@ _CONFIG = page(
                 {"col": "LR (referencë)", "label": "LR (referencë)", "color": "#52514e"},
             ],
             ylabel="Average Precision (AP)",
-            title="Referenca e mbikëqyrur nuk lëviz; metodat gjeometrike po",
+            title="Referenca supervised nuk lëviz; metodat gjeometrike po",
         ),
         table(
-            "scaling_significance",
-            "Testi i Friedman-it mbi shtatë opsionet dhe krahasimi me skalimin standard.",
-            round_={"Friedman_chi2": 2, "delta_ndaj_standard": 4, "wilcoxon_p": 4},
+            "scaling_prequential",
+            "Skaluesi i zgjedhur vetëm nga fold-et e mëparshme kundrejt StandardScaler.",
+            round_={
+                "AP me zgjedhjen": 3,
+                "AP me StandardScaler": 3,
+                "Δ AP": 3,
+                "p (Wilcoxon)": 4,
+            },
         ),
         callout(
             "Hapësira mes paraprocesimit më të mirë dhe atij më të keq për një detektor të "
@@ -789,7 +794,7 @@ _CONFIG = page(
     section(
         "akordimi",
         "Sa e ndryshon akordimi renditjen",
-        "§5.9",
+        "§5.4.2",
         prose(
             "I njëjti protokoll u përsërit plotësisht me hiperparametrat e nxjerrë nga një "
             "kërkim mbi ndarjen e brendshme kohore të dritares së trajnimit. Bashkësia e "
@@ -809,13 +814,12 @@ _CONFIG = page(
             title="Udhëheqësi mbetet, dy të fundit ndërrohen",
         ),
         table("tuning_effect", "Efekti i akordimit mbi blloqet e testimit."),
-        figure("tuning_transfer", "Përmirësimi i brendshëm kundrejt atij në test."),
         runner("exp9_tuning", "run_protocol_tuned", "exp18_tuning_effect"),
     ),
     section(
         "kapaciteti",
         "Secili detektor në kapacitetin e vet më të mirë",
-        "§5.16",
+        "§5.4.3",
         prose(
             "Dizajni faktorial dy-nga-dy kryqëzon hiperparametrat e parazgjedhur me ata të "
             "akorduar, dhe skalimin standard me paraprocesimin që studimi i mëparshëm zgjodhi "
@@ -853,193 +857,13 @@ _CONFIG = page(
         callout(
             "Nën konfigurimet e parazgjedhura tri algoritmet ndahen me raport rreth dy herë "
             "mes më të mirit dhe më të keqit. Kur secilit i jepet konfigurimi i vet më i mirë, "
-            "ai raport bie nën një e gjysmë dhe renditja përmbyset. Pjesa më e madhe e asaj "
+            "ai raport bie në rreth 1.15 dhe One-Class SVM kalon në krye. Pjesa më e madhe e asaj "
             "që duket si dallim mes algoritmeve është dallim në se sa mirë u shërbejnë atyre "
             "vlerat e parazgjedhura të bibliotekave.",
             tone="accent",
             title="Gjetja që e ndryshon leximin e çdo renditjeje të publikuar",
         ),
         runner("exp28_best_effort", "exp28_best_effort_rebuild"),
-    ),
-)
-
-
-_CAUSAL = page(
-    "kauzaliteti",
-    "Nga korrelacioni te shkaku",
-    "Shpjegimi mekanicist i renditjes, dhe ndërhyrja që e teston atë.",
-    section(
-        "atribuimi",
-        "Ku e drejtojnë vëmendjen detektorët",
-        "§5.12",
-        prose(
-            "Për secilin detektor matet sa përputhet vëmendja e tij me sinjalin realisht të "
-            "disponueshëm në secilën kolonë. Atribuimi është i jashtëm dhe i njëjtë për të "
-            "tre, prandaj vlerat janë të krahasueshme mes tyre."
-        ),
-        verdict("explain"),
-        chart(
-            "barsh",
-            "explain_signal_agreement",
-            label="atribuimi",
-            value="spearman_vs_auc_gap",
-            xlabel="Korrelacion rangjesh me sinjalin e disponueshëm",
-            sort="desc",
-            color="#2a78d6",
-            title="Rendi i përputhjes është i njëjti me rendin e cilësisë së zbulimit",
-        ),
-        table("explain_signal_agreement", "Përputhja mes atribuimit dhe sinjalit."),
-        figure("explain_attention_vs_signal", "Vëmendja kundrejt sinjalit, kolonë për kolonë."),
-        callout(
-            "Dy renditje mbi tre elemente mund të përputhen rastësisht. Prandaj kjo mbetet "
-            "hipotezë mekaniciste derisa të ndërhyhet mbi shkakun e supozuar, gjë që bëhet "
-            "në seksionin e mëposhtëm.",
-            tone="note",
-        ),
-        runner("exp15_explainability"),
-    ),
-    section(
-        "nderhyrja",
-        "Ndërhyrja mbi hyrjen",
-        "§5.7",
-        prose(
-            "Në secilin fold, komponentët renditen sipas fuqisë së tyre diskriminuese të "
-            "matur vetëm mbi dritaren e trajnimit, dhe secili detektor ripërshtatet duke parë "
-            "vetëm k komponentët e parë. Nëse shpërndarja e ndarjeve mbi kolona pa sinjal "
-            "është vërtet mekanizmi i dobësisë, Isolation Forest duhet të fitojë më shumë se "
-            "të tjerët, dhe më shumë te k-të e vogla."
-        ),
-        verdict("feature_selection"),
-        chart(
-            "line",
-            "feature_selection",
-            x="k",
-            group="model",
-            y="ap_mean",
-            facet="renditja",
-            xlabel="Numri i komponentëve të ruajtur (k)",
-            ylabel="Average Precision (AP)",
-            markers=True,
-            colorByGroup=True,
-            title="Zgjidh renditjen: me etiketa është rasti më i mirë, kurtoza është e vendosshme",
-        ),
-        figure("feature_selection", "Efekti i kufizimit të hyrjes, për të dyja renditjet."),
-        table("feature_selection_agreement", "Mbivendosja mes dy renditjeve."),
-        callout(
-            "Referenca e mbikëqyrur humbet nga çdo kufizim, ndërsa të tre detektorët "
-            "unsupervised fitojnë. Ky kontroll e bën argumentin të vlefshëm: një model që "
-            "tashmë i peshon vetë kolonat nuk ka çfarë të fitojë nga një peshim i jashtëm.",
-            tone="accent",
-        ),
-        runner("exp25_feature_selection"),
-    ),
-)
-
-
-_TIME = page(
-    "koha",
-    "Koha: zhvendosja, historiku, pragu",
-    "Çfarë ndryshon me kalimin e kohës, dhe çfarë duhet bërë për të.",
-    section(
-        "zhvendosja",
-        "Cila popullatë lëviz",
-        "§5.11",
-        prose(
-            "Degradimi me kohën vërehet lehtë; pyetja e dobishme është cila popullatë lëviz. "
-            "Nëse lëviz ajo legjitime, ritrajnimi ndihmon. Nëse lëviz ajo e mashtrimeve, "
-            "ritrajnimi mbi të dhëna të reja normale nuk ndryshon asgjë."
-        ),
-        verdict("drift"),
-        chart(
-            "line",
-            "drift_per_fold",
-            x="fold",
-            series=[
-                {"col": "psi_normals_mean", "label": "Transaksione legjitime", "color": "#2a78d6"},
-                {"col": "psi_frauds_mean", "label": "Mashtrime", "color": "#e34948"},
-            ],
-            xlabel="Fold-i kohor",
-            ylabel="Indeksi PSI (mesatar mbi veçoritë)",
-            markers=True,
-            logy=True,
-            refs=[{"y": 0.25, "label": "pragu i zhvendosjes së moderuar"}],
-            title="Një rend madhësie dallim mes dy popullatave",
-        ),
-        figure("drift_psi_decomposition", "Dekompozimi i zhvendosjes sipas popullatës."),
-        figure("drift_separability", "Aftësia ndarëse e matur pa model."),
-        runner("exp13_drift"),
-    ),
-    section(
-        "historiku",
-        "Sa histori duhet mbajtur",
-        "§5.8",
-        verdict("training_window"),
-        chart(
-            "line",
-            "training_window_curve",
-            x="madhesia",
-            group="model",
-            y="ap_mean",
-            xlabel="Gjatësia e dritares rrëshqitëse (transaksione)",
-            ylabel="Average Precision (AP)",
-            logx=True,
-            markers=True,
-            colorByGroup=True,
-            title="Më shumë të dhëna nuk ndihmojnë detektorët unsupervised",
-        ),
-        table(
-            "training_window_expanding", "Rezultati me dritaren që zgjerohet mbi gjithë historikun."
-        ),
-        figure("training_window", "Kurba e të mësuarit mbi gjatësinë e dritares."),
-        runner("exp26_training_window"),
-    ),
-    section(
-        "pragu",
-        "Pragu adaptiv me dritare rrëshqitëse",
-        "§5.13",
-        prose(
-            "Një prag i fiksuar nga kuantili i pikëve të trajnimit e ka një dobësi që del "
-            "vetëm në rrjedhë: kur shpërndarja zhvendoset, numri i alarmeve zhvendoset bashkë "
-            "me të, dhe ekipi hetimor merr ngarkesë të paparashikueshme pikërisht kur diçka "
-            "ka ndryshuar."
-        ),
-        verdict("adaptive_threshold"),
-        chart(
-            "grouped",
-            "adaptive_threshold_summary",
-            index="model",
-            pivot={"column": "regjimi", "value": "f1"},
-            ylabel="F1",
-            title="F1 nën pragun statik kundrejt atij adaptiv",
-        ),
-        chart(
-            "grouped",
-            "adaptive_threshold_summary",
-            index="model",
-            pivot={"column": "regjimi", "value": "alert_rate_cv"},
-            ylabel="Koeficienti i variacionit të ngarkesës",
-            title="Sa e parashikueshme bëhet ngarkesa hetimore",
-        ),
-        figure("adaptive_tradeoff", "Kompromisi mes qëndrueshmërisë dhe cilësisë."),
-        callout(
-            "Për të tre detektorët unsupervised F1 rritet; për referencën e mbikëqyrur ai "
-            "bie. Pragu statik i saj është tashmë i kalibruar, prandaj një kuantil mbi "
-            "dritare rrëshqitëse vetëm sa e detyron të alarmojë më shumë se ç'duhet. "
-            "Rekomandimi është pra i kushtëzuar.",
-            tone="warn",
-        ),
-        runner("exp16_adaptive_threshold"),
-    ),
-    section(
-        "pa-etiketa",
-        "A mund të zgjidhet një konfigurim pa etiketa",
-        "§5.15",
-        verdict("unsupervised_selection"),
-        table("unsupervised_selection", "Zgjedhja pa etiketa kundrejt asaj me etiketa."),
-        figure(
-            "unsupervised_selection", "Renditja sipas kriterit pa etiketa kundrejt asaj me etiketa."
-        ),
-        runner("exp19_unsupervised_selection"),
     ),
 )
 
@@ -1062,11 +886,11 @@ _STREAM = page(
     section(
         "vonesa",
         "Vonesa end-to-end",
-        "§5.2",
+        "§5.1",
         prose(
             "Për secilin model, njëzet mijë transaksione ripërsëriten mbi broker-in e vërtetë "
             "me ritëm të kontrolluar. Vonesa matet nga çasti kur producer-i e krijon mesazhin "
-            "deri kur consumer-i e ka pikëzuar atë, me orë monotonike të të njëjtit host."
+            "deri kur consumer-i e ka përpunuar atë, me orën e të njëjtit host."
         ),
         metrics("streaming"),
         chart(
@@ -1093,16 +917,16 @@ _STREAM = page(
             y="throughput_ratio",
             query="prag_adaptiv == False",
             xlabel="Ritmi i replay-it (mesazhe/s)",
-            ylabel="Kapaciteti i arritur / i synuar",
+            ylabel="Throughput / ritmi i synuar",
             logx=True,
             markers=True,
             colorByGroup=True,
             refs=[{"y": 1.0, "label": "consumer-i mban ritmin"}],
-            title="Ku fillon ngopja e një consumer-i të vetëm",
+            title="Consumer-i nuk mbetet pas në asnjë ritëm",
         ),
         table(
             "latency_summary",
-            "Vonesa, inferenca dhe kapaciteti për çdo kombinim modeli dhe ritmi.",
+            "Vonesa, inferenca dhe throughput-i për çdo kombinim modeli dhe ritmi.",
             query="prag_adaptiv == False",
             columns=[
                 "model",
@@ -1144,7 +968,7 @@ _STREAM = page(
         "Çfarë ka arritur te baza e të dhënave",
         "§4.9.3",
         prose(
-            "Çdo ngjarje e pikëzuar dhe çdo alarm shkruhen në PostgreSQL me shkrime të "
+            "Çdo event i përpunuar dhe çdo alarm shkruhen në PostgreSQL me shkrime të "
             "grumbulluara. Numëruesit më poshtë lexohen drejtpërdrejt nga baza sa herë "
             "rifreskohet faqja."
         ),
@@ -1207,7 +1031,7 @@ _REPRO = page(
     section(
         "mjedisi",
         "Mjedisi eksperimental",
-        "Shtojca H",
+        "§4.10",
         table("environment", "Konfigurimi harduerik dhe softuerik i matjeve."),
     ),
 )
@@ -1219,10 +1043,8 @@ PAGES: tuple[dict[str, Any], ...] = (
     _PROTOCOL,
     _RESULTS,
     _ENSEMBLE,
-    _DEPTH,
     _CONFIG,
-    _CAUSAL,
-    _TIME,
+    _DEPTH,
     _STREAM,
     _REPRO,
 )

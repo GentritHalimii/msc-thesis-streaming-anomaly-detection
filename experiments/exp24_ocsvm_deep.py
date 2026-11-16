@@ -16,6 +16,7 @@ sets inference latency, responds to those same settings.
 
 import time
 
+import matplotlib as mpl
 import numpy as np
 import pandas as pd
 from sklearn.metrics import average_precision_score
@@ -25,14 +26,27 @@ from src.data.load import load_transactions
 from src.data.scale import fit_scaler, transform
 from src.evaluation.manifest import write_manifest
 from src.evaluation.protocol import rolling_origin_folds
-from src.evaluation.report import AX, new_figure, save_figure, save_table
+from src.evaluation.report import (
+    AX,
+    CM,
+    FULL_WIDTH,
+    INK,
+    INK_2,
+    annotate_cells,
+    model_color,
+    new_figure,
+    outline_cell,
+    save_figure,
+    save_table,
+    strip_vertical,
+    value_grid,
+)
 from src.models.build import build_model
 
 KERNELS = ["rbf", "poly", "sigmoid", "linear"]
 NUS = [0.001, 0.005, 0.01, 0.05, 0.1, 0.2]
 GAMMAS = [0.005, 0.01, 0.05, "scale", 0.5]
 SUBSAMPLES = [1000, 2000, 5000, 10000, 20000, 40000, 80000]
-VIOLET, GREY = "#4a3aa7", "#898781"
 
 
 def fold_matrices(cfg, df, fold):
@@ -140,27 +154,7 @@ def summarise(cfg, results_dir, table):
     grid = grid.reindex([str(n) for n in NUS])[[str(g) for g in GAMMAS]]
     save_table(grid.reset_index(), results_dir, "ocsvm_surface", float_fmt="%.4f")
 
-    fig, ax = new_figure(figsize=(6.4, 4.0))
-    im = ax.imshow(grid.to_numpy(), cmap="Purples", aspect="auto", origin="lower")
-    ax.set_xticks(range(len(grid.columns)), list(grid.columns))
-    ax.set_yticks(range(len(grid.index)), list(grid.index))
-    ax.set_xlabel("gamma")
-    ax.set_ylabel("nu")
-    for i in range(grid.shape[0]):
-        for j in range(grid.shape[1]):
-            value = grid.iat[i, j]
-            ax.text(
-                j,
-                i,
-                f"{value:.3f}",
-                ha="center",
-                va="center",
-                fontsize=7.5,
-                color="#ffffff" if value > np.nanmean(grid.to_numpy()) else "#0b0b0b",
-            )
-    ax.grid(visible=False)
-    fig.colorbar(im, ax=ax, shrink=0.85, label=AX["ap"])
-    save_figure(fig, REPO_ROOT / cfg.results_dir, "ocsvm_surface")
+    _surface_figure(cfg, grid)
 
     # ---- what the subsampling compromise costs ---------------------------
     learning = (
@@ -180,77 +174,111 @@ def summarise(cfg, results_dir, table):
     print("\n=== kurba e të mësuarit ===")
     print(learning.to_string(index=False))
 
-    fig, (ax1, ax2) = new_figure(ncols=2, figsize=(8.6, 3.8))
-    ax1.errorbar(
-        learning["train_subsample"],
-        learning["ap_mean"],
-        yerr=learning["ap_std"],
-        marker="o",
-        markersize=4,
-        color=VIOLET,
-        capsize=2,
-        linewidth=1.6,
-    )
     used = int(cfg.models.ocsvm.train_subsample)
-    ax1.axvline(used, color=GREY, lw=1.2, ls="--")
-    ax1.text(
-        used * 1.1,
-        learning["ap_mean"].min(),
-        "nën-mostra e përdorur",
-        fontsize=8,
-        color=GREY,
-        rotation=90,
-        va="bottom",
-    )
-    ax1.set_xscale("log")
-    ax1.set_xlabel("Transaksione normale në trajnim")
-    ax1.set_ylabel(AX["ap"])
-
-    ax2.plot(
-        learning["train_subsample"],
-        learning["fit_s"],
-        marker="o",
-        markersize=4,
-        color=VIOLET,
-        linewidth=1.6,
-        label="Koha e trajnimit (s)",
-    )
-    ax2.plot(
-        learning["train_subsample"],
-        learning["us_per_tx"],
-        marker="s",
-        markersize=4,
-        color="#eb6834",
-        linewidth=1.6,
-        label="Pikëzimi (µs/tx)",
-    )
-    ax2.set_xscale("log")
-    ax2.set_yscale("log")
-    ax2.set_xlabel("Transaksione normale në trajnim")
-    ax2.set_ylabel("Kosto (shkallë logaritmike)")
-    ax2.legend(fontsize=8.5)
-    fig.tight_layout(w_pad=2.5)
-    save_figure(fig, REPO_ROOT / cfg.results_dir, "ocsvm_learning_curve")
+    _learning_figure(cfg, table, learning, used)
 
     at_used = learning.loc[learning["train_subsample"] == used].iloc[0]
     at_max = learning.iloc[-1]
     best_kernel = kernels.iloc[0]
     best_cell = surface.groupby(["nu", "gamma"])["ap"].mean().idxmax()
     verdict = (
-        f"Kerneli RBF nuk është zgjedhja më e mirë automatikisht: renditja e kernelëve jep "
-        f"{best_kernel['kernel']} në krye me AP {best_kernel['ap_mean']:.4f}. "
+        f"Renditja e kernelëve vë në krye {best_kernel['kernel']} me AP "
+        f"{best_kernel['ap_mean']:.4f}. "
         f"Sipërfaqja nu-gamma ka maksimumin te nu={best_cell[0]}, gamma={best_cell[1]}. "
         f"Nën-mostrimi në {used:,} transaksione, i imponuar nga kostoja kuadratike, jep AP "
         f"{at_used['ap_mean']:.4f}, ndërsa {int(at_max['train_subsample']):,} transaksione "
         f"japin {at_max['ap_mean']:.4f}; pra kompromisi kushton "
         f"{at_max['ap_mean'] - at_used['ap_mean']:+.4f} njësi AP, me kohë trajnimi që "
-        f"rritet nga {at_used['fit_s']:.1f}s në {at_max['fit_s']:.1f}s dhe kosto pikëzimi "
+        f"rritet nga {at_used['fit_s']:.1f}s në {at_max['fit_s']:.1f}s dhe kosto të inferencës "
         f"nga {at_used['us_per_tx']:.1f} në {at_max['us_per_tx']:.1f} mikrosekonda për "
         f"transaksion."
     )
     (results_dir / "ocsvm_verdict.txt").write_text(verdict + "\n")
     print("\n" + verdict)
     write_manifest(results_dir, "exp24_ocsvm_deep", cfg.raw)
+
+
+def _gamma_scale(cfg) -> float:
+    """The value scikit-learn substitutes for gamma="scale", 1 / (d · Var X),
+    on the training normals of the first fold as the detector sees them."""
+    df = load_transactions(REPO_ROOT / cfg.data.raw_csv)
+    fold = rolling_origin_folds(len(df), cfg.protocol.n_folds, cfg.protocol.initial_train_fraction)[
+        0
+    ]
+    X_norm, _, _ = fold_matrices(cfg, df, fold)
+    return 1.0 / (X_norm.shape[1] * X_norm.var())
+
+
+def _surface_figure(cfg, grid: pd.DataFrame) -> None:
+    """nu x gamma, with "scale" placed where its numeric value falls."""
+    scale = _gamma_scale(cfg)
+    numeric = {g: (scale if g == "scale" else float(g)) for g in grid.columns}
+    columns = sorted(grid.columns, key=numeric.get)
+    grid = grid[columns]
+    labels = [f"scale\n(≈{scale:.3f})" if g == "scale" else g for g in columns]
+
+    fig, ax = new_figure(figsize=(FULL_WIDTH, 7.0 * CM))
+    image = ax.imshow(grid.to_numpy(), cmap="Purples", aspect="auto", origin="lower")
+    ax.set_xticks(range(len(columns)), labels)
+    ax.set_yticks(range(len(grid.index)), list(grid.index))
+    ax.set_xlabel("gamma (gjerësia e kernelit RBF)")
+    ax.set_ylabel("nu")
+    ax.tick_params(length=0)
+    for side in ("left", "bottom"):
+        ax.spines[side].set_visible(False)
+    ax.grid(False)
+    values = grid.to_numpy()
+    annotate_cells(ax, values, image)
+    default = (list(grid.index).index("0.05"), columns.index("scale"))
+    best = np.unravel_index(np.nanargmax(values), values.shape)
+    outline_cell(ax, *default, color=INK, lw=1.2, ls=(0, (2, 1.5)))
+    outline_cell(ax, *best, color=INK, lw=1.6)
+    bar = fig.colorbar(image, ax=ax, shrink=0.85, pad=0.02)
+    bar.set_label(AX["ap"])
+    bar.outline.set_visible(False)
+    save_figure(fig, REPO_ROOT / cfg.results_dir, "ocsvm_surface")
+
+
+def _learning_figure(cfg, table: pd.DataFrame, learning: pd.DataFrame, used: int) -> None:
+    """Quality and the two costs against the training subsample, one panel
+    each: the three quantities have different units and cannot share an axis."""
+    color = model_color("ocsvm")
+    per_fold = table[table["study"] == "nën-mostra"].assign(
+        train_subsample=lambda d: d["train_subsample"].astype(int)
+    )
+    fig, axes = new_figure(ncols=3, figsize=(FULL_WIDTH, 5.6 * CM))
+    ax1, ax2, ax3 = axes
+    for n, grp in per_fold.groupby("train_subsample"):
+        strip_vertical(ax1, n, grp["ap"].to_numpy(), color, jitter=0.0)
+    for ax, column, label in (
+        (ax1, "ap_mean", "AP (pikat: fold-et)"),
+        (ax2, "fit_s", "Trajnimi (s)"),
+        (ax3, "us_per_tx", "Inferenca (µs për transaksion)"),
+    ):
+        ax.plot(
+            learning["train_subsample"],
+            learning[column],
+            color=color,
+            linewidth=1.5,
+            marker="D",
+            markersize=4.5,
+            markeredgecolor="#ffffff",
+            markeredgewidth=0.7,
+            zorder=4,
+        )
+        ax.axvline(used, color=INK_2, lw=0.8, ls=(0, (3, 2)), zorder=1)
+        ax.set_xscale("log")
+        ax.set_xticks([1000, 10000, 80000], ["1 000", "10 000", "80 000"])
+        ax.xaxis.set_minor_formatter(mpl.ticker.NullFormatter())
+        ax.set_title(label, loc="left", fontsize=8.5)
+        value_grid(ax, "y")
+    for ax in (ax1, ax2, ax3):
+        ax.set_yscale("log")
+        ax.yaxis.set_major_formatter(mpl.ticker.FuncFormatter(lambda v, _: f"{v:g}"))
+        ax.yaxis.set_minor_formatter(mpl.ticker.NullFormatter())
+    ax1.set_yticks([0.05, 0.1, 0.2, 0.5])
+    ax2.set_xlabel("Transaksione normale në trajnim (vija: 20 000, vlera e përdorur)")
+    save_figure(fig, REPO_ROOT / cfg.results_dir, "ocsvm_learning_curve")
 
 
 def main_from_saved(cfg=None):

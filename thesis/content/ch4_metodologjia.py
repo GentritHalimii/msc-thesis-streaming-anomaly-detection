@@ -5,171 +5,156 @@ from blocks import bullets, eq, fig, h1, h2, h3, note, numbers, p, tab
 _DATA = [
     h1("4", "Metodologjia"),
     p("""Ky kapitull përshkruan dataset-in, protokollin e vlerësimit, paraprocesimin, modelet,
-      procedurën e përcaktimit të pragut, metrikat, studimet e thelluara për secilin algoritëm
-      dhe arkitekturën e implementuar. Përshkrimi është i hollësishëm me qëllim: pjesa më e
-      madhe e dallimeve mes rezultateve të publikuara mbi këtë dataset nuk vjen nga algoritmet,
-      por nga zgjedhje metodologjike që shpesh nuk raportohen."""),
+      procedurën e pragut, metrikat, studimet për secilin algoritëm dhe arkitekturën e implementuar.
+      Përshkrimi është i hollësishëm, sepse shumë nga dallimet mes rezultateve të publikuara për
+      këtë dataset nuk vijnë nga algoritmet, por nga zgjedhje metodologjike që shpesh nuk
+      raportohen."""),
+    p("""Dy zgjedhje metodologjike meritojnë të përmenden që në fillim. Protokolli kryesor i
+      vlerësimit është rolling-origin me tetë fold-e në vend të një ndarjeje të vetme 70/30, dhe
+      metrika kryesore është Average Precision në vend të F1. Arsyet jepen në nënkapitujt 4.2.2 dhe
+      4.6.1; ndarja 70/30 dhe F1 raportohen gjithsesi."""),
     h2("4.1", "Dataset-i"),
     h3("4.1.1", "Origjina dhe struktura"),
-    p("""Studimi përdor dataset-in publik Credit Card Fraud Detection të grupit Machine Learning
-      të Université Libre de Bruxelles [@ulb_dataset]. Ai përmban transaksione reale me karta
-      krediti të kryera nga mbajtës evropianë gjatë dy ditëve të shtatorit 2013. Struktura
-      është e thjeshtë: një kolonë Time me sekondat e kaluara nga transaksioni i parë, njëzet e
-      tetë kolona V1 deri V28 që janë komponentë kryesorë të dala nga një transformim PCA i
-      aplikuar nga publikuesit për arsye konfidencialiteti, kolona Amount me vlerën e
-      transaksionit, dhe kolona Class me etiketën binare."""),
+    p("""Studimi përdor dataset-in publik Credit Card Fraud Detection të grupit Machine Learning të
+      Université Libre de Bruxelles [@ulb_dataset]. Ai përmban transaksione reale me karta krediti
+      të mbajtësve evropianë gjatë dy ditëve të shtatorit 2013. Struktura është e thjeshtë: kolona
+      Time me sekondat nga transaksioni i parë, 28 kolona V1 deri V28 që janë komponentë kryesorë të
+      një transformimi PCA të bërë nga publikuesit për ruajtjen e konfidencialitetit, kolona Amount
+      me shumën e transaksionit dhe kolona Class me etiketën binare."""),
     tab(
         "eda_overview",
-        "Karakteristikat kryesore të dataset-it ULB Credit Card Fraud.",
+        "Karakteristikat kryesore të dataset-it.",
         rename={"treguesi": "Treguesi", "vlera": "Vlera"},
         font_size=10,
     ),
-    p("""Anonimizimi me PCA ka dy pasoja që përshkojnë gjithë punimin. E para është se
-      interpretimi semantik i veçorive është i pamundur, sepse komponentët nuk kanë emra dhe
-      nuk mund të thuhet cila sjellje e transaksionit e ngre pikën e anomalisë. E dyta, më pak
-      e diskutuar, është se një detektor linear rindërtimi bazuar në PCA nuk është thjesht një
-      baseline e dobët, por pragu natyror i familjes së rindërtimit; prandaj ai përfshihet
-      shprehimisht si ablacion i Autoencoder-it."""),
+    p("""Anonimizimi me PCA ka një pasojë që shfaqet gjatë gjithë punimit: veçoritë nuk mund të
+      interpretohen semantikisht, sepse komponentët nuk kanë emra dhe nuk mund të thuhet cila
+      sjellje e transaksionit e rrit pikën e anomalisë."""),
     h3("4.1.2", "Analiza eksploruese"),
-    p("""Analiza eksploruese nxori disa fakte që ndikojnë drejtpërdrejt në interpretimin e
-      rezultateve. Vëllimi i transaksioneve ndjek një cikël të qartë ditë-natë, ndërsa shfaqja
-      e mashtrimeve nuk e ndjek atë cikël. Kjo do të thotë se norma e mashtrimit për orë
-      ndryshon shumë, dhe blloqe testimi me numër të barabartë rreshtash mbulojnë intervale
-      kohore shumë të ndryshme."""),
+    p("""Analiza eksploruese nxori disa fakte që ndikojnë në interpretimin e rezultateve. Vëllimi i
+      transaksioneve ndjek një cikël të qartë ditë-natë, ndërsa mashtrimet nuk e ndjekin atë (Figura
+      [[fig:eda_volume_and_fraud]]). Për pasojë norma e mashtrimit ndryshon shumë nga ora në orë,
+      dhe blloqet e testimit me numër të njëjtë rreshtash mbulojnë intervale kohore shumë të
+      ndryshme."""),
     fig(
         "eda_volume_and_fraud",
-        "Vëllimi i transaksioneve për orë (lart) dhe numri i mashtrimeve për orë (poshtë). "
-        "Mashtrimet nuk e ndjekin ciklin ditor të vëllimit, dhe grupimet e tyre janë të "
-        "dukshme rreth orëve me trafik të ulët.",
+        "Transaksionet dhe mashtrimet për çdo orë të regjistrimit.",
         15.0,
     ),
-    p("""Norma e mashtrimit sipas orës së ditës e bën këtë edhe më të qartë: në orën dy të
-      mëngjesit ajo arrin rreth 1.7 për qind, pra afërsisht dhjetë herë mbi mesataren globale.
-      Ky është sinjal i fortë, por i papërdorshëm në këtë punim si veçori modeli, sepse koha
-      përdoret për renditjen e rrjedhës dhe për përcaktimin e ndarjes; futja e saj si hyrje do
-      të ndërthurte variablin e ndarjes me hyrjen e modelit. Kjo zgjedhje diskutohet përsëri në
-      kufizime."""),
+    p("""Norma e mashtrimit sipas orës së ditës e tregon këtë edhe më qartë: në orën dy të natës ajo
+      arrin rreth 1.7%, afërsisht dhjetë herë mbi mesataren (Figura [[fig:eda_hourly_rate]]). Ky
+      është sinjal i fortë, por në këtë punim nuk përdoret si veçori, sepse koha shërben për
+      renditjen e rrjedhës dhe për ndarjen e të dhënave; përdorimi i saj si hyrje do të ngatërronte
+      variablin e ndarjes me hyrjen e modelit. Kjo zgjedhje diskutohet edhe te kufizimet."""),
     fig(
-        "eda_hourly_rate",
-        "Norma e mashtrimit sipas orës së ditës, e grumbulluar mbi të dy ditët. Vija e "
-        "ndërprerë tregon mesataren globale prej 0.173 për qind.",
-        14.0,
+        "eda_hourly_rate", "Norma e mashtrimit sipas orës së ditës, për të dyja ditët bashkë.", 15.0
     ),
-    p("""Shpërndarja e shumave sjell një gjetje kundërintuitive. Mesatarja e shumës së
-      mashtrimeve është më e lartë se ajo e transaksioneve legjitime, por mediana është dukshëm
-      më e ulët, 9.25 euro kundrejt 22 eurove. Kjo do të thotë se shpërndarja e mashtrimeve
-      është fort e zhdrejtë: shumica janë transaksione shumë të vogla, ndërsa një pakicë janë
-      shumë të mëdha. Njëzet e shtatë mashtrime kanë shumë saktësisht zero, gjë që përputhet me
-      modelin e njohur të testimit të kartave, ku sulmuesi verifikon vlefshmërinë e një karte
-      me një autorizim pa vlerë përpara përdorimit real."""),
+    p("""Shpërndarja e shumave të transaksioneve nuk është ajo që mund të pritej. Shuma mesatare e
+      mashtrimeve (122.21 EUR) është më e lartë se ajo e transaksioneve legjitime (88.29 EUR), por
+      mediana e tyre është shumë më e ulët: 9.25 EUR kundrejt 22.00 EUR (Figura
+      [[fig:eda_amounts]]). Shumica e mashtrimeve janë pra transaksione të vogla, ndërsa një pjesë e
+      vogël janë shumë të mëdha. Rreth 37% e mashtrimeve kanë shumë deri në një euro, dhe 27 prej
+      tyre kanë shumë saktësisht zero, gjë që përputhet me praktikën e njohur të testimit të
+      kartave: sulmuesi kontrollon nëse karta është aktive me një autorizim pa vlerë para se ta
+      përdorë."""),
     fig(
         "eda_amounts",
-        "Shpërndarja e shumave për të dyja klasat në shkallë logaritmike (majtas) dhe krahasimi "
-        "i kuartileve (djathtas). Mashtrimet përqendrohen te shumat e vogla, me një bisht të "
-        "gjatë drejt vlerave të larta.",
+        "Shpërndarja kumulative e shumës së transaksionit sipas klasës.",
         15.0,
     ),
-    p("""Matrica e korrelacionit konfirmon prejardhjen e deklaruar të të dhënave. Korrelacioni
-      mesatar absolut jashtë diagonales është 0.008, praktikisht zero, siç pritet nga komponentë
-      kryesorë ortogonalë. Korrelacionet e vetme të konsiderueshme përfshijnë kolonën Amount, e
-      cila nuk ka qenë pjesë e transformimit PCA, ku vlera më e lartë është 0.531 mes Amount dhe
-      V2. Ky është kontroll i thjeshtë por i dobishëm i integritetit të të dhënave."""),
+    p("""Matrica e korrelacionit konfirmon prejardhjen e të dhënave (Figura
+      [[fig:eda_correlation]]). Korrelacioni mesatar absolut mes veçorive të ndryshme është 0.008,
+      praktikisht zero, siç pritet nga komponentë kryesorë ortogonalë. Korrelacionet e
+      konsiderueshme përfshijnë vetëm kolonën Amount, e cila nuk ishte pjesë e transformimit PCA; më
+      i forti është mes Amount dhe V2, me vlerë absolute 0.531. Ky është një kontroll i thjeshtë,
+      por i dobishëm, i integritetit të të dhënave."""),
     fig(
         "eda_correlation",
-        "Matrica e korrelacionit të Pearson-it mes 29 veçorive hyrëse. Ortogonaliteti i "
-        "komponentëve V1 deri V28 është i dukshëm, dhe korrelacionet e vetme jotriviale "
-        "përfshijnë kolonën Amount.",
+        "Korrelacioni i Pearson-it mes 29 veçorive hyrëse.",
         12.0,
     ),
-    h3("4.1.3", "Karakterizimi gjeometrik para modelimit"),
-    p("""Të gjitha metodat unsupervised të këtij studimi mbështeten në supozimin se klasa
-      pozitive qëndron gjeometrikisht larg asaj negative. Ky supozim është i testueshëm pa
-      përshtatur asnjë model, dhe testimi i tij paraprak jep një kufi të sipërm të pavarur nga
-      algoritmi. Prandaj para çdo modelimi matet dimensioni i brendshëm i klasës normale me dy
-      vlerësues të pavarur, distanca e secilit transaksion deri te fqinjët e tij legjitimë më të
-      afërt, dhe cilësia e zbulimit që arrin një detektor i ndërtuar vetëm mbi atë distancë."""),
-    p("""Dimensioni i brendshëm vlerësohet me metodën e gjasës maksimale të Levina-Bickel dhe me
-      vlerësuesin TwoNN, i cili përdor vetëm dy fqinjët më të afërt dhe është prandaj shumë më
-      pak i ndjeshëm ndaj lakimit dhe ndaj variacionit të densitetit. Të dy vlerësuesit
-      llogariten mbi dritaren e trajnimit, dhe të njëjtat masa përsëriten mbi dritaren e testimit
-      për të dhënë një pamje pa model të zhvendosjes."""),
-    p("""Masa vendimtare është një detektor pa parametra: pika e anomalisë është distanca
-      mesatare deri te dhjetë fqinjët legjitimë më të afërt. Meqë ky detektor nuk mëson asgjë,
-      cilësia e tij përcakton se çfarë arrihet me gjeometri të pastër, dhe çdo detektor i
-      trajnuar duhet lexuar përballë saj. Për ta bërë numrin të interpretueshëm në terma
-      operacionalë, raportohet edhe pozicioni i secilit mashtrim në renditjen e plotë, pra sa
-      alarme duhen shqyrtuar përpara se ai të arrihet."""),
-    h3("4.1.4", "Kufizimet e dataset-it"),
-    p("""Tri kufizime duhen deklaruar përpara se të interpretohet çdo rezultat."""),
+    p("""Pyetja e fundit eksploruese lidhet drejtpërdrejt me metodat unsupervised: sa larg klasës
+      legjitime ndodhen mashtrimet. Për çdo transaksion të dritares së trajnimit të ndarjes 70/30 u
+      mat distanca mesatare deri te dhjetë fqinjët e tij legjitimë më të afërt (Figura
+      [[fig:geometry_knn_distance]]). Distanca mediane e një mashtrimi është 7.9 herë më e madhe se
+      ajo e një transaksioni legjitim tipik, kështu që mashtrimet janë vërtet vlera të
+      jashtëzakonshme."""),
+    fig(
+        "geometry_knn_distance",
+        "Distanca mesatare deri te dhjetë fqinjët legjitimë më të afërt, sipas klasës.",
+        15.0,
+    ),
+    p("""Kjo largësi nuk sjell megjithatë zbulim të lehtë. Figura e paraqet secilën klasë si pjesë
+      të vetes, prandaj nuk e tregon disproporcionin mes tyre: dritarja e trajnimit ka afërsisht 199
+      000 transaksione legjitime, dhe 5% e tyre që ndodhen më larg janë rreth 10 000 transaksione.
+      Ato zënë të njëjtin rajon me 384 mashtrimet e dritares, të cilat janë shumë më pak në numër.
+      Ky fakt ndihmon të kuptohen rezultatet modeste të Kapitullit 5."""),
+    h3("4.1.3", "Kufizimet e dataset-it"),
+    p("""Para interpretimit të rezultateve duhen pasur parasysh tri kufizime të të dhënave."""),
     bullets(
         [
-            "Mungesa e identifikuesit të kartës. Pa të, agregimi për llogari mbi dritare kohore, "
-            "teknikë që literatura e aplikuar e raporton si më efektiven [@whitrow2009], "
-            "[@bahnsen2016], është i pamundur, si dhe modelimi sekuencial për mbajtës "
-            "[@jurgovsky2018]. Rezultatet duhen lexuar si të vlefshme për zbulim pikësor pa "
-            "kontekst llogarie.",
-            "Kohëzgjatja prej vetëm dyzet e tetë orësh. Kjo lejon vlerësimin e zhvendosjes "
-            "brenda-ditore dhe mes dy ditëve, por jo të zhvendosjes sezonale ose afatgjatë.",
-            "Etiketat konsiderohen të plota dhe të sakta. Në realitet një pjesë e mashtrimeve nuk "
-            "kontestohet kurrë dhe mbetet e etiketuar gabimisht si legjitime, gjë që i bën "
-            "vlerësimet e precision-it pesimiste.",
+            "Mungon identifikuesi i kartës. Pa të nuk mund të agregohen transaksionet e një "
+            "llogarie mbi dritare kohore, teknikë që literatura e aplikuar e raporton si ndër më "
+            "efektivet [@whitrow2009], [@bahnsen2016], dhe as të modelohet sekuenca e "
+            "transaksioneve të një mbajtësi [@jurgovsky2018]. Rezultatet vlejnë për zbulim "
+            "pikësor, pa kontekst llogarie.",
+            "Të dhënat mbulojnë vetëm 48 orë. Mund të vlerësohet zhvendosja brenda ditës dhe mes "
+            "dy ditëve, por jo ajo sezonale ose afatgjatë.",
+            "Etiketat merren si të plota dhe të sakta. Në realitet një pjesë e mashtrimeve nuk "
+            "kontestohet kurrë dhe mbetet e etiketuar si legjitime, prandaj vlerat e precision-it "
+            "janë më tepër pesimiste.",
         ]
     ),
 ]
 
 _PROTOKOLLI = [
     h2("4.2", "Protokolli i vlerësimit"),
-    h3("4.2.1", "Ndarja kronologjike dhe disiplina kundër rrjedhjes"),
-    p("""Të dhënat renditen sipas kolonës Time me renditje të qëndrueshme, që do të thotë se
-      rreshtat me të njëjtën vlerë kohe ruajnë rendin origjinal të skedarit dhe ndarja është
-      plotësisht deterministe. Ndarja bëhet sipas rendit kohor dhe kurrë me përzierje. Modelet
-      unsupervised trajnohen vetëm mbi transaksionet normale të dritares së trajnimit, ndërsa
-      skaluesi përshtatet vetëm mbi dritaren e trajnimit dhe pastaj aplikohet mbi bllokun e
-      testimit."""),
-    p("""Kolona Time nuk përdoret si veçori hyrëse. Vektori i veçorive përbëhet nga V1 deri V28
-      dhe Amount, gjithsej njëzet e nëntë dimensione. Kjo zgjedhje është e domosdoshme
-      teknikisht: meqë Time përcakton ndarjen, në një ndarje kronologjike vlerat e saj në
-      bllokun e testimit janë sistematikisht jashtë intervalit të parë gjatë trajnimit, dhe pas
-      skalimit çdo pikë testimi do të merrte një vlerë ekstreme në atë dimension. Kjo do të
-      prishte renditjen e çdo detektori të bazuar në distancë ose densitet, pa prekur fare një
-      model të mbikëqyrur linear."""),
-    note("""Ky nuk është rrezik teorik. Mungesa e kolonës Time mes veçorive verifikohet me test
-      automatik pikërisht sepse ky mekanizëm do të prodhonte një model degradimi që duket
-      identik me atë që vëzhgohet, por për arsye krejt të gabuar."""),
+    h3("4.2.1", "Ndarja kronologjike dhe masat kundër rrjedhjes"),
+    p("""Të dhënat renditen sipas kolonës Time me një renditje të qëndrueshme (stable sort):
+      rreshtat me të njëjtën vlerë kohe ruajnë rendin e skedarit, kështu që ndarja është plotësisht
+      deterministe. Të dhënat ndahen sipas kohës dhe nuk përzihen kurrë. Modelet unsupervised
+      trajnohen vetëm mbi transaksionet normale të dritares së trajnimit, ndërsa skaluesi përshtatet
+      mbi të gjithë dritaren e trajnimit dhe pastaj zbatohet mbi bllokun e testimit."""),
+    p("""Kolona Time nuk përdoret si veçori. Vektori i veçorive përbëhet nga V1 deri V28 dhe Amount,
+      gjithsej 29 dimensione. Kjo është e domosdoshme: meqë Time përcakton ndarjen, në një ndarje
+      kronologjike vlerat e saj në bllokun e testimit janë gjithmonë jashtë intervalit të parë gjatë
+      trajnimit, dhe pas skalimit çdo transaksion i testit do të kishte një vlerë ekstreme në këtë
+      dimension. Kjo do ta prishte renditjen e çdo detektori të bazuar në distancë ose densitet,
+      ndërsa një model linear supervised do të ndikohej shumë më pak, sepse mund t'i japë kolonës
+      një peshë të vogël."""),
+    note("""Rreziku nuk është vetëm teorik. Mungesa e kolonës Time mes veçorive kontrollohet me test
+      automatik, sepse ky mekanizëm do të prodhonte një rënie të cilësisë me kohën që duket njësoj
+      si ajo që vërehet në të dhëna, por për një arsye krejt tjetër."""),
     h3("4.2.2", "Protokolli rolling-origin"),
-    p("""Një ndarje e vetme 70/30 jep një vlerësim të performancës në një moment të vetëm
-      hipotetik vendosjeje. Me 492 pozitivë në të gjithë dataset-in ky vlerësim është i
-      zhurmshëm, dhe nga një ndarje e vetme nuk mund të dallohet nëse renditja e algoritmeve
-      është e qëndrueshme apo artefakt i pikës së prerjes. Prandaj vlerësimi përsëritet në tetë
-      pika të njëpasnjëshme prerjeje me dritare trajnimi që zgjerohet, sipas skemës
-      rolling-origin të konsoliduar në literaturën e parashikimit [@tashman2000],
-      [@bergmeir2012] dhe të vlerësimit prekuencial [@gama2013]."""),
+    p("""Zgjidhja më e thjeshtë që e respekton renditjen kohore është një ndarje e vetme
+      kronologjike 70/30. Një ndarje e tillë jep një vlerësim për një moment të vetëm vendosjeje. Me
+      492 pozitivë në gjithë dataset-in ky vlerësim është i zhurmshëm, dhe nga një prerje e vetme
+      nuk mund të thuhet nëse renditja e algoritmeve është e qëndrueshme apo e rastësishme. Prandaj
+      vlerësimi përsëritet në tetë pika prerjeje të njëpasnjëshme me dritare trajnimi që zgjerohet,
+      sipas skemës rolling-origin të përdorur në literaturën e parashikimit [@bergmeir2012] dhe të
+      vlerësimit prekuencial [@gama2013]. Ky protokoll quhet më poshtë rolling-origin 8-fold."""),
     eq("Fold i:  trajnim [0, c_i),   testim [c_i, c_{i+1})"),
-    p("""Pikat e prerjes c_i ndajnë pjesën e rrjedhës pas 40 për qindëshit fillestar në tetë
-      blloqe të barabarta sipas numrit të rreshtave. Çdo fold rindërton nga fillimi të gjithë
-      zinxhirin: skaluesin e vet, modelet e veta dhe pragjet e veta. Asgjë nuk transferohet nga
-      një fold në tjetrin, prandaj asnjë informacion nga një bllok i mëvonshëm nuk mund të
-      rrjedhë prapa."""),
+    p("""Pikat e prerjes c_i e ndajnë pjesën e rrjedhës pas 40% të parë në tetë blloqe me numër të
+      njëjtë rreshtash, pra rreth 21 360 transaksione secili (Figura [[fig:diagram_protocol]]). Në
+      çdo fold rindërtohen nga fillimi skaluesi, modelet dhe pragjet. Asgjë nuk kalon nga një fold
+      te tjetri, kështu që informacioni nga një bllok i mëvonshëm nuk mund të ndikojë në një bllok
+      më të hershëm."""),
     fig(
         "diagram_protocol",
-        "Gjeometria e protokollit rolling-origin. Dritarja e trajnimit zgjerohet me çdo fold, "
-        "ndërsa blloqet e testimit e mbulojnë rrjedhën pa mbivendosje. Numri i mashtrimeve për "
-        "bllok varion nga 13 në 88.",
+        "Protokolli rolling-origin 8-fold. Numrat tregojnë mashtrimet në çdo bllok testimi.",
         15.0,
     ),
-    p("""Numri i fold-eve nuk është zgjedhur si numër i rrumbullakët. Ai është rezultat i një
-      kompromisi mes dy kufizimeve që tërheqin në drejtime të kundërta. Nga njëra anë, testi i
-      çiftuar i Wilcoxon-it me N fold-e mund të prodhojë p-vlerë dy-bishtore jo më të vogël se
-      2/2^N; me gjashtë fold-e kjo është 0.031 dhe nuk mbijeton korrigjimin e Holm-it për
-      krahasime të shumëfishta, sado i qëndrueshëm të jetë rezultati. Nga ana tjetër, me shumë
-      fold-e blloqet e testimit zvogëlohen derisa disa prej tyre të mbajnë më pak se dhjetë
-      pozitivë dhe AP-ja e tyre bëhet zhurmë. Me tetë fold-e çdo bllok mban të paktën
-      trembëdhjetë pozitivë dhe p-vlera më e vogël e arritshme është 0.0078, e cila mbijeton
-      korrigjimin për deri në gjashtë krahasime të paradeklaruara."""),
+    p("""Numri i fold-eve është kompromis mes dy kërkesave të kundërta. Me N fold-e, testi i
+      Wilcoxon-it për çifte nuk mund të japë p-vlerë dypalëshe më të vogël se 2/2^N; me gjashtë
+      fold-e kjo është 0.031, e cila nuk e kalon korrigjimin e Holm-it për disa krahasime, sado i
+      qëndrueshëm të jetë rezultati. Nga ana tjetër, me shumë fold-e blloqet e testimit zvogëlohen
+      derisa disa prej tyre të kenë më pak se dhjetë pozitivë dhe AP-ja e tyre të bëhet zhurmë. Me
+      tetë fold-e çdo bllok ka të paktën 13 pozitivë, dhe p-vlera më e vogël e mundshme është
+      0.0078, e cila e kalon korrigjimin për deri në gjashtë krahasime të deklaruara
+      paraprakisht."""),
     tab(
         "fold_summary",
-        "Struktura e tetë fold-eve: madhësia e dritares së trajnimit dhe e bllokut të testimit, "
-        "numri i mashtrimeve dhe intervali kohor i mbuluar.",
+        "Struktura e tetë fold-eve.",
         columns=[
             "fold",
             "train_rows",
@@ -193,340 +178,261 @@ _PROTOKOLLI = [
         round={"test_fraud_rate": 5, "test_time_start_h": 1, "test_time_end_h": 1},
         font_size=9.0,
     ),
-    p("""Tabela zbulon një veti të rëndësishme të të dhënave: blloqet me numër të barabartë
-      rreshtash mbulojnë intervale kohore shumë të ndryshme, sepse dendësia e transaksioneve
-      ndryshon me orën. Fold-i 1 shquhet me 88 mashtrime, afërsisht katër herë mbi mesataren e
-      blloqeve të tjera, sepse përfshin një grumbullim mashtrimesh që rezulton vendimtar për të
-      kuptuar variancën e lartë të rezultateve."""),
+    p("""Tabela tregon se blloqet me numër të njëjtë rreshtash mbulojnë intervale kohore shumë të
+      ndryshme, sepse dendësia e transaksioneve ndryshon me orën. Fold-i 1 dallohet me 88 mashtrime,
+      gati katër herë më shumë se mesatarja e blloqeve të tjera, sepse përfshin një grumbull
+      mashtrimesh që shpjegon pjesën më të madhe të variancës së rezultateve."""),
+    p("""Ndarja e vetme 70/30 nuk braktiset. Modelet trajnohen edhe mbi të, rezultatet e saj
+      jepen në Shtojcën D, dhe nënkapitulli 5.6 e krahason me protokollin 8-fold."""),
     h2("4.3", "Paraprocesimi si variabël eksperimentale"),
-    p("""Çdo detektor i bazuar në distancë, densitet ose rindërtim e trashëgon nocionin e
-      largësisë nga paraprocesimi që zbatohet përpara tij. Në shumicën e studimeve skaluesi
-      zgjidhet një herë dhe nuk rishikohet, gjë që e fsheh një burim variacioni potencialisht
-      më të madh se vetë zgjedhja e algoritmit. Ky punim e trajton atë si variabël
-      eksperimentale me të drejta të plota."""),
-    p("""Një hollësi e protokollit meriton të thuhet shprehimisht. Skaluesi përshtatet mbi të
-      gjithë dritaren e trajnimit, mashtrimet përfshirë, dhe jo mbi normalet e njohura. Në
-      momentin e vendosjes etiketat e dritares aktuale nuk ekzistojnë, prandaj një skalues i
-      përshtatur mbi të dhëna të pastra do të ishte një përparësi që sistemi real nuk e ka. Kjo
-      zgjedhje ka një pasojë që duhet testuar e jo supozuar: statistikat e përshtatura i
-      thithin vetë vlerat ekstreme që duhen nxjerrë në pah."""),
-    p("""Krahasohen shtatë opsione: StandardScaler, RobustScaler me interval ndërkuartilor, dy
-      variante të transformimit kuantil me dalje normale dhe uniforme, PowerTransformer me
-      metodën Yeo-Johnson, MinMaxScaler, dhe mungesa e plotë e skalimit. E fundit nuk është
-      lëshim, sepse komponentët V janë tashmë të qendërzuar dhe lënia e tyre e paprekur është
-      baseline legjitime. Çdo kombinim paraprocesim-detektor ekzekutohet mbi të tetë fold-et, që
-      krahasimi të mbartë të njëjtën pasiguri si rezultatet kryesore."""),
+    p("""Siç u argumentua në nënkapitullin 2.9, largësia që përdorin detektorët varet nga
+      paraprocesimi, ndonëse skaluesi zakonisht zgjidhet një herë dhe nuk rishikohet. Në këtë punim
+      paraprocesimi trajtohet si variabël eksperimentale."""),
+    p("""Skaluesi përshtatet mbi të gjithë dritaren e trajnimit, mashtrimet përfshirë, dhe jo vetëm
+      mbi transaksionet normale. Në momentin e vendosjes etiketat e dritares aktuale nuk dihen, dhe
+      një skalues i përshtatur mbi të dhëna të pastra do t'i jepte modelit një avantazh që sistemi
+      real nuk e ka. Pasoja është se statistikat e skaluesit ndikohen nga vetë vlerat ekstreme që
+      duhen nxjerrë në pah, dhe kjo pasojë matet."""),
+    p("""Krahasohen shtatë opsione: StandardScaler, RobustScaler me interval ndërkuartilor,
+      transformimi kuantil me dalje normale dhe me dalje uniforme, PowerTransformer me metodën
+      Yeo-Johnson, MinMaxScaler dhe mungesa e skalimit. Opsioni i fundit është model bazë i
+      ligjshëm, sepse komponentët V janë tashmë të qendërzuar. Çdo kombinim paraprocesimi dhe
+      detektori vlerësohet në të tetë fold-et, me të njëjtën pasiguri si rezultatet kryesore."""),
+    p("""Kur zgjidhet opsioni më i mirë nga shtatë dhe pastaj matet përfitimi i tij në të njëjtat
+      fold-e, përfitimi mbivlerësohet. Për ta shmangur këtë bëhet edhe një kontroll prekuencial: për
+      fold-in i zgjidhet skaluesi më i mirë vetëm nga fold-et 0 deri i−1, dhe rezultati i tij
+      krahasohet me StandardScaler në fold-in i. Fold-i 0, që nuk ka histori, mbetet jashtë këtij
+      krahasimi."""),
     h2("4.4", "Modelet"),
     h3("4.4.1", "Ndërfaqja e përbashkët"),
-    p("""Të gjithë detektorët implementojnë të njëjtën ndërfaqe me katër metoda: fit, score, save
-      dhe load. Konventa e shenjës është uniforme dhe e detyrueshme, pra vlera më e lartë e
-      pikës do të thotë gjithmonë më anormale. Kjo konventë verifikohet me test automatik mbi
-      të dhëna reale për secilin model, duke krahasuar medianën e pikëve të mashtrimeve me atë
-      të transaksioneve legjitime. Uniformiteti nuk është thjesht higjienë kodi: ai lejon që
-      harnesi i vlerësimit, ansamblet dhe konsumatori i rrjedhës të mbeten krejtësisht të
-      pavarur nga identiteti i modelit."""),
+    p("""Të gjithë detektorët kanë të njëjtën ndërfaqe me katër metoda: fit, score, save dhe load.
+      Konventa e shenjës është e njëjtë për të gjithë: vlerë më e lartë e pikës do të thotë më
+      anormale. Konventa kontrollohet me test automatik mbi të dhëna reale për secilin model, duke
+      krahasuar medianën e pikëve të mashtrimeve me atë të transaksioneve legjitime. Falë kësaj,
+      kodi i vlerësimit, ansamblet dhe consumer-i i rrjedhës nuk varen nga modeli konkret."""),
     tab(
         "model_zoo",
-        "Detektorët e krahasuar, mekanizmi i tyre i pikëzimit, kostoja asimptotike e trajnimit "
-        "dhe hiperparametrat e parazgjedhur. Simbolet: n mostra, d dimensione, t pemë, ψ "
-        "madhësia e nën-mostrës, e epoka, h njësi të fshehura, i iteracione.",
-        font_size=7.5,
+        "Detektorët, pika e anomalisë që llogarit secili dhe hiperparametrat bazë.",
+        query="Detektori != 'PCA lineare (ablacion)'",
+        columns=["Detektori", "Familja", "Pika e anomalisë", "Hiperparametrat"],
+        font_size=8.5,
     ),
     h3("4.4.2", "Isolation Forest"),
-    p("""Implementimi ndjek formulimin origjinal [@liu2008], me pikën e marrë me shenjë të
-      kundërt për të respektuar konventën e studimit. Përveç dy hiperparametrave standardë,
-      numrit të pemëve dhe madhësisë së nën-mostrës, ekspozohet edhe fraksioni i kolonave që
-      secila pemë mund të përdorë. Ky i fundit nuk është pjesë e konfigurimit të parazgjedhur,
-      por është ndërhyrja më e lirë e disponueshme nëse dobësia e algoritmit qëndron te
-      shpërndarja e ndarjeve, dhe prandaj studiohet shprehimisht."""),
-    p("""Studimi i thelluar për këtë detektor përfshin katër komponentë: sipërfaqen e plotë mbi
-      numrin e pemëve dhe madhësinë e nën-mostrës, ndjeshmërinë ndaj fraksionit të kolonave,
-      hapjen e pemëve të përshtatura për të numëruar sa ndarje merr secila kolonë, dhe një
-      ripërshtatje mbi një kopje të rrotulluar rastësisht të hapësirës. Ky i fundit është test i
-      drejtpërdrejtë i hipotezës se përputhja e boshteve me komponentët kryesorë ka rëndësi,
-      sepse një rrotullim ortogonale nuk ndryshon asnjë distancë por e shkatërron atë
-      përputhje."""),
+    p("""Implementimi ndjek formulimin origjinal [@liu2008], me pikën e marrë me shenjë të kundërt
+      sipas konventës së studimit. Përveç dy hiperparametrave standardë, numrit të pemëve dhe
+      madhësisë së nën-mostrës, ekspozohet edhe pjesa e kolonave që përdor secila pemë
+      (max_features). Ky parametër nuk ndryshohet në konfigurimin bazë, por studiohet, sepse është
+      ndërhyrja më e thjeshtë nëse dobësia e algoritmit lidhet me shpërndarjen e ndarjeve."""),
     h3("4.4.3", "Autoencoder"),
     p("""Autoencoder-i është një rrjet me enkoder dhe dekoder simetrikë, i trajnuar vetëm mbi
-      transaksionet normale të dritares së trajnimit, me gabimin mesatar kuadratik të rindërtimit
-      si pikë anomalie. Implementimi ekspozon shtatë leva që studimi i thelluar i varion një nga
-      një: dimensionin latent, gjerësinë e shtresës së fshehur, thellësinë e enkoderit,
-      funksionin e humbjes, weight decay, dropout dhe nivelin e zhurmës për variantin
-      denoising."""),
-    note("""Një konventë e rëndësishme për interpretimin e ablacioneve: funksioni i humbjes gjatë
-      trajnimit mund të jetë kuadratik, absolut ose i Huber-it, por pika e anomalisë është
-      gjithmonë gabimi mesatar kuadratik. Pikëzimi me të njëjtin funksion që u trajnua do të
-      ndryshonte njëkohësisht edhe modelin edhe funksionin renditës, dhe dy efektet nuk do të
-      mund të ndaheshin."""),
-    p("""Thellësia e enkoderit ndryshohet me ngushtim gjeometrik nga gjerësia e shtresës së parë
-      drejt dimensionit latent, që një rritje e thellësisë të ndryshojë vetëm mënyrën si arrihet
-      ngjeshja dhe jo sasinë e saj. Konstruktori refuzon konfigurimet ku dimensioni latent nuk
-      është më i vogël se gjerësia e fshehur, sepse një ngushtim që nuk ngushton është
-      arkitekturë tjetër dhe jo një enkoder më i thellë."""),
-    p("""Gjatë trajnimit regjistrohet humbja mesatare për epokë. Kjo lejon që kurba e trajnimit
-      të vendoset përballë cilësisë së zbulimit të matur në blloqet e testimit, dhe pikërisht ai
-      krahasim dallon një model të pastërvitur nga një model që ka filluar t'i rindërtojë mirë
-      edhe anomalitë."""),
+      transaksionet normale të dritares së trajnimit, me gabimin mesatar kuadratik të rindërtimit si
+      pikë anomalie. Implementimi lejon të ndryshohen një nga një shtatë parametra: dimensioni
+      latent, gjerësia e shtresës së fshehur, thellësia e enkoderit, funksioni i humbjes, weight
+      decay, dropout dhe niveli i zhurmës për variantin denoising."""),
+    p("""Funksioni i humbjes gjatë trajnimit mund të jetë kuadratik, absolut ose Huber, por pika e
+      anomalisë është gjithmonë gabimi mesatar kuadratik. Përndryshe do të ndryshonin njëkohësisht
+      modeli dhe funksioni i renditjes, dhe efektet e tyre nuk do të ndaheshin dot. Konfigurimet ku
+      dimensioni latent nuk është më i vogël se gjerësia e shtresës së fshehur nuk provohen, sepse
+      në to nuk ka ngushticë."""),
     h3("4.4.4", "One-Class SVM"),
-    p("""One-Class SVM-ja me kernel RBF ka kosto trajnimi të paktën kuadratike, çka e bën të
-      papërdorshëm mbi njëqind e tetëdhjetë mijë rreshta. Konfigurimi i parazgjedhur e trajnon
-      mbi një nën-mostër të rastësishme me seed të fiksuar prej njëzet mijë transaksionesh
-      normale. Ky është kompromisi i vetëm në gjithë studimin që imponohet nga kostoja
-      llogaritëse dhe jo nga një zgjedhje parimore, prandaj ai nuk mbetet i deklaruar por
-      matet: studimi i thelluar ndërton kurbën e të mësuarit deri në tetëdhjetë mijë
-      transaksione dhe raporton sa njësi Average Precision kushton kufizimi."""),
-    p("""Studimi mat gjithashtu numrin e vektorëve mbështetës të ruajtur, sepse ai është madhësia
-      që përcakton koston e inferencës: çdo transaksion i pikëzuar krahasohet me të gjithë ata.
-      Kështu i njëjti hiperparametër ν që rregullon ashpërsinë e kufirit rregullon edhe vonesën,
-      dhe të dyja raportohen bashkë."""),
-    h3("4.4.5", "Referenca e mbikëqyrur"),
-    p("""Projekt-propozimi kërkonte njëkohësisht trajnim vetëm mbi transaksione normale dhe një
-      baseline me Regresion Logjistik. Këto dy kërkesa janë në kundërshtim, sepse regresioni
-      logjistik ka nevojë për etiketa. Zgjidhja e zbatuar këtu e bën kundërshtinë të dukshme në
-      vend që ta fshehë: modeli trajnohet mbi të gjithë dritaren e trajnimit me etiketat e saj,
-      përfshirë mashtrimet që ndodhen natyrshëm aty, dhe raportohet gjithmonë si referencë e
-      mbikëqyrur, jo si konkurrent i barabartë. Ai i përgjigjet pyetjes se çfarë do të arrihej
-      nëse etiketat historike do të përdoreshin, dhe shërben si kufi i sipërm i arritshëm."""),
-    h3("4.4.6", "Ablacioni linear"),
-    p("""Një detektor i pestë regjistrohet në kod por nuk hyn kurrë në krahasimin kryesor. Ai
-      llogarit gabimin e rindërtimit nga një nënhapësirë lineare PCA me rang të caktuar. Roli i
-      tij është i vetëm: meqë veçoritë hyrëse janë vetë komponentë kryesorë, ky detektor është
-      pragu natyror i familjes së rindërtimit, dhe diferenca mes tij dhe Autoencoder-it në të
-      njëjtin rang latent është saktësisht ajo që paguan jolineariteti."""),
+    p("""One-Class SVM me kernel RBF ka kosto trajnimi të paktën kuadratike dhe nuk mund të
+      trajnohet në kohë të arsyeshme mbi 100 000 deri 260 000 rreshtat e dritareve të trajnimit.
+      Konfigurimi bazë e trajnon mbi një nën-mostër të rastësishme me seed të fiksuar prej 20 000
+      transaksionesh normale. Ky është kompromisi i vetëm i studimit që imponohet nga kostoja
+      llogaritëse dhe jo nga një zgjedhje parimore. Studimi i thelluar e mat çmimin e tij: ndërton
+      kurbën e të mësuarit deri në 80 000 transaksione dhe tregon sa AP kushton kufizimi."""),
+    p("""Studimi mat gjithashtu numrin e vektorëve mbështetës, sepse ai përcakton koston e
+      inferencës: çdo transaksion i ri krahasohet me të gjithë ata. Kështu parametri ν, që përcakton
+      sa i ngushtë është kufiri, përcakton edhe vonesën, dhe të dyja raportohen bashkë."""),
+    h3("4.4.5", "Referenca supervised"),
+    p("""Siç u shpjegua në nënkapitullin 2.5, Regresioni Logjistik nuk mund të trajnohet vetëm mbi
+      transaksione normale si detektorët, sepse ka nevojë për etiketa. Zgjidhja e zbatuar këtu e bën
+      këtë mospërputhje të dukshme: modeli trajnohet mbi gjithë dritaren e trajnimit me etiketat e
+      saj, përfshirë mashtrimet që ndodhen aty, dhe raportohet gjithmonë si referencë supervised. Ai
+      tregon çfarë do të arrihej nëse do të përdoreshin etiketat historike, pra shërben si kufi i
+      sipërm."""),
 ]
 
 _PRAGU = [
     h2("4.5", "Përcaktimi i pragut"),
-    p("""Një funksion pikëzimi bëhet detektor vetëm pasi i shtohet një prag. Zgjedhja e pragut
-      është pikërisht vendi ku rrjedhja e informacionit hyn më lehtë dhe vërehet më vështirë,
-      prandaj këtu përdoren tri procedura krejt të ndara."""),
+    p("""Një funksion që jep pikë anomalie bëhet detektor vetëm kur i shtohet një prag, dhe zgjedhja
+      e pragut është vendi ku rrjedhja e informacionit hyn më lehtë e vërehet më vështirë. Në këtë
+      punim pragu caktohet me tri procedura të ndara."""),
     h3("4.5.1", "Pragu nga percentili i trajnimit"),
-    p("""Protokolli parësor e nxjerr pragun nga percentili (1 − c) i shpërndarjes së pikëve mbi
-      dritaren e trajnimit:"""),
+    p("""Protokolli kryesor e merr pragun nga percentili (1 − c) i pikëve të dritares së
+      trajnimit:"""),
     eq("τ = Kuantili_{1−c} { s(x) : x ∈ D_trajnim }"),
-    p("""ku c është hiperparametri i kontaminimit. Në mungesë të një vlere të caktuar, c merret i
-      barabartë me normën e mashtrimit të vëzhguar në dritaren e trajnimit. Kjo përdor etiketa
-      vetëm nga e kaluara, pra të njëjtin supozim disponueshmërie që i është dhënë tashmë
-      referencës së mbikëqyrur, dhe deklarohet shprehimisht. Për të siguruar që asnjë përfundim
-      të mos varet nga kjo zgjedhje, kontaminimi skanohet në një interval prej dy urdhrash
-      madhësie."""),
+    p("""ku c është kontaminimi. Kur nuk jepet ndryshe, c merret i barabartë me normën e mashtrimit
+      në dritaren e trajnimit. Kjo përdor etiketa vetëm nga e kaluara, njësoj si referenca
+      supervised. Nënkapitulli 5.2.4 mat sa varen rezultatet nga kjo zgjedhje, duke e ndryshuar
+      kontaminimin në një interval prej dy rendesh madhësie."""),
     h3("4.5.2", "Pragu orakull"),
-    p("""Për krahasim raportohet edhe pragu që maksimizon F1-shin mbi bashkësinë e testimit. Ky
-      prag është i paarritshëm në praktikë, sepse kërkon etiketat e testit. Ai paraqitet
-      gjithmonë në kolonë të veçantë dhe emërtohet si kufi i sipërm, dhe të dy numrat nuk
-      përzihen kurrë në të njëjtën kolonë. Diferenca mes tyre është masë e dobishme e asaj se sa
-      humbet një sistem real që nuk mund ta zgjedhë pragun me etiketa."""),
+    p("""Për krahasim raportohet edhe pragu që maksimizon F1 mbi të dhënat e testit. Ky prag nuk
+      mund të përdoret në praktikë, sepse kërkon etiketat e testit; ai jepet gjithmonë në kolonë të
+      veçantë, si kufi i sipërm. Diferenca mes dy pragjeve tregon sa humbet një sistem real që nuk
+      mund ta zgjedhë pragun me etiketa."""),
     h3("4.5.3", "Pragu adaptiv me dritare rrëshqitëse"),
-    p("""Një prag i fiksuar në kohën e trajnimit fikson një pikë, jo një ngarkesë pune. Nëse
-      shpërndarja e pikëve zhvendoset, numri i alarmeve zhvendoset me të. Kjo është mënyrë
-      dështimi e pavarur nga cilësia e zbulimit: një ekip i dimensionuar për njëqind alarme në
-      bllok nuk mund të përballojë shtatëqind, dhe alarmet që nuk hapen kurrë nuk kanë vlerë
-      sado mirë të renditura të jenë."""),
-    p("""Prandaj propozohet dhe testohet një alternativë: pragu llogaritet si percentili (1 − c)
-      i pikëve më të fundit brenda një dritareje rrëshqitëse, i rifreskuar çdo disa qindra
-      mesazhe për ta mbajtur koston të kufizuar. Vendimi për një mesazh përdor vetëm mesazhet
-      që kanë mbërritur para tij, pra mesazhi që gjykohet nuk hyn kurrë në dritaren që e
-      gjykon, gjë që e bën procedurën shkakësore dhe të zbatueshme në një rrjedhë reale."""),
+    p("""Një prag i fiksuar gjatë trajnimit fikson një vlerë të pikës, jo një ngarkesë pune. Kur
+      shpërndarja e pikëve zhvendoset, numri i alarmeve zhvendoset bashkë me të. Ky problem është i
+      pavarur nga cilësia e zbulimit: një ekip i përgatitur për njëqind alarme në bllok nuk
+      përballon dot shtatëqind, dhe alarmet që nuk shqyrtohen nuk kanë vlerë, sado mirë të jenë
+      renditur."""),
+    p("""Si alternativë propozohet dhe testohet një prag adaptiv, i cili llogaritet si percentili (1
+      − c) i pikëve më të fundit brenda një dritareje rrëshqitëse prej 5000 mesazhesh dhe
+      rifreskohet çdo 500 mesazhe, që kostoja të mbetet e vogël. Vendimi për një mesazh përdor vetëm
+      mesazhet që kanë ardhur para tij; mesazhi që gjykohet nuk hyn kurrë në dritaren që e gjykon,
+      kështu që procedura mund të zbatohet në një rrjedhë reale."""),
     h2("4.6", "Metrikat"),
     h3("4.6.1", "Metrikat e cilësisë së renditjes"),
-    p("""Metrika kryesore është Average Precision, e cila përmbledh kurbën precision-recall si
-      shumë e ponderuar e precision-it në çdo prag:"""),
-    eq("AP = Σ_n (R_n − R_{n−1}) · P_n"),
-    p("""Arsyeja e zgjedhjes është e dokumentuar mirë: në çekuilibër ekstrem kurba
-      precision-recall jep një pamje shumë më informative se ROC, sepse norma e pozitivëve të
-      rremë mbetet e vogël edhe kur alarmet e rreme janë shumëfish më të shumta se ato të
-      vërteta [@davis2006], [@saito2015]. AUC-ROC raportohet gjithashtu, por vetëm për
-      krahasueshmëri me literaturën, dhe rezultatet e Kapitullit 5 e tregojnë qartë pse ai nuk
-      duhet të jetë metrika vendimtare. Precision, recall dhe F1 raportohen në pragun e nxjerrë
-      nga trajnimi dhe, veçmas, në pragun orakull. Për çdo metrikë raportohet edhe shpërhapja
-      nëpër fold-e, sepse një vlerë e vetme pa masën e pasigurisë së saj është e vështirë të
-      interpretohet; aty ku nevojitet një interval besimi mbi një bashkësi të vetme testimi, ai
-      nxirret me riparashtrim bootstrap [@efron1993]."""),
+    p("""Metrika kryesore është Average Precision, e përkufizuar në nënkapitullin 3.3, e cila
+      përmbledh kurbën precision-recall pa u lidhur me një prag. Një alternativë e natyrshme do të
+      ishte F1, e cila bashkon precision-in dhe recall-in në një numër të vetëm. F1 varet megjithatë
+      nga pragu, dhe pragu ndryshon nga një fold në tjetrin dhe nga një procedurë në tjetrën, kështu
+      që një krahasim i bazuar vetëm në F1 do të përzinte cilësinë e renditjes me zgjedhjen e
+      pragut. Për këtë arsye F1 raportohet kudo, por algoritmet renditen sipas AP-së."""),
+    p("""Në çekuilibër ekstrem kurba precision-recall jep një pamje shumë më informuese se ROC,
+      sepse norma e pozitivëve të rremë mbetet e vogël edhe kur alarmet e rreme janë shumë më tepër
+      se ato të vërteta [@davis2006], [@saito2015]. AUC-ROC raportohet vetëm për krahasim me
+      literaturën. Precision, recall dhe F1 raportohen në pragun nga trajnimi dhe, veçmas, në pragun
+      orakull. Për çdo metrikë jepet edhe shpërndarja mbi fold-et, sepse një vlerë e vetme pa masën
+      e pasigurisë thotë pak; aty ku nevojitet interval besimi mbi një bashkësi të vetme testimi, ai
+      llogaritet me bootstrap [@efron1993]."""),
     h3("4.6.2", "Metrikat operacionale"),
-    p("""Asnjë ekip hetimi nuk shqyrton një renditje të plotë, por aq alarme sa i lejon
-      kapaciteti. Prandaj raportohen edhe precision dhe recall në buxhet fiks alarmesh k, si dhe
-      recall i vlerës monetare, pra pjesa e eurove mashtruese të kapura brenda buxhetit, sepse
-      një mashtrim i humbur prej dy eurosh dhe një prej dy mijë eurosh nuk janë i njëjti
-      gabim."""),
-    p("""Kursimet neto llogariten sipas një modeli kostoje të thjeshtë dhe të deklaruar: një
-      mashtrim i kapur kursen shumën e tij, ndërsa çdo alarm i ngritur, i vërtetë apo i rremë,
-      kushton një hetim:"""),
-    eq("Kursimi(k) = Σ_{i∈TP(k)} shuma_i − c_het · |Alarme(k)|"),
-    p("""Normalizimi bëhet ndaj detektorit të përsosur, i cili kap çdo mashtrim duke ngritur
-      saktësisht aq alarme sa ka mashtrime. Kostoja e hetimit vendoset në tre euro, dhe
-      ndjeshmëria ndaj kësaj zgjedhjeje diskutohet në Kapitullin 6."""),
+    p("""Një ekip hetimesh nuk shqyrton gjithë renditjen, por aq alarme sa i lejon kapaciteti, dhe
+      metrikat operacionale e pasqyrojnë këtë: raportohen precision dhe recall për një buxhet të
+      fiksuar k alarmesh, si dhe recall-i i vlerës monetare, pra pjesa e eurove mashtruese të kapura
+      brenda buxhetit, sepse humbja e një mashtrimi prej dy eurosh dhe e një mashtrimi prej dy mijë
+      eurosh nuk janë i njëjti gabim."""),
     h3("4.6.3", "Metrikat e kostos llogaritëse"),
-    p("""Për secilin model matet koha e trajnimit, koha e pikëzimit për transaksion dhe gjurma e
-      memories gjatë trajnimit. Gjurma matet si diferencë mes pikut të memories rezidente gjatë
-      bllokut dhe vlerës në hyrje të tij, jo si piku absolut i procesit, sepse ky i fundit
-      përfshin të dhënat e ngarkuara paraprakisht dhe do të ishte pothuajse i njëjtë për të
-      gjithë modelet."""),
+    p("""Për secilin model maten koha e trajnimit, koha e inferencës për transaksion dhe memoria e
+      përdorur gjatë trajnimit. Memoria matet si diferencë mes pikut të memories rezidente gjatë
+      trajnimit dhe vlerës në fillim të tij, jo si piku absolut i procesit, sepse ky i fundit
+      përfshin të dhënat e ngarkuara më parë dhe do të ishte pothuajse i njëjtë për të gjithë
+      modelet."""),
     h2("4.7", "Përzgjedhja e hiperparametrave"),
-    p("""Krahasimi mes modeleve të akorduara keq nuk ka vlerë, ndërsa akordimi mbi bashkësinë e
-      testimit e shkatërron vlefshmërinë e tij. Prandaj përdoren dy rrugë të pavarura, dhe të
-      dyja raportohen."""),
-    p("""Rruga e parë është validimi i brendshëm kohor. Dritarja e trajnimit ndahet përsëri sipas
-      kohës, kandidatët përshtaten mbi 75 për qindëshin e parë dhe renditen sipas Average
-      Precision në 25 për qindëshin e fundit. Kërkimi kryhet me Optuna duke përdorur mostruesin
-      TPE [@akiba2019]; edhe një kërkim thjesht i rastësishëm do të ishte alternativë e
-      arsyeshme, sepse mbi hapësira me pak dimensione efektive ai është konkurrues me kërkimin
-      sistematik në rrjetë [@bergstra2012]. Kandidatët përshtaten mbi një nën-mostër me seed të
-      fiksuar, që kërkimi të përfundojë në minuta e jo në orë, dhe konfigurimi fitues
-      ripërshtatet pastaj mbi dritaren e plotë."""),
-    p("""Rruga e dytë nuk përdor fare etiketa. Kriteret Excess-Mass dhe Mass-Volume vlerësojnë sa
-      mirë grupet e nivelit të një funksioni pikëzimi e përqendrojnë masën probabilitare në
-      vëllim të vogël [@goix2015], [@goix2016]:"""),
-    eq("EM(t) = sup_u [ P(s≥u) − t·Leb(s≥u) ];   MV(α) = Leb(s≥u_α)"),
-    p("""Vlerësimi i masës Lebesgue me Monte Carlo është i pamundur në njëzet e nëntë dimensione,
-      prandaj ndiqet zgjidhja e rekomanduar: kriteret mesatarizohen mbi nënhapësira të
-      rastësishme me dimension të ulët, ku detektori ripërshtatet në secilën nënhapësirë. Një
-      hollësi implementimi rezultoi vendimtare. Këto kritere përcaktohen për një funksion
-      normaliteti, ku grupet e sipërme të nivelit janë rajonet e dendura; me konventën e kundërt
-      të këtij projekti pikat uniforme mbushin çdo grup niveli dhe vëllimi i vlerësuar kolapson
-      në të gjithë kutinë kufizuese, prandaj shenja kthehet brenda funksionit. Po ashtu, rrjeta
-      e pragjeve duhet të përfshijë grupin bosh të nivelit, përndryshe supremumi mund të dalë
-      negativ dhe kriteri nuk është më masë e vlefshme."""),
-    p("""Këto kritere nuk përdoren për akordimin kryesor, sepse kostoja e tyre, një ripërshtatje
-      e detektorit për çdo nënhapësirë, do ta bënte një kërkim të plotë të papërballueshëm. Ato
-      përdoren në një krahasim të fokusuar mbi rrjeta të vogla dhe të deklaruara, me një pyetje
-      të vetme: a do ta zgjidhnin ato të njëjtin konfigurim si kriteri me etiketa."""),
-    h2("4.8", "Studimet e thelluara për algoritëm"),
-    p("""Përveç krahasimit kryesor, secili nga tri algoritmet i nënshtrohet një studimi të
-      veçantë, i dizajnuar rreth mekanizmit të tij dhe jo si skanim gjenerik hiperparametrash.
-      Të gjitha ekzekutohen mbi të tetë fold-et, që rezultatet e tyre të mbartin të njëjtën
-      pasiguri si tabela kryesore."""),
+    p("""Krahasimi i modeleve të akorduara keq nuk ka vlerë, por akordimi mbi të dhënat e testit e
+      prish vlefshmërinë e krahasimit. Hiperparametrat zgjidhen prandaj me validim të brendshëm
+      kohor. Dritarja e trajnimit e ndarjes 70/30 ndahet përsëri sipas kohës: kandidatët trajnohen
+      mbi 75% e parë dhe renditen sipas AP-së në 25% e fundit. Kërkimi bëhet me Optuna dhe
+      mostruesin TPE, me 60 prova për detektor [@akiba2019]. Kandidatët trajnohen mbi një nën-mostër
+      prej 60 000 transaksionesh me seed të fiksuar, që kërkimi të zgjasë minuta e jo orë;
+      konfigurimi fitues përdoret pastaj në të gjitha fold-et, i trajnuar mbi dritaren e plotë të
+      secilit."""),
+    p("""Kërkimi bëhet një herë dhe jo brenda çdo fold-i, gjë që ka një pasojë që duhet thënë qartë.
+      Dritarja e kërkimit, 70% e parë e rrjedhës, përmban blloqet e testimit të fold-eve 0 deri 3;
+      blloqet e fold-eve 4 deri 7 fillojnë pas saj. Për fold-et e hershme zgjedhja e
+      hiperparametrave ka parë të njëjtën periudhë mbi të cilën vlerësohet, dhe për këtë efekti i
+      akordimit raportohet edhe veçmas për fold-et 4 deri 7, të cilat janë plotësisht të pavarura
+      nga kërkimi."""),
+    h2("4.8", "Studimet për secilin algoritëm"),
+    p("""Përveç krahasimit kryesor, secili algoritëm ka një studim të veçantë, të ndërtuar rreth
+      mekanizmit të tij dhe jo si kërkim i përgjithshëm hiperparametrash. Të gjitha studimet
+      ekzekutohen në të tetë fold-et, me të njëjtën pasiguri si tabela kryesore."""),
     numbers(
         [
-            "Isolation Forest: sipërfaqja mbi numrin e pemëve dhe madhësinë e nën-mostrës, "
-            "ndjeshmëria ndaj fraksionit të kolonave, numërimi i ndarjeve për kolonë brenda pemëve "
-            "të përshtatura, dhe ripërshtatja mbi një hapësirë të rrotulluar rastësisht.",
-            "Autoencoder: sipërfaqja mbi dimensionin latent dhe gjerësinë e fshehur, thellësia e "
-            "enkoderit, funksioni i humbjes, tri regullarizues të ndryshëm, kurba e trajnimit "
-            "përballë cilësisë së zbulimit, dhe krahasimi me projeksionin linear në rang të "
-            "njëjtë.",
-            "One-Class SVM: krahasimi i kernelëve, sipërfaqja mbi nu dhe gamma, dhe kurba e të "
-            "mësuarit mbi madhësinë e nën-mostrës së trajnimit bashkë me koston përkatëse.",
-            "Të tre bashkë: ndjeshmëria ndaj paraprocesimit, ndikimi i kufizimit të hyrjes te "
-            "komponentët informativë, ndikimi i politikës së dritares së trajnimit, dhe analiza e "
-            "gabimeve në nivel transaksioni.",
+            "Isolation Forest: hapësira mbi numrin e pemëve dhe madhësinë e nën-mostrës, "
+            "ndjeshmëria ndaj pjesës së kolonave për pemë, numërimi i ndarjeve për kolonë në pemët "
+            "e trajnuara dhe trajnimi mbi një kopje të rrotulluar rastësisht të hapësirës. Testi i "
+            "fundit kontrollon nëse ka rëndësi që boshtet përputhen me komponentët kryesorë, sepse "
+            "një rrotullim ortogonal nuk ndryshon asnjë distancë, por e prish këtë përputhje.",
+            "Autoencoder: hapësira mbi dimensionin latent dhe gjerësinë e shtresës së fshehur, "
+            "thellësia e enkoderit, funksioni i humbjes, tre regularizues, numri i epokave dhe "
+            "krahasimi me rindërtimin linear me PCA me rang të njëjtë.",
+            "One-Class SVM: krahasimi i kernelëve, hapësira mbi nu dhe gamma, dhe kurba e të "
+            "mësuarit sipas madhësisë së nën-mostrës së trajnimit, bashkë me koston përkatëse.",
         ]
     ),
-    p("""Studimet e mësipërme e ndryshojnë nga një levë në një kohë, që efekti i secilës të jetë
-      i izoluar. Kjo lë hapur pyetjen nëse levat kombinohen. Prandaj shtohet një studim i fundit
-      me dizajn faktorial dy-nga-dy, ku secili detektor vlerësohet nën katër kombinime:
-      paraprocesim i parazgjedhur ose më i miri i tij, dhe hiperparametra të parazgjedhur ose më
-      të mirët e tij. Ky dizajn e ndan përfitimin total në tri pjesë, kontributin e
-      paraprocesimit, atë të hiperparametrave dhe ndërveprimin mes tyre, dhe e tregon nëse
-      renditja e algoritmeve ndryshon kur secili vlerësohet në kapacitetin e vet më të mirë.
-      Konfigurimet fituese merren nga studimet e mësipërme dhe jo nga blloqet e testimit, prandaj
-      ky rezultat raportohet si kufi i sipërm optimist dhe jo si vlerësim i paanshëm."""),
-    p("""Studimi mbi kufizimin e hyrjes meriton koment të veçantë, sepse nuk është skanim por
-      ndërhyrje. Analiza e interpretueshmërisë prodhon një pohim mekanicist mbi shkakun e
-      renditjes; ai pohim mbetet korrelacion derisa të ndërhyhet mbi shkakun e supozuar. Duke i
-      dhënë secilit detektor vetëm k komponentët më informativë dhe duke matur se cili fiton më
-      shumë, korrelacioni shndërrohet në provë kauzale."""),
+    p("""Këto studime ndryshojnë një parametër në një kohë, që efekti i secilit të matet veç. Mbetet
+      pyetja nëse efektet e paraprocesimit dhe të hiperparametrave mblidhen. Për këtë shtohet një
+      studim i fundit me dizajn faktorial 2×2, ku secili detektor vlerësohet në katër kombinime:
+      paraprocesimi bazë ose më i miri për të, dhe hiperparametrat bazë ose ata të akorduar. Dizajni
+      e ndan përfitimin total në kontributin e paraprocesimit, atë të hiperparametrave dhe
+      ndërveprimin mes tyre, dhe tregon nëse renditja ndryshon kur çdo algoritëm vlerësohet në
+      konfigurimin e tij më të mirë. Konfigurimet "më të mira" vijnë nga studimet e mësipërme, të
+      cilat i kanë parë të njëjtat blloqe testimi, prandaj ky rezultat raportohet si kufi i sipërm
+      optimist dhe jo si vlerësim i paanshëm."""),
 ]
 
 _ARKITEKTURA = [
     h2("4.9", "Arkitektura e implementuar"),
-    p("""Sistemi ndjek arkitekturën pesështresore të përcaktuar në projekt-propozim. Ndarja mes
-      shtresave nuk është vetëm konceptuale: secila është modul i veçantë me ndërfaqe të qartë,
-      gjë që lejoi zëvendësimin e modeleve pa prekur shtresën e rrjedhës dhe anasjelltas."""),
-    fig(
-        "diagram_architecture",
-        "Arkitektura pesështresore e sistemit dhe ajo që kalon nëpër çdo kufi mes shtresave.",
-        14.5,
-    ),
+    p("""Sistemi ndërtohet si arkitekturë me pesë shtresa (Figura
+      [[fig:diagram_architecture]]). Shtresat janë module të veçanta me ndërfaqe të qarta, gjë që
+      lejoi ndryshimin e modeleve pa prekur shtresën e rrjedhës dhe anasjelltas."""),
+    fig("diagram_architecture", "Arkitektura e sistemit me pesë shtresa.", 15.0),
     h3("4.9.1", "Shtresa e rrjedhës"),
-    p("""Apache Kafka ekzekutohet në modalitetin KRaft, pa ZooKeeper, me një broker të vetëm dhe
-      një particion për topic. Zgjedhja e Kafka-s në vend të alternativave si Redpanda u bë
-      sepse titulli dhe propozimi i temës e emërtojnë shprehimisht atë, dhe sepse një shërbim
-      KRaft me një nyje kushton pak më shumë se alternativat në konfigurim [@kreps2011].
-      Serializimi bëhet me JSON: në ritmet e testuara kostoja e kodimit është e papërfillshme,
-      ndërsa lexueshmëria e mesazheve e bën pipeline-in të diagnostikueshëm dhe lejon krahasim
-      bit-për-bit të pikëve mes dy regjimeve."""),
-    p("""Producer-i riprodhon bllokun e testimit me ritëm konstant të konfigurueshëm, duke
-      përdorur një orar absolut për të shmangur grumbullimin e devijimit të ritmit. Consumer-i
-      mbledh mikro-grupe deri në gjashtëdhjetë e katër mesazhe dhe i pikëzon si një matricë të
-      vetme, me kohëzgjatje pritjeje të kufizuar në pesëdhjetë milisekonda."""),
-    note("""Kufizimi i kësaj pritjeje nuk ishte planifikuar. Në ekzekutimin e parë vonesa
-      end-to-end dilte më e ulët në ritme të larta sesa në ritme të ulëta, gjë që nuk ka kuptim
-      fizik; shkaku ishte se në ritme të ulëta vetë mbledhja e mikro-grupit dominonte vonesën.
-      Ky është shembull i dobishëm se si një defekt matjeje mund të prodhojë një rezultat që
-      duket i publikueshëm."""),
-    h3("4.9.2", "Matja e vonesës"),
-    p("""Çdo mesazh mbart një vulë kohore të prodhimit. Consumer-i regjistron dy madhësi të
-      ndara: vonesën e inferencës, që mat vetëm kalimin përpara të modelit dhe amortizohet mbi
-      mikro-grupin, dhe vonesën end-to-end, nga vula e producer-it deri pas publikimit të
-      alarmit. Producer-i dhe consumer-i ekzekutohen në të njëjtin host, prandaj nuk ka nevojë
-      për trajtim të mospërputhjes së orëve. Raportohen shpërndarjet e plota, jo vetëm
-      mesatarja, pra p50, p95 dhe p99."""),
-    p("""Një hollësi që ndikon në vlefshmërinë e matjes: producer-i nuk niset derisa consumer-i
-      të ketë marrë caktimin e particioneve dhe të ketë sinjalizuar gatishmërinë. Pa këtë
-      sinkronizim mesazhet e para presin në radhë ndërsa consumer-i po ngrihet, dhe bishti i
-      shpërndarjes ndotet me kohën e nisjes në vend se me vonesën e gjendjes së
-      qëndrueshme."""),
-    h3("4.9.3", "Persistimi dhe vizualizimi"),
-    p("""Të gjitha ngjarjet e pikëzuara dhe alarmet ruhen në PostgreSQL në dy tabela të
-      indeksuara sipas etiketës së ekzekutimit, me shkrime të grumbulluara që të mos bëhet vetë
-      persistimi pengesa e rrjedhës. Skema ruan për çdo ngjarje identifikuesin e transaksionit,
-      modelin, pikën, pragun në fuqi, vulën kohore të mbërritjes dhe atë të pikëzimit, pra
-      gjithçka që nevojitet për ta rindërtuar vonesën dhe vendimin pas faktit."""),
-    p("""Mbi këto tabela është ndërtuar një panel Grafana OSS me nëntë panele: katër tregues
-      përmbledhës për numrin e ngjarjeve të pikëzuara, alarmeve të publikuara, alarmeve që
-      rezultojnë mashtrime të vërteta dhe mashtrimeve të pranishme në rrjedhë; katër seri kohore
-      për kapacitetin e pikëzimit, alarmet me kalimin e kohës, percentilet e vonesës
-      end-to-end dhe percentilin e nëntëdhjetë e pestë të kohës së inferencës për model; dhe një
-      tabelë me alarmet më të fundit."""),
-    p("""I gjithë konfigurimi, burimi i të dhënave dhe vetë paneli, gjendet si skedar në depo dhe
-      ngarkohet automatikisht kur ngrihet grumbulli, që gjendja e vizualizimit të mos varet nga
-      veprime manuale në ndërfaqe dhe të jetë pjesë e riprodhueshmërisë. Një hollësi teknike
-      meriton përmendje sepse kushtëzoi implementimin: makro-ja standarde e Grafana-s për
-      grupim kohor nuk pranon shprehje të mbivendosura mbi kolonën e kohës, prandaj grupimi
-      kryhet me aritmetikë të drejtpërdrejtë mbi sekondat epokë."""),
-    h3("4.9.4", "Paneli interaktiv i rezultateve"),
-    p("""Mbi të njëjtën dosje rezultatesh është ndërtuar edhe një aplikacion web lokal, i cili
-      shërben për dy qëllime që dokumenti i shtypur nuk i mbulon dot. I pari është kontrolli:
-      çdo tabelë, figurë dhe verdikt lexohet prej tij në çastin kur kërkohet faqja, prandaj
-      paneli tregon gjendjen e vërtetë të depos dhe jo një kopje të saj, dhe çdo mospërputhje
-      mes tij dhe këtij dokumenti do të ishte e dukshme menjëherë. I dyti është riprodhimi:
-      secili seksion ka butonin e vet që e ri-ekzekuton eksperimentin përkatës dhe e shfaq
-      daljen e tij rresht pas rreshti ndërsa ajo prodhohet."""),
-    p("""Dy zgjedhje projektimi meritojnë përmendje sepse burojnë nga vetë natyra e studimit.
-      Konsola e ekzekutimit nuk pranon rreshta komande por vetëm identifikues nga një katalog i
-      deklaruar, dhe i ekzekuton ata rreptësisht një nga një, sepse eksperimentet konkurrojnë
-      për çdo bërthamë dhe një ekzekutim paralel do t'i shtrembëronte kolonat e kohës që
-      raporton Kapitulli 5. Grafikët vizatohen si SVG nga vetë kodi i projektit, pa asnjë
-      bibliotekë të jashtme, që paneli të funksionojë edhe pa lidhje rrjeti dhe që ngjyrat e
-      serive të jenë identike me ato të figurave të këtij dokumenti."""),
-    p("""Paneli integron edhe shtresën e rrjedhës: tregon gjendjen e të tre kontejnerëve, lejon
-      ngritjen e tyre, i lexon numëruesit drejtpërdrejt nga PostgreSQL dhe e fut panelin Grafana
-      brenda faqes. Kështu e gjithë zinxhiri, nga ekzekutimi i një eksperimenti deri te alarmet
-      që mbërrijnë në bazë, mund të demonstrohet pa u larguar nga shfletuesi."""),
+    p("""Apache Kafka punon në modalitetin KRaft, pa ZooKeeper, me një broker dhe një particion për
+      topic. Kafka u zgjodh në vend të alternativave si Redpanda sepse është pjesë e vetë
+      temës së punimit, dhe sepse një shërbim KRaft me një nyje konfigurohet lehtë [@kreps2011].
+      Mesazhet serializohen në JSON: në ritmet e testuara kostoja e kodimit është e papërfillshme,
+      ndërsa mesazhet e lexueshme e bëjnë pipeline-in të lehtë për diagnostikim dhe lejojnë
+      krahasimin e saktë të pikëve mes dy regjimeve."""),
+    p("""Producer-i riprodhon bllokun e testimit me ritëm konstant të konfigurueshëm dhe ndjek një
+      orar absolut, që vonesat e vogla të mos grumbullohen në devijim të ritmit. Consumer-i mbledh
+      mikro-grupe deri në 64 mesazhe dhe i përpunon si një matricë të vetme, me pritje të kufizuar
+      në 50 milisekonda."""),
+    note("""Kufiri i pritjes nuk ishte planifikuar. Në ekzekutimin e parë vonesa end-to-end dilte më
+      e ulët në ritme të larta se në ritme të ulëta, gjë që nuk ka kuptim fizik; shkaku ishte se në
+      ritme të ulëta vonesën e përcaktonte vetë mbledhja e mikro-grupit. Ky është një shembull se si
+      një defekt matjeje mund të japë një rezultat që duket i besueshëm."""),
+    h3("4.9.2", "Matja e vonesës dhe e throughput-it"),
+    p("""Çdo mesazh mbart vulën kohore të krijimit nga producer-i. Consumer-i regjistron dy madhësi:
+      kohën e inferencës, që mat vetëm llogaritjen e modelit dhe ndahet mbi mikro-grupin, dhe
+      vonesën end-to-end, nga vula e producer-it deri në momentin kur vendimi është marrë dhe
+      alarmi, nëse ka, i është dorëzuar producer-it të Kafka-s për publikim. Konfirmimi i dorëzimit
+      në broker nuk pritet, prandaj vonesa e matur nuk përfshin rrugën e alarmit deri te broker-i.
+      Producer-i dhe consumer-i punojnë në të njëjtin host, kështu që nuk ka mospërputhje orësh.
+      Raportohen p50, p95 dhe p99, jo vetëm mesatarja."""),
+    p("""Producer-i nuk nis derisa consumer-i të ketë marrë particionet dhe të ketë sinjalizuar se
+      është gati. Pa këtë sinkronizim, mesazhet e para do të prisnin në radhë gjatë nisjes së
+      consumer-it, dhe bishti i shpërndarjes do të matte kohën e nisjes në vend të vonesës në
+      gjendje të qëndrueshme."""),
+    p("""Throughput-i llogaritet si numri i mesazheve të përpunuara pjesëtuar me kohën nga krijimi
+      i mesazhit të parë deri te vendimi për të fundit. Ora e consumer-it nuk përdoret për këtë,
+      sepse ajo nis sapo consumer-i është gati, para se të niset procesi i producer-it."""),
+    note("""Në llogaritjen e parë throughput-i matej me orën e consumer-it, dhe në 2000 mesazhe në
+      sekondë dilte 86% deri 89% e ritmit, gjë që dukej si ngopje. Shkaku ishte nisja e
+      producer-it, me ngarkimin e bibliotekave dhe leximin e dataset-it, e cila zgjat 1.2 deri 2.1
+      sekonda dhe në një ekzekutim prej vetëm 10 sekondash zë mbi një të dhjetën e kohës. Vetë
+      consumer-i nuk mbetej pas (nënkapitulli 5.1)."""),
+    h3("4.9.3", "Ruajtja dhe vizualizimi"),
+    p("""Eventet e përpunuara dhe alarmet ruhen në PostgreSQL në dy tabela, me çelës të përbërë nga
+      etiketa e ekzekutimit, identifikuesi i transaksionit dhe modeli; shkrimet bëhen në grupe që
+      ruajtja të mos ngadalësojë rrjedhën. Për çdo event ruhen pika, vendimi, etiketa, vula kohore e
+      krijimit, koha e inferencës, vonesa end-to-end dhe madhësia e mikro-grupit; për çdo alarm
+      ruhen edhe pragu në fuqi dhe vula kohore e publikimit. Me këto të dhëna vonesa dhe vendimi
+      mund të rindërtohen pas faktit."""),
+    p("""Mbi këto tabela është ndërtuar një panel në Grafana OSS me nëntë grafikë: katër tregues
+      përmbledhës (eventet e përpunuara, alarmet e publikuara, alarmet që janë mashtrime të vërteta
+      dhe mashtrimet në rrjedhë), katër seri kohore (throughput-i i përpunimit, alarmet me kalimin e
+      kohës, percentilet e vonesës end-to-end dhe percentili 95 i kohës së inferencës për model) dhe
+      një tabelë me alarmet e fundit."""),
+    p("""I gjithë konfigurimi i Grafana-s, burimi i të dhënave dhe vetë paneli ruhen si skedarë në
+      depo dhe ngarkohen automatikisht kur ngrihen shërbimet, kështu që vizualizimi nuk varet nga
+      veprime manuale në ndërfaqe dhe është pjesë e riprodhimit. Një hollësi teknike ndikoi në
+      implementim: makroja standarde e Grafana-s për grupim kohor nuk pranon shprehje të përbëra mbi
+      kolonën e kohës, prandaj grupimi bëhet me aritmetikë mbi sekondat epokë."""),
     h2("4.10", "Riprodhueshmëria"),
     p("""Çdo eksperiment shkruan një manifest me SHA-në e commit-it, hash-in SHA-256 të
-      konfigurimit, versionet e paketave të gjurmuara, vulën kohore dhe përshkrimin e harduerit.
-      Seed-et janë të fiksuara në çdo pikë ku ndodh rastësi. Determinizmi u verifikua në mënyrë
-      empirike dhe jo vetëm si pretendim: dy cikle të plota e të pavarura ritrajnimi dhe
-      vlerësimi prodhuan tabela metrike identike bit-për-bit, me përjashtim të kolonave të kohës
-      dhe të memories, të cilat për nga natyra ndryshojnë."""),
-    p("""Disiplina metodologjike e përshkruar në këtë kapitull nuk mbetet vetëm në tekst. Ajo
-      është e koduar në një grup testesh që ekzekutohen me çdo ndryshim dhe që mbulojnë ndarjen
-      kronologjike, mungesën e rrjedhjes së informacionit, kontratën e modeleve, konventën e
-      shenjës mbi të dhëna reale, saktësinë e metrikave dhe barazinë e pikëve mes regjimit
-      offline dhe atij në rrjedhë."""),
+      konfigurimit, versionet e paketave kryesore, kohën e ekzekutimit dhe përshkrimin e harduerit.
+      Seed-et janë të fiksuara kudo ku ka rastësi. Determinizmi u kontrollua edhe në praktikë: dy
+      cikle të plota dhe të pavarura trajnimi e vlerësimi dhanë tabela metrikash identike, me
+      përjashtim të kolonave të kohës dhe të memories, të cilat ndryshojnë natyrshëm."""),
+    p("""Masat metodologjike të këtij kapitulli janë të koduara edhe në teste që ekzekutohen me çdo
+      ndryshim. Ato mbulojnë ndarjen kronologjike, mungesën e rrjedhjes së informacionit, kontratën
+      e modeleve, konventën e shenjës mbi të dhëna reale, saktësinë e metrikave dhe barazinë e
+      pikëve mes regjimit offline dhe atij në rrjedhë. Figurat e punimit vizatohen nga tabelat e
+      ruajtura të eksperimenteve dhe mund të rindërtohen pa trajnuar përsëri asnjë model."""),
     tab(
         "environment",
-        "Mjedisi eksperimental: hardueri, sistemi dhe versionet e komponentëve kryesorë.",
+        "Mjedisi eksperimental.",
         font_size=9.5,
     ),
-    p("""Implementimi mbështetet në një grumbull softuerësh të lirë: scikit-learn për modelet
-      klasike dhe metrikat [@pedregosa2011], PyTorch për Autoencoder-in [@paszke2019], NumPy për
-      llogaritjen numerike [@harris2020] dhe Matplotlib për figurat [@hunter2007]. Versionet e
-      sakta janë pjesë e çdo manifesti ekzekutimi. Të gjitha modelet trajnohen dhe ekzekutohen
-      në CPU, gjë që është zgjedhje e qëllimshme dhe jo kufizim i pashmangshëm: modelet janë të
-      vogla, dhe matja e kostos operacionale mbi CPU është më e afërt me realitetin e shumicës
-      së sistemeve të pagesave sesa matja mbi një përshpejtues grafik."""),
+    p("""Implementimi mbështetet në softuer të lirë: scikit-learn për modelet klasike dhe metrikat
+      [@pedregosa2011], PyTorch për Autoencoder-in [@paszke2019], NumPy për llogaritjet numerike dhe
+      Matplotlib për figurat. Versionet e sakta ruhen në çdo manifest. Të gjitha modelet trajnohen
+      dhe ekzekutohen në CPU. Kjo është zgjedhje e qëllimshme: modelet janë të vogla, dhe matja e
+      kostos operacionale në CPU është më afër realitetit të shumicës së sistemeve të pagesave se
+      matja mbi një përshpejtues grafik."""),
 ]
 
 BLOCKS = _DATA + _PROTOKOLLI + _PRAGU + _ARKITEKTURA

@@ -11,14 +11,33 @@ This experiment quantifies both sides of the trade: how much steadier the
 adaptive rule keeps the alert volume, and what it costs in detection quality.
 """
 
+import matplotlib as mpl
 import numpy as np
 import pandas as pd
+from matplotlib.lines import Line2D
 
 from src.config import REPO_ROOT, load_config
 from src.evaluation.manifest import write_manifest
 from src.evaluation.metrics import thresholded_metrics
 from src.evaluation.protocol import load_folds
-from src.evaluation.report import AX, MODEL_LABELS, new_figure, save_figure, save_table
+from src.evaluation.report import (
+    AX,
+    CM,
+    FULL_WIDTH,
+    GRID,
+    INK_2,
+    MODEL_LABELS,
+    MODEL_MARKERS,
+    MUTED,
+    fig_legend_above,
+    legend_above,
+    model_color,
+    new_figure,
+    ordered_models,
+    save_figure,
+    save_table,
+    value_grid,
+)
 from src.evaluation.thresholds import adaptive_quantile_thresholds
 from src.models.build import ALL_MODELS
 
@@ -28,6 +47,122 @@ SUBBLOCKS = 10  # alert-rate stability is measured across these equal slices
 
 def alert_rate_profile(flags: np.ndarray, n_slices: int = SUBBLOCKS) -> np.ndarray:
     return np.array([part.mean() for part in np.array_split(flags, n_slices)])
+
+
+def figures(cfg, prof: pd.DataFrame, per_fold: pd.DataFrame, fold_info: pd.DataFrame) -> None:
+    # --- Workload over time, one panel per unsupervised detector ----------
+    # The supervised reference is left out here: its alert rate is the same
+    # story told by the table, and pooling it with the detectors would
+    # average two groups that move in opposite directions.
+    names = [m for m in MODELS if m != "logreg"]
+    fig, axes = new_figure(nrows=len(names), sharex=True, figsize=(FULL_WIDTH, 10.0 * CM))
+    target = fold_info.set_index("fold")["train_fraud_rate"]
+    for ax, name in zip(axes, names, strict=True):
+        for mode, color, width in (("statik", MUTED, 1.1), ("adaptiv", model_color(name), 1.5)):
+            sub = prof[(prof["model"] == name) & (prof["regjimi"] == mode)]
+            sub = sub.sort_values(["fold", "slice"])
+            x = sub["fold"] + (sub["slice"] + 0.5) / SUBBLOCKS
+            ax.plot(
+                x,
+                sub["alert_rate"],
+                color=color,
+                linewidth=width,
+                label="Prag statik" if mode == "statik" else "Prag adaptiv",
+            )
+        for f in target.index:
+            ax.plot([f, f + 1], [target[f]] * 2, color=INK_2, lw=0.8, ls=(0, (2, 2)))
+            if f > 0:
+                ax.axvline(f, color=GRID, lw=0.8, zorder=0)
+        ax.set_title(MODEL_LABELS[name], loc="left", fontsize=8.2)
+        ax.yaxis.set_major_formatter(mpl.ticker.PercentFormatter(xmax=1.0, decimals=1))
+        ax.yaxis.set_major_locator(mpl.ticker.MaxNLocator(3))
+        ax.set_ylim(0, None)
+        value_grid(ax, "y")
+    axes[-1].set_xticks(np.arange(len(target)) + 0.5, [str(f) for f in target.index])
+    axes[-1].tick_params(axis="x", length=0)
+    axes[-1].set_xlim(0, len(target))
+    axes[-1].set_xlabel("Fold (secili i ndarë në 10 nën-blloqe)")
+    axes[len(axes) // 2].set_ylabel("Alarme si pjesë e transaksioneve")
+    handles, labels = axes[0].get_legend_handles_labels()
+    handles.append(Line2D([], [], color=INK_2, lw=0.8, ls=(0, (2, 2))))
+    labels.append("Norma e synuar (norma e mashtrimit në trajnim)")
+    fig_legend_above(fig, handles, labels)
+    save_figure(fig, REPO_ROOT / cfg.results_dir, "adaptive_alert_rate")
+
+    # --- The trade-off, as a move from one regime to the other -------------
+    piv = (
+        per_fold.groupby(["model", "regjimi"])
+        .agg(cv=("alert_rate_cv", "mean"), f1=("f1", "mean"))
+        .reset_index()
+        .set_index(["model", "regjimi"])
+    )
+    fig, ax = new_figure(figsize=(FULL_WIDTH, 6.6 * CM))
+    for name in ordered_models(per_fold["model"].unique()):
+        start, end = piv.loc[(name, "statik")], piv.loc[(name, "adaptiv")]
+        color = model_color(name)
+        ax.annotate(
+            "",
+            xy=(end["cv"], end["f1"]),
+            xytext=(start["cv"], start["f1"]),
+            arrowprops={
+                "arrowstyle": "-|>",
+                "color": color,
+                "lw": 1.3,
+                "shrinkA": 5,
+                "shrinkB": 5,
+                "mutation_scale": 10,
+            },
+        )
+        ax.plot(
+            start["cv"],
+            start["f1"],
+            marker=MODEL_MARKERS[name],
+            markersize=7,
+            markerfacecolor="#ffffff",
+            markeredgecolor=color,
+            markeredgewidth=1.3,
+            linestyle="none",
+        )
+        ax.plot(
+            end["cv"],
+            end["f1"],
+            marker=MODEL_MARKERS[name],
+            markersize=7,
+            color=color,
+            markeredgecolor="#ffffff",
+            markeredgewidth=0.8,
+            linestyle="none",
+        )
+        ax.annotate(
+            MODEL_LABELS[name],
+            (start["cv"], start["f1"]),
+            xytext=(8, -2),
+            textcoords="offset points",
+            fontsize=7.5,
+            color=INK_2,
+            va="center",
+        )
+    ax.set_xlabel("Paqëndrueshmëria e ngarkesës (CV e normës së alarmeve; më majtas është më mirë)")
+    ax.set_ylabel(AX["f1"])
+    ax.set_ylim(0, 0.8)
+    value_grid(ax, "both")
+    legend_above(
+        ax,
+        handles=[
+            Line2D(
+                [],
+                [],
+                marker="o",
+                markersize=7,
+                markerfacecolor="#ffffff",
+                markeredgecolor=INK_2,
+                linestyle="none",
+            ),
+            Line2D([], [], marker="o", markersize=7, color=INK_2, linestyle="none"),
+        ],
+        labels=["Prag statik", "Prag adaptiv"],
+    )
+    save_figure(fig, REPO_ROOT / cfg.results_dir, "adaptive_tradeoff")
 
 
 def main(cfg=None):
@@ -118,53 +253,9 @@ def main(cfg=None):
     save_table(summary, results_dir, "adaptive_threshold_summary")
     print(summary.to_string(index=False))
 
-    # --- Figure: workload stability -------------------------------------
     prof = pd.concat(profiles, ignore_index=True)
-    fig, ax = new_figure(figsize=(7.0, 4.2))
-    for mode, colour in (("statik", "#e34948"), ("adaptiv", "#2a78d6")):
-        sub = prof[prof["regjimi"] == mode]
-        grouped = sub.groupby(["fold", "slice"])["alert_rate"].mean().reset_index()
-        x = grouped["fold"] + grouped["slice"] / SUBBLOCKS
-        ax.plot(x, 100 * grouped["alert_rate"], color=colour, linewidth=1.5, label=f"Prag {mode}")
-    ax.set_xlabel(AX["fold"] + " (i ndarë në 10 nën-blloqe)")
-    ax.set_ylabel("Alarme si % e transaksioneve")
-    ax.set_yscale("log")
-    ax.legend()
-    save_figure(fig, REPO_ROOT / cfg.results_dir, "adaptive_alert_rate")
-
-    # --- Figure: the trade-off in one view ------------------------------
-    fig, ax = new_figure(figsize=(6.2, 4.2))
-    piv = (
-        per_fold.groupby(["model", "regjimi"])
-        .agg(cv=("alert_rate_cv", "mean"), f1=("f1", "mean"))
-        .reset_index()
-    )
-    for mode, marker, colour in (("statik", "s", "#e34948"), ("adaptiv", "o", "#2a78d6")):
-        sub = piv[piv["regjimi"] == mode]
-        ax.scatter(
-            sub["cv"],
-            sub["f1"],
-            s=52,
-            marker=marker,
-            color=colour,
-            label=f"Prag {mode}",
-            alpha=0.85,
-            edgecolor="white",
-            linewidth=0.8,
-        )
-        for _, r in sub.iterrows():
-            ax.annotate(
-                MODEL_LABELS.get(r["model"], r["model"]),
-                (r["cv"], r["f1"]),
-                fontsize=7.5,
-                color="#52514e",
-                xytext=(5, 3),
-                textcoords="offset points",
-            )
-    ax.set_xlabel("Paqëndrueshmëria e ngarkesës (CV e normës së alarmeve)")
-    ax.set_ylabel(AX["f1"])
-    ax.legend()
-    save_figure(fig, REPO_ROOT / cfg.results_dir, "adaptive_tradeoff")
+    save_table(prof, results_dir, "adaptive_threshold_profiles", float_fmt="%.6f")
+    figures(cfg, prof, per_fold, fold_info)
 
     stat = per_fold[per_fold["regjimi"] == "statik"]
     adap = per_fold[per_fold["regjimi"] == "adaptiv"]
@@ -190,7 +281,7 @@ def main(cfg=None):
         f" Kjo mesatare e fsheh gjetjen, sepse dy grupet lëvizin në drejtime të kundërta. "
         f"Për të tre detektorët unsupervised F1 rritet nga {su['f1'].mean():.4f} në "
         f"{au['f1'].mean():.4f}, me përmirësim në {gained} nga {len(unsup)} prej tyre, "
-        f"ndërsa për referencën e mbikëqyrur ai bie nga {ref_s['f1'].mean():.4f} në "
+        f"ndërsa për referencën supervised ai bie nga {ref_s['f1'].mean():.4f} në "
         f"{ref_a['f1'].mean():.4f}. Shkaku i rënies së referencës është i lexueshëm te "
         f"numri i alarmeve: ai rritet nga {ref_s['n_alerts'].mean():.0f} në "
         f"{ref_a['n_alerts'].mean():.0f} për bllok, dhe precision-i bie nga "

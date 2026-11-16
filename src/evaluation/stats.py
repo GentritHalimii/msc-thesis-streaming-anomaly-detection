@@ -6,12 +6,14 @@ test on the rank matrix, then a Nemenyi post-hoc with a critical-difference
 diagram, plus pairwise Wilcoxon signed-rank tests with Holm correction for
 the specific comparisons the research questions name.
 
-A warning that belongs in the results, not just in the code: with only six
-folds the post-hoc tests have very little power. The critical difference for
-fourteen detectors over six folds is larger than the whole range of average
-ranks, so Nemenyi can essentially never reject. That is a property of the
-experiment size, not evidence that the detectors are equivalent, and it is
-why the per-fold bootstrap is reported alongside.
+A warning that belongs in the results, not just in the code: over a handful
+of folds the post-hoc tests have little power. The critical difference grows
+with the number of methods compared, and for a wide field of detectors it
+exceeds the whole range of average ranks, so Nemenyi can essentially never
+reject. That is a property of the experiment size, not evidence that the
+detectors are equivalent, which is one reason this study compares three
+detectors rather than many, and why the per-fold values are always reported
+alongside the tests.
 """
 
 import numpy as np

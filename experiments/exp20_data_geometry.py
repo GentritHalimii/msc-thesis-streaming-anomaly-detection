@@ -13,6 +13,9 @@ measures are then recomputed on the test window, which turns the analysis into
 a second, model-free view of the drift result.
 """
 
+import argparse
+
+import matplotlib as mpl
 import numpy as np
 import pandas as pd
 
@@ -27,10 +30,118 @@ from src.evaluation.geometry import (
     one_nn_class_agreement,
 )
 from src.evaluation.manifest import write_manifest
-from src.evaluation.report import new_figure, save_figure, save_table
+from src.evaluation.report import (
+    BASELINE,
+    CLASS_COLORS,
+    CM,
+    FULL_WIDTH,
+    INK_2,
+    MUTED,
+    legend_above,
+    new_figure,
+    save_figure,
+    save_table,
+    value_grid,
+)
 
-BLUE, RED, GREY = "#2a78d6", "#e34948", "#898781"
 K_NEIGHBOURS = 10
+WINDOW_COLORS = {"trajnim": "#2a78d6", "test": "#eb6834"}
+WINDOW_LABELS = {"trajnim": "Dritarja e trajnimit", "test": "Dritarja e testimit"}
+
+
+def figures(cfg):
+    """Both geometry figures, from the distances saved by `main`."""
+    results_dir = REPO_ROOT / cfg.results_dir
+    saved = np.load(results_dir / "geometry_distances.npz")
+
+    # --- How deep inside normal territory each class sits ----------------
+    # Log-spaced bins: the normal distances crowd below 5 while the frauds
+    # spread over an order of magnitude, and on a linear axis the normal
+    # class collapses into two bars at the left edge. Each bar is the share
+    # of its class in the bin; a density would divide by the bin width and
+    # shrink the right tail, where log-spaced bins are widest.
+    d_norm = saved["distances_normal__trajnim"]
+    d_fraud = saved["distances_fraud__trajnim"]
+    lo = max(min(d_norm.min(), d_fraud.min()), 1e-2)
+    bins = np.logspace(np.log10(lo), np.log10(max(d_norm.max(), d_fraud.max())), 70)
+    fig, ax = new_figure(figsize=(FULL_WIDTH, 6.4 * CM))
+    for values, cls, label in (
+        (d_norm, 0, "Transaksione legjitime"),
+        (d_fraud, 1, "Mashtrime"),
+    ):
+        weights = np.full(len(values), 1.0 / len(values))
+        ax.hist(
+            values,
+            bins=bins,
+            weights=weights,
+            histtype="stepfilled",
+            color=CLASS_COLORS[cls],
+            alpha=0.35,
+            linewidth=0,
+        )
+        ax.hist(
+            values,
+            bins=bins,
+            weights=weights,
+            histtype="step",
+            color=CLASS_COLORS[cls],
+            linewidth=1.1,
+            label=label,
+        )
+    p95 = float(np.quantile(d_norm, 0.95))
+    ax.axvline(p95, color=INK_2, lw=0.9, ls=(0, (4, 2)))
+    ax.text(
+        p95 * 1.06,
+        ax.get_ylim()[1] * 0.93,
+        f"95% e legjitimeve\njanë nën {p95:.1f}",
+        fontsize=7.5,
+        color=INK_2,
+        va="top",
+    )
+    ax.set_xscale("log")
+    ax.set_xlabel(f"Distanca mesatare deri te {K_NEIGHBOURS} fqinjët legjitimë më të afërt")
+    ax.set_ylabel("Pjesa e klasës")
+    ax.yaxis.set_major_locator(mpl.ticker.MultipleLocator(0.05))
+    ax.yaxis.set_major_formatter(mpl.ticker.PercentFormatter(xmax=1.0, decimals=0))
+    value_grid(ax, "y")
+    legend_above(ax)
+    save_figure(fig, REPO_ROOT / cfg.results_dir, "geometry_knn_distance")
+
+    # --- How many alerts each fraud costs ---------------------------------
+    # The point of this figure is the gap between "far from the normal class"
+    # and "cheap to find": the normal class is so large that its own tail
+    # occupies the far region several times over.
+    fig, ax = new_figure(figsize=(FULL_WIDTH, 6.6 * CM))
+    for label in ("trajnim", "test"):
+        ranks = np.sort(saved[f"fraud_ranks__{label}"])
+        caught = np.arange(1, len(ranks) + 1) / len(ranks)
+        ax.step(
+            np.concatenate([[1.0], ranks]),
+            np.concatenate([[0.0], caught]),
+            where="post",
+            color=WINDOW_COLORS[label],
+            linewidth=1.6,
+            label=f"{WINDOW_LABELS[label]} ({len(ranks)} mashtrime)",
+        )
+    for budget in (100, 1000):
+        ax.axvline(budget, color=BASELINE, lw=0.9, zorder=1)
+        ax.text(
+            budget * 1.08,
+            0.98,
+            f"{budget} alarme",
+            fontsize=7.5,
+            color=MUTED,
+            va="top",
+        )
+    ax.set_xscale("log")
+    ax.set_xlim(1, None)
+    ax.set_ylim(0, 1.0)
+    ax.set_xlabel("Alarme të shqyrtuara, sipas distancës nga klasa legjitime")
+    ax.set_ylabel("Mashtrime të kapura")
+    ax.yaxis.set_major_formatter(mpl.ticker.PercentFormatter(xmax=1.0))
+    value_grid(ax, "both")
+    legend_above(ax)
+    save_figure(fig, REPO_ROOT / cfg.results_dir, "geometry_cost_to_catch")
 
 
 def main(cfg=None):
@@ -80,67 +191,17 @@ def main(cfg=None):
     save_table(table, results_dir, "geometry_summary", float_fmt="%.4f")
     print(table.to_string(index=False))
 
-    # --- Figure: how deep inside normal territory each class sits ---------
-    fig, ax = new_figure(figsize=(6.8, 4.2))
-    train_h = hardness_by_window["trajnim"]
-    bins = np.linspace(0, np.quantile(train_h["distances_fraud"], 0.99), 60)
-    ax.hist(
-        train_h["distances_normal"],
-        bins=bins,
-        density=True,
-        color=BLUE,
-        alpha=0.55,
-        label="Transaksione legjitime",
-        linewidth=0,
+    # The per-transaction distances are the raw material of both figures;
+    # keeping them means a figure can be redrawn without the neighbour search.
+    np.savez_compressed(
+        results_dir / "geometry_distances.npz",
+        **{
+            f"{key}__{label}": np.asarray(hardness_by_window[label][key], dtype=np.float64)
+            for label in windows
+            for key in ("distances_normal", "distances_fraud", "fraud_ranks")
+        },
     )
-    ax.hist(
-        train_h["distances_fraud"],
-        bins=bins,
-        density=True,
-        color=RED,
-        alpha=0.65,
-        label="Mashtrime",
-        linewidth=0,
-    )
-    ax.axvline(train_h["median_knn_distance_normal"], color=BLUE, lw=1.4, ls="--")
-    ax.axvline(train_h["p95_knn_distance_normal"], color=GREY, lw=1.4, ls=":")
-    ax.text(
-        train_h["p95_knn_distance_normal"],
-        ax.get_ylim()[1] * 0.92,
-        "  p95 i legjitimeve",
-        fontsize=8,
-        color=GREY,
-    )
-    ax.set_xlabel(f"Distanca mesatare deri te {K_NEIGHBOURS} fqinjët legjitimë më të afërt")
-    ax.set_ylabel("Densiteti")
-    ax.legend()
-    save_figure(fig, REPO_ROOT / cfg.results_dir, "geometry_knn_distance")
-
-    # --- Figure: how many alerts each fraud costs -------------------------
-    # The point of this figure is the gap between "far from the normal class"
-    # and "cheap to find": the normal class is so large that its own tail
-    # occupies the far region several times over.
-    fig, ax = new_figure(figsize=(6.8, 4.2))
-    for label, colour in (("trajnim", BLUE), ("test", RED)):
-        ranks = np.sort(hardness_by_window[label]["fraud_ranks"])
-        caught = np.arange(1, len(ranks) + 1) / len(ranks)
-        ax.step(
-            ranks,
-            100 * caught,
-            where="post",
-            color=colour,
-            linewidth=2,
-            label=f"Dritarja e {label}",
-        )
-    ax.set_xscale("log")
-    ax.set_xlabel("Alarme që duhen shqyrtuar (renditje sipas distancës nga klasa legjitime)")
-    ax.set_ylabel("Përqindja e mashtrimeve të kapura")
-    ax.set_ylim(0, 100)
-    for budget in (100, 1000):
-        ax.axvline(budget, color=GREY, lw=1, ls=":")
-        ax.text(budget * 1.15, 6, f"{budget} alarme", fontsize=8, color=GREY)
-    ax.legend(loc="lower right")
-    save_figure(fig, REPO_ROOT / cfg.results_dir, "geometry_cost_to_catch")
+    figures(cfg)
 
     # --- Per-feature separability, on the training window only ------------
     X_train = transform(scaler, split.train_full)
@@ -181,4 +242,11 @@ def main(cfg=None):
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--figures-only",
+        action="store_true",
+        help="redraw the figures from the saved distances without the neighbour search",
+    )
+    args = parser.parse_args()
+    figures(load_config()) if args.figures_only else main()

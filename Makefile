@@ -2,7 +2,7 @@ UV ?= uv
 RUN := $(UV) run
 
 .PHONY: setup lint format test test-integration train protocol protocol-tuned \
-        evaluate deep-studies tune stream stream-store stream-adaptive \
+        evaluate deep-studies figures tune stream stream-store stream-adaptive \
         latency-report webapp thesis all clean
 
 setup:
@@ -53,7 +53,6 @@ evaluate:                  ## every table and figure that reads the saved fold s
 	$(RUN) python -m experiments.exp14_alert_budget
 	$(RUN) python -m experiments.exp16_adaptive_threshold
 	$(RUN) python -m experiments.exp17_protocol_comparison
-	$(RUN) python -m experiments.exp19_unsupervised_selection
 	$(RUN) python -m experiments.exp27_error_analysis
 	$(RUN) python -m experiments.make_rq_summary
 
@@ -62,14 +61,36 @@ evaluate:                  ## every table and figure that reads the saved fold s
 # cost hours, while `evaluate` costs minutes.
 deep-studies:              ## per-algorithm studies; each one refits, hours not minutes
 	$(RUN) python -m experiments.exp20_data_geometry
-	$(RUN) python -m experiments.exp15_explainability
 	$(RUN) python -m experiments.exp21_scaling
 	$(RUN) python -m experiments.exp22_iforest_deep
 	$(RUN) python -m experiments.exp23_autoencoder_deep
 	$(RUN) python -m experiments.exp24_ocsvm_deep
-	$(RUN) python -m experiments.exp25_feature_selection
-	$(RUN) python -m experiments.exp26_training_window
 	$(RUN) python -m experiments.exp28_best_effort
+
+# Every thesis figure, redrawn from the tables the experiments saved or from
+# the saved models. Nothing here refits a model, so a change of style costs a
+# minute, not an afternoon.
+figures:                   ## redraw all figures from saved results, no refitting
+	$(RUN) python -m experiments.make_diagrams
+	$(RUN) python -m experiments.exp0_eda
+	$(RUN) python -m experiments.exp20_data_geometry --figures-only
+	$(RUN) python -m experiments.exp2_contamination_sweep
+	$(RUN) python -m experiments.exp3_curves
+	$(RUN) python -m experiments.latency_report
+	$(RUN) python -m experiments.exp10_benchmark
+	$(RUN) python -m experiments.exp11_significance
+	$(RUN) python -m experiments.exp14_alert_budget
+	$(RUN) python -m experiments.exp12_ensembles
+	$(RUN) python -m experiments.exp22_iforest_deep --figures-only
+	$(RUN) python -m experiments.exp23_autoencoder_deep --from-saved
+	$(RUN) python -m experiments.exp24_ocsvm_deep --from-saved
+	$(RUN) python -m experiments.exp21_scaling --from-saved
+	$(RUN) python -m experiments.exp28_best_effort --from-saved
+	$(RUN) python -m experiments.exp18_tuning_effect
+	$(RUN) python -m experiments.exp17_protocol_comparison
+	$(RUN) python -m experiments.exp13_drift
+	$(RUN) python -m experiments.exp16_adaptive_threshold
+	$(RUN) python -m experiments.exp27_error_analysis
 
 # --- streaming pipeline (needs docker) -------------------------------------
 stream:

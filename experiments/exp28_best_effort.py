@@ -15,6 +15,7 @@ same problem, their combination will be worth less than their sum.
 
 import json
 
+import numpy as np
 import pandas as pd
 from sklearn.metrics import average_precision_score
 
@@ -23,7 +24,20 @@ from src.data.load import load_transactions
 from src.data.scale import fit_scaler, transform
 from src.evaluation.manifest import write_manifest
 from src.evaluation.protocol import rolling_origin_folds
-from src.evaluation.report import AX, MODEL_LABELS, model_color, new_figure, save_figure, save_table
+from src.evaluation.report import (
+    AX,
+    CM,
+    FULL_WIDTH,
+    INK_2,
+    MODEL_LABELS,
+    legend_above,
+    model_plot_kwargs,
+    new_figure,
+    ordered_models,
+    save_figure,
+    save_table,
+    value_grid,
+)
 from src.models.build import ALL_MODELS, build_model
 
 SCALER_LABEL_TO_KEY = {
@@ -169,35 +183,7 @@ def summarise(results_dir, per_fold, cfg):
     save_table(interaction, results_dir, "best_effort_interaction", float_fmt="%.4f")
     print("\n" + interaction.to_string(index=False))
 
-    # --- Figure -----------------------------------------------------------
-    fig, ax = new_figure(figsize=(7.0, 4.2))
-    order = [
-        "parazgjedhur / standard",
-        "parazgjedhur / më i miri",
-        "i akorduar / standard",
-        "i akorduar / më i miri",
-    ]
-    labels = ["bazë", "+ paraprocesim", "+ akordim", "+ të dyja"]
-    import numpy as np
-
-    x = np.arange(len(order))
-    width = 0.18  # a hair under 0.25 so grouped bars do not touch and read as stacked
-    for i, name in enumerate(ALL_MODELS):
-        row = wide[wide["model"] == MODEL_LABELS.get(name, name)]
-        if row.empty:
-            continue
-        values = [float(row[col].iloc[0]) if col in row else np.nan for col in order]
-        ax.bar(
-            x + (i - 1.5) * width,
-            values,
-            width=width,
-            color=model_color(name),
-            label=MODEL_LABELS.get(name, name),
-        )
-    ax.set_xticks(x, labels)
-    ax.set_ylabel(AX["ap"] + " mbi 8 fold-e")
-    ax.legend(fontsize=8.5)
-    save_figure(fig, REPO_ROOT / cfg.results_dir, "best_effort")
+    figure(cfg, summary)
 
     unsup = interaction[interaction["Detektori"] != MODEL_LABELS["logreg"]]
     best_row = unsup.loc[unsup["AP më i mirë i arritshëm"].idxmax()]
@@ -209,10 +195,7 @@ def summarise(results_dir, per_fold, cfg):
         f"Kur secili detektor vlerësohet në qelizën e vet më të mirë të dizajnit dy-nga-dy, "
         f"renditja bëhet: {per_detector}. Më i miri është pra {best_row['Detektori']} me AP "
         f"{best_row['AP më i mirë i arritshëm']:.4f} kundrejt {best_row['bazë']:.4f} në "
-        f"konfigurimin bazë, pra renditja e konfigurimeve të parazgjedhura nuk mbijeton. "
-        f"Vlen të theksohet se për dy nga tre detektorët qeliza më e mirë nuk është ajo ku "
-        f"zbatohen të dyja ndërhyrjet, sepse ndërveprimi mes tyre është mjaft negativ sa "
-        f"kombinimi të bjerë nën ndërhyrjen e vetme më të mirë. "
+        f"konfigurimin bazë. {_cells_sentence(unsup)}"
         + "; ".join(
             f"{r['Detektori']}: paraprocesim {r['vetëm paraprocesim']:+.3f}, akordim "
             f"{r['vetëm akordim']:+.3f}, të dyja {r['të dyja']:+.3f}, ndërveprim "
@@ -225,6 +208,70 @@ def summarise(results_dir, per_fold, cfg):
     (results_dir / "best_effort_verdict.txt").write_text(verdict + "\n")
     print("\n" + verdict)
     write_manifest(results_dir, "exp28_best_effort", cfg.raw)
+
+
+def _cells_sentence(unsup: pd.DataFrame) -> str:
+    """How many detectors do best with both interventions, read off the table."""
+    not_both = unsup[unsup["qeliza më e mirë"] != "të dyja"]
+    if not_both.empty:
+        return "Për të gjithë detektorët qeliza më e mirë është ajo me të dyja ndërhyrjet. "
+    return (
+        f"Për {len(not_both)} nga {len(unsup)} detektorë qeliza më e mirë nuk është ajo ku "
+        f"zbatohen të dyja ndërhyrjet, sepse ndërveprimi mes tyre e çon kombinimin nën "
+        f"ndërhyrjen e vetme më të mirë. "
+    )
+
+
+CELLS = [
+    ("parazgjedhur", "standard", "bazë"),
+    ("parazgjedhur", "më i miri", "vetëm\nparaprocesimi"),
+    ("i akorduar", "standard", "vetëm\nakordimi"),
+    ("i akorduar", "më i miri", "të dyja"),
+]
+
+
+def figure(cfg, summary: pd.DataFrame) -> None:
+    """Each detector's profile over the four cells of the design.
+
+    The supervised reference is left out of the picture: it is not tuned, so
+    it occupies only two cells, and at 0.73 it would compress the three
+    detectors the design is about into the bottom fifth of the axis. Its
+    values are in the table above the figure.
+    """
+    base = summary.set_index(["model", "hiperparametrat", "paraprocesimi"])["ap_mean"]
+    fig, ax = new_figure(figsize=(FULL_WIDTH, 6.6 * CM))
+    x = np.arange(len(CELLS))
+    for name in [m for m in ordered_models(summary["model"].unique()) if m != "logreg"]:
+        values = np.array([base.get((name, hp, prep), np.nan) for hp, prep, _ in CELLS])
+        kw = model_plot_kwargs(name, markers=True)
+        ax.plot(x, values, **kw)
+        best = int(np.nanargmax(values))
+        ax.plot(
+            [x[best]],
+            [values[best]],
+            marker=kw["marker"],
+            markersize=9,
+            color=kw["color"],
+            markeredgecolor="#ffffff",
+            markeredgewidth=1.0,
+            zorder=5,
+        )
+        ax.annotate(
+            f"{values[best]:.3f}",
+            (x[best], values[best]),
+            xytext=(0, 8),
+            textcoords="offset points",
+            ha="center",
+            fontsize=7.5,
+            color=INK_2,
+        )
+    ax.set_xticks(x, [label for _, _, label in CELLS])
+    ax.set_xlim(-0.4, len(CELLS) - 0.6)
+    ax.set_ylim(0, 0.45)
+    ax.set_ylabel(AX["ap"] + ", mesatare")
+    value_grid(ax, "y")
+    legend_above(ax)
+    save_figure(fig, REPO_ROOT / cfg.results_dir, "best_effort")
 
 
 def main_from_saved(cfg=None):

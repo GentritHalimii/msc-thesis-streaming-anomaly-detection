@@ -1,10 +1,11 @@
 """Score-level combination of detectors.
 
 Two problems have to be solved before averaging anything. First, the detectors
-report on wildly different scales — a Mahalanobis distance in the hundreds and
-a LODA score in the thousandths cannot simply be added. Second, whatever
-rescaling is used must be estimated from the *training* window, or the
-ensemble quietly becomes a function of the test set.
+report on very different scales: a path-length score from Isolation Forest, a
+mean squared reconstruction error from the Autoencoder and a signed distance
+to a kernel boundary from One-Class SVM cannot simply be added. Second,
+whatever rescaling is used must be estimated from the *training* window, or
+the ensemble quietly becomes a function of the test set.
 
 Both are handled by mapping each detector's scores onto its own training-score
 quantile: the result is a [0, 1] "how unusual is this relative to what we saw

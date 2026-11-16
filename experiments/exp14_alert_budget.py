@@ -7,6 +7,7 @@ and asks how much fraud, and how much money, each detector recovers inside
 that budget.
 """
 
+import matplotlib as mpl
 import numpy as np
 import pandas as pd
 
@@ -16,12 +17,17 @@ from src.evaluation.operational import budget_metrics, net_savings
 from src.evaluation.protocol import load_folds
 from src.evaluation.report import (
     AX,
+    CM,
+    FULL_WIDTH,
+    INK_2,
     MODEL_LABELS,
-    model_color,
-    model_linestyle,
+    legend_above,
+    model_plot_kwargs,
     new_figure,
+    ordered_models,
     save_figure,
     save_table,
+    value_grid,
 )
 
 
@@ -77,27 +83,21 @@ def main(cfg=None):
         ("amount_recall_at_k", AX["amount_recall"] + " brenda buxhetit", "budget_amount_recall"),
         ("savings_ratio", AX["savings"], "budget_savings"),
     ]:
-        fig, ax = new_figure(figsize=(6.8, 4.2))
-        for name, grp in summary.groupby("model"):
-            grp = grp.sort_values("budget_k")
-            ax.plot(
-                grp["budget_k"],
-                grp[metric],
-                color=model_color(name),
-                linestyle=model_linestyle(name),
-                label=MODEL_LABELS.get(name, name),
-                linewidth=2.0 if name == "logreg" else 1.4,
-                marker="o",
-                markersize=3,
-                alpha=1.0 if name == "logreg" else 0.85,
-            )
+        fig, ax = new_figure(figsize=(FULL_WIDTH, 6.6 * CM))
+        for name in ordered_models(summary["model"].unique()):
+            grp = summary[summary["model"] == name].sort_values("budget_k")
+            ax.plot(grp["budget_k"], grp[metric], **model_plot_kwargs(name, markers=True))
         ax.set_xscale("log")
         ax.set_xticks(budgets, [str(b) for b in budgets])
+        ax.xaxis.set_minor_locator(mpl.ticker.NullLocator())
         ax.set_xlabel(AX["budget"])
         ax.set_ylabel(ylab)
         if metric == "savings_ratio":
-            ax.axhline(0.0, color="#c3c2b7", lw=1)
-        ax.legend(loc="center left", bbox_to_anchor=(1.01, 0.5), fontsize=8.5)
+            ax.axhline(0.0, color=INK_2, lw=0.8, zorder=1)
+        else:
+            ax.set_ylim(0, 1)
+        value_grid(ax, "y")
+        legend_above(ax)
         save_figure(fig, REPO_ROOT / cfg.results_dir, fname)
 
     # How many euros does the whole exercise actually save per block?
