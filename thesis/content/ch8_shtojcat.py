@@ -20,6 +20,8 @@ BLOCKS = [
             "mbështetet çdo analizë e mëvonshme.",
             "make tune dhe make protocol-tuned kryejnë kërkimin e hiperparametrave mbi ndarjen e "
             "brendshme kohore dhe pastaj e përsërisin protokollin me hiperparametrat e gjetur.",
+            "make protocol-unfiltered e përsërit protokollin me detektorët e trajnuar mbi gjithë "
+            "dritaren, mashtrimet përfshirë, dhe i krahason të dy regjimet (nënkapitulli 5.6).",
             "make evaluate gjeneron tabelat dhe figurat që mbështeten te pikët e ruajtura, pa "
             "trajnuar përsëri asnjë model; ky hap zgjat disa minuta.",
             "make deep-studies ekzekuton studimet për secilin algoritëm, distancat e analizës "
@@ -31,8 +33,9 @@ BLOCKS = [
             "PostgreSQL-in dhe Grafana-n.",
             "make test-integration kontrollon barazinë e pikëve mes regjimit offline dhe atij në "
             "rrjedhë me një broker real, si dhe kalimin e plotë të të dhënave nëpër PostgreSQL.",
-            "make stream dhe make latency-report ekzekutojnë matjet e vonesës dhe prodhojnë "
-            "tabelat operacionale.",
+            "make stream, make stream-adaptive dhe make stream-capacity matin, tri herë secila, "
+            "vonesën, koston e pragut adaptiv dhe kapacitetin; make latency-report prodhon prej "
+            "tyre tabelat operacionale.",
             "make thesis gjeneron këtë dokument nga rezultatet e ruajtura.",
             "make webapp ngre panelin interaktiv mbi të njëjtat rezultate në "
             "http://127.0.0.1:8800, nga ku çdo hap i mësipërm mund të ekzekutohet edhe nga "

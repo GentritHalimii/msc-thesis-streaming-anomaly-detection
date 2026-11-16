@@ -289,7 +289,8 @@ _PRAGU = [
     p("""Protokolli kryesor e merr pragun nga percentili (1 − c) i pikëve të dritares së
       trajnimit:"""),
     eq("τ = Kuantili_{1−c} { s(x) : x ∈ D_trajnim }"),
-    p("""ku c është kontaminimi. Kur nuk jepet ndryshe, c merret i barabartë me normën e mashtrimit
+    p("""ku D_trajnim është e gjithë dritarja e trajnimit, mashtrimet përfshirë, dhe c është
+      kontaminimi. Kur nuk jepet ndryshe, c merret i barabartë me normën e mashtrimit
       në dritaren e trajnimit. Kjo përdor etiketa vetëm nga e kaluara, njësoj si referenca
       supervised. Nënkapitulli 5.2.4 mat sa varen rezultatet nga kjo zgjedhje, duke e ndryshuar
       kontaminimin në një interval prej dy rendesh madhësie."""),

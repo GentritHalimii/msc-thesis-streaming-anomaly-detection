@@ -48,7 +48,7 @@ _SINTEZA = [
             "unsupervised kapin pak, sepse mashtrimet nuk zënë majën e renditjes së tyre. Pragu "
             "adaptiv e bën ngarkesën e hetimeve më të qëndrueshme. Ai rrit edhe F1 për të tre "
             "detektorët unsupervised, por vetëm sepse jep më shumë alarme: një prag statik me po "
-            "aq alarme arrin të njëjtin F1.",
+            "aq alarme arrin të paktën të njëjtin F1.",
         ]
     ),
     h2("6.2", "Interpretimi"),
@@ -88,8 +88,10 @@ _SINTEZA = [
       probleme ku sinjali shpërndahet mbi shumë veçori, e njëjta rastësi e ndarjeve mund të jetë
       avantazh."""),
     h3("6.2.3", "Pse paraprocesimi peshon aq shumë"),
-    p("""Rezultati që ndoshta të befason më shumë është se zgjedhja e paraprocesimit ndikon po aq
-      ose më shumë se dallimet mes vetë algoritmeve, sidomos për One-Class SVM-në. Shpjegimi vjen
+    p("""Rezultati që ndoshta të befason më shumë është se për dy nga tri detektorët zgjedhja e
+      paraprocesimit ndikon po aq ose më shumë se dallimet mes vetë algoritmeve: për One-Class
+      SVM-në më shumë dhe për Autoencoder-in afërsisht njësoj, ndërsa për Isolation Forest-in më pak
+      (nënkapitulli 5.4.1). Shpjegimi vjen
       nga mekanizmi i tyre i përbashkët: të tri e përcaktojnë anomalinë përmes largësisë ose
       ngjeshjes, dhe largësia përcaktohet nga shkalla e veçorive. Kur ndryshon shkalla, ndryshon
       vetë problemi që zgjidh algoritmi. Efekti nuk vjen nga përzgjedhja pas faktit, sepse mbetet
@@ -205,9 +207,10 @@ _SINTEZA = [
             "modele më të kushtueshme zgjidhja e natyrshme është shkallëzimi horizontal i "
             "nënkapitullit 6.2.6. Investimi duhet drejtuar te cilësia e modelit dhe te të "
             "dhënat, jo te optimizimi i transportit.",
-            "Paraprocesimi duhet zgjedhur bashkë me modelin. Në këtë studim ai dha përfitime më të "
-            "mëdha se çdo zgjedhje algoritmi, dhe një sistem që e trajton skaluesin si detaj "
-            "implementimi lë pa shfrytëzuar një përmirësim të konsiderueshëm.",
+            "Paraprocesimi duhet zgjedhur bashkë me modelin. Në këtë studim ai i dha One-Class "
+            "SVM-së një përfitim më të madh se zgjedhja e algoritmit dhe Autoencoder-it afërsisht "
+            "sa ajo, kështu që një sistem që e trajton skaluesin si detaj implementimi lë pa "
+            "shfrytëzuar një përmirësim të konsiderueshëm.",
             "Kostoja e inferencës duhet të jetë kriter zgjedhjeje që në fillim. Dy metoda me "
             "cilësi të ngjashme mund të kenë kosto të inferencës që ndryshon qindra herë, dhe në "
             "një rrjedhë ky dallim përcakton nëse metoda mund të vendoset.",
@@ -335,10 +338,11 @@ _SINTEZA = [
     p("""Përtej renditjes së tri algoritmeve, e cila varet nga dataset-i dhe nga protokolli,
       rezultatet tregojnë se në këtë fushë vendimet metodologjike ndikojnë në numrin e raportuar më
       shumë se zgjedhja e algoritmit. Ndarja e rastësishme e rrit AP-në më shumë se sa ndryshon ajo
-      nga algoritmi më i dobët te më i miri, një paraprocesim tjetër ka efekt të ngjashëm, dhe
-      trajnimi pa pastrimin e dritares e përmbys renditjen. Për këtë arsye rezultatet në këtë fushë
-      kanë kuptim vetëm kur raportohen bashkë me pasigurinë e tyre, protokollin e ndarjes, regjimin
-      e trajnimit dhe procedurën e paraprocesimit dhe të akordimit."""),
+      nga algoritmi më i dobët te më i miri, një paraprocesim tjetër ka efekt të ngjashëm te
+      One-Class SVM-ja, dhe trajnimi pa pastrimin e dritares e përmbys renditjen. Për këtë arsye
+      rezultatet në këtë fushë kanë kuptim vetëm kur raportohen bashkë me pasigurinë e tyre,
+      protokollin e ndarjes, regjimin e trajnimit dhe procedurën e paraprocesimit dhe të
+      akordimit."""),
 ]
 
 BLOCKS = _SINTEZA
