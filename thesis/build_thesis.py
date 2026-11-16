@@ -25,11 +25,12 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from bibliography import ieee_entry, source_tag, word_sources  # noqa: E402
-from content.front_matter import FRONT_ENTRIES  # noqa: E402
+from content.front_matter import FJALET_KYCE, FRONT_ENTRIES  # noqa: E402
 from docx_helpers import (  # noqa: E402
     CITE_CLOSE,
     CITE_OPEN,
     FIGURE_LABEL,
+    TABLE_LABEL,
     add_bibliography,
     add_bullets,
     add_equation,
@@ -59,6 +60,13 @@ FIG_REF_RE = re.compile(r"\[\[fig:([a-zA-Z0-9_]+)\]\]")
 # A reference names its figure with the caption's label in front, "Figura
 # [[fig:name]]", and the text shows that label and the figure's number.
 LABELLED_FIG_REF_RE = re.compile(rf"{FIGURE_LABEL}[ \u00a0]\[\[fig:([a-zA-Z0-9_]+)\]\]")
+# Tables are referenced the same way, "Tabela [[tab:name]]", where the name is
+# the results file the table is drawn from.
+TAB_REF_RE = re.compile(r"\[\[tab:([a-zA-Z0-9_]+)\]\]")
+LABELLED_TAB_REF_RE = re.compile(rf"{TABLE_LABEL}[ \u00a0]\[\[tab:([a-zA-Z0-9_]+)\]\]")
+# Table text, at the size of the sample table in the UBT template and of the
+# captions, the same in every table.
+TABLE_FONT_PT = 11.0
 # Printed stand-in for a value that does not exist, rather than "nan".
 MISSING = "n/a"  # never an em dash: the thesis reserves that character for nothing
 
@@ -69,6 +77,10 @@ class Numbering:
     def __init__(self):
         self.citations: dict[str, int] = {}
         self.figure_numbers: dict[str, int] = {}
+        self.table_numbers: dict[str, int] = {}
+        # A results file drawn into two tables cannot be named in the text
+        # without saying which one is meant.
+        self.ambiguous_tables: set[str] = set()
         self.figures: dict[int, str] = {}
         self.tables: dict[int, str] = {}
         self._fig = 0
@@ -121,6 +133,18 @@ def resolve_citations(text: str, numbering: Numbering) -> str:
     text = LABELLED_FIG_REF_RE.sub(figure, text)
     if bare := FIG_REF_RE.search(text):
         raise ValueError(f"write a figure reference as 'Figura {bare.group(0)}'")
+
+    def table(match: re.Match) -> str:
+        name = match.group(1)
+        if name in numbering.ambiguous_tables:
+            raise ValueError(f"{name} is drawn into more than one table; name the one meant")
+        if name not in numbering.table_numbers:
+            raise KeyError(f"reference to unknown table: {name}")
+        return f"{TABLE_LABEL}\u00a0{numbering.table_numbers[name]}"
+
+    text = LABELLED_TAB_REF_RE.sub(table, text)
+    if bare := TAB_REF_RE.search(text):
+        raise ValueError(f"write a table reference as 'Tabela {bare.group(0)}'")
 
     def repl(match: re.Match) -> str:
         key = match.group(1)
@@ -281,10 +305,17 @@ def collect_outline(chapters: list[list]) -> list[tuple[int, str]]:
 
 
 def first_pass(chapters: list[list], numbering: Numbering) -> None:
+    tables = 0
     for blocks in chapters:
         for block in blocks:
             if block[0] == "fig":
                 numbering.figure_numbers[block[1]] = len(numbering.figure_numbers) + 1
+            elif block[0] == "tab":
+                tables += 1
+                if block[1] in numbering.table_numbers:
+                    numbering.ambiguous_tables.add(block[1])
+                else:
+                    numbering.table_numbers[block[1]] = tables
     for blocks in chapters:
         for block in blocks:
             kind = block[0]
@@ -340,7 +371,7 @@ def render_blocks(doc, blocks: list, numbering: Numbering, counters: dict) -> No
                 df,
                 resolve_citations(caption, numbering),
                 number=n,
-                font_size=options.get("font_size", 9.0),
+                font_size=options.get("font_size", TABLE_FONT_PT),
                 col_widths=options.get("widths"),
                 bookmark=table_bookmark(n),
             )
@@ -364,7 +395,7 @@ def _set_properties(doc, front_matter) -> None:
     props.last_modified_by = front_matter.STUDENTI
     props.title = front_matter.TITULLI
     props.subject = "Punim diplome, Shkalla e Magjistraturës"
-    props.keywords = "zbulimi i anomalive; Apache Kafka; unsupervised machine learning"
+    props.keywords = FJALET_KYCE.replace(", ", "; ")
     props.comments = ""
     props.revision = 1
     props.created = props.modified = datetime.now(UTC).replace(microsecond=0, tzinfo=None)

@@ -121,23 +121,60 @@ ABSTRAKT = [
     "dataset-in publik të ULB-së (284 807 transaksione, 492 mashtrime) me protokoll "
     "rolling-origin 8-fold pa rrjedhje informacioni dhe me Average Precision (AP) si metrikë "
     "kryesore.",
-    "Percentili 99 i vonesës end-to-end mbetet nën 132 milisekonda, duke përmbushur me rezultat "
-    "të kënaqshëm objektivin e përcaktuar prej një sekonde, edhe në ngarkesa deri në 2000 mesazhe "
-    "në sekondë. Në konfigurimin bazë Autoencoder-i ofron balancën më të mirë mes cilësisë dhe "
-    "kostos, me AP 0.193 dhe koston më të ulët të inferencës, para One-Class SVM-së (0.150) dhe "
-    "Isolation Forest-it (0.091), ndërsa referenca supervised arrin 0.734. Asnjë ansambël nuk e "
-    "kalon modelin më të mirë individual, sepse detektorët gabojnë njësoj. Me 100 alarme për "
-    "bllok, 37% e mashtrimeve nuk i arrin asnjë prej tyre.",
-    "Konfigurimi peshon më shumë se algoritmi. Me konfigurimin më të mirë për secilin detektor, "
-    "raporti mes më të mirit dhe më të dobëtit bie nga 2.1 në 1.15, dhe One-Class SVM me "
-    "transformim kuantil kalon në krye (AP 0.368). Ndarja e rastësishme, e zakonshme në "
-    "literaturë, e fryn AP-në e metodave unsupervised rreth tri herë. Një prag adaptiv me dritare "
-    "rrëshqitëse e bën ngarkesën e hetimeve më të qëndrueshme dhe rrit F1 për detektorët "
-    "unsupervised.",
-    "Përfundimi kryesor është se infrastruktura streaming nuk është pengesë, ndërsa cilësia varet "
-    "më shumë nga konfigurimi dhe nga etiketat historike sesa nga algoritmi, prandaj metodat "
-    "unsupervised vlejnë si shtresë plotësuese për periudhën pa etiketa.",
+    "Deri në 1000 mesazhe në sekondë vonesa mesatare end-to-end është 28 deri 58 milisekonda, "
+    "shumë nën objektivin prej një sekonde. Në konfigurimin bazë Autoencoder-i ofron balancën më "
+    "të mirë mes cilësisë dhe kostos, me AP 0.193 dhe koston më të ulët të inferencës, para "
+    "One-Class SVM-së (0.150) dhe Isolation Forest-it (0.091), ndërsa referenca supervised arrin "
+    "0.734. Kjo përparësi kërkon që dritarja e trajnimit të pastrohet me etiketat historike; pa "
+    "pastrim, AP e Autoencoder-it bie në 0.047, ndërsa Isolation Forest-i nuk ndikohet. Asnjë "
+    "ansambël nuk e kalon modelin më të mirë individual, sepse detektorët gabojnë njësoj. Me 100 "
+    "alarme për bllok, 37% e mashtrimeve nuk i arrin asnjë prej tyre.",
+    "Konfigurimi peshon sa algoritmi ose më shumë. Me konfigurimin më të mirë për secilin "
+    "detektor, raporti mes më të mirit dhe më të dobëtit bie nga 2.1 në 1.15, dhe One-Class SVM "
+    "me transformim kuantil kalon në krye (AP 0.368). Ndarja e rastësishme, e zakonshme në "
+    "literaturë, e fryn AP-në e metodave unsupervised rreth tri herë. Përfundimi kryesor është se "
+    "infrastruktura streaming nuk është pengesë, ndërsa cilësia varet më shumë nga konfigurimi "
+    "dhe nga etiketat historike sesa nga algoritmi, prandaj metodat unsupervised vlejnë si "
+    "shtresë plotësuese për periudhën pa etiketa.",
 ]
+
+FJALET_KYCE = (
+    "zbulimi i anomalive, zbulimi i mashtrimeve me karta, Apache Kafka, unsupervised machine "
+    "learning, Isolation Forest, Autoencoder, One-Class SVM, vlerësim rolling-origin"
+)
+
+# The same abstract in English, as the mentor asked; it follows the Albanian
+# one paragraph for paragraph, so a change to one belongs in the other.
+ABSTRACT_EN = [
+    "Credit card fraud detection requires decisions within milliseconds, while verified labels "
+    "arrive days or weeks later. This thesis designs, implements and evaluates an end-to-end "
+    "system for anomaly detection over a simulated transaction stream, which connects Apache "
+    "Kafka with three unsupervised algorithms (Isolation Forest, Autoencoder and One-Class SVM) "
+    "and with Logistic Regression as a supervised reference. The evaluation uses the public ULB "
+    "dataset (284,807 transactions, 492 frauds) with a leakage-free 8-fold rolling-origin "
+    "protocol and Average Precision (AP) as the primary metric.",
+    "At rates of up to 1,000 messages per second the mean end-to-end latency is 28 to 58 "
+    "milliseconds, far below the one-second target. In the baseline configuration the Autoencoder "
+    "offers the best balance between quality and cost, with an AP of 0.193 and the lowest "
+    "inference cost, ahead of One-Class SVM (0.150) and Isolation Forest (0.091), while the "
+    "supervised reference reaches 0.734. This advantage requires a training window cleaned with "
+    "historical labels; without that cleaning the AP of the Autoencoder falls to 0.047, whereas "
+    "Isolation Forest is unaffected. No ensemble beats the best single model, because the "
+    "detectors make the same mistakes. With 100 alerts per block, 37% of the frauds are reached "
+    "by none of them.",
+    "Configuration matters as much as the algorithm, or more. With the best configuration for "
+    "each detector, the ratio between the best and the weakest falls from 2.1 to 1.15, and "
+    "One-Class SVM with a quantile transform moves to the top (AP 0.368). A random split, common "
+    "in the literature, inflates the AP of the unsupervised methods about threefold. The main "
+    "conclusion is that the streaming infrastructure is not the bottleneck, while quality depends "
+    "more on configuration and on historical labels than on the algorithm, so unsupervised "
+    "methods are valuable as a complementary layer for the period without labels.",
+]
+
+KEYWORDS_EN = (
+    "anomaly detection, card fraud detection, Apache Kafka, unsupervised machine learning, "
+    "Isolation Forest, Autoencoder, One-Class SVM, rolling-origin evaluation"
+)
 
 MIRENJOHJE = [
     "Në radhë të parë, falënderimi i takon Allahut të Madhërishëm dhe të Gjithëdijshëm, për "
@@ -154,12 +191,12 @@ MIRENJOHJE = [
 ]
 
 FJALORI = [
+    ("AE", "Autoencoder, rrjet nervor që mëson të rindërtojë hyrjen e vet"),
     (
         "AP",
         "Average Precision, sipërfaqja nën kurbën precision-recall; metrika kryesore e këtij "
         "punimi",
     ),
-    ("AE", "Autoencoder, rrjet nervor që mëson të rindërtojë hyrjen e vet"),
     ("AUC", "Area Under the Curve, sipërfaqja nën kurbë"),
     ("CV", "Coefficient of Variation, koeficienti i variacionit"),
     ("FN", "False Negative, mashtrim i pazbuluar"),
@@ -171,6 +208,11 @@ FJALORI = [
     ("FP", "False Positive, alarm i rremë"),
     ("H1–H3", "Hipotezat e punimit, të formuluara në nënkapitullin 3.5"),
     ("IF", "Isolation Forest"),
+    (
+        "Kendall W",
+        "Koeficienti i përputhjes së Kendall-it; mat sa njësoj i renditin fold-et detektorët, nga "
+        "0 deri në 1",
+    ),
     ("KRaft", "Kafka Raft, modaliteti i Apache Kafka-s pa ZooKeeper"),
     ("LR", "Logistic Regression, Regresioni Logjistik"),
     ("msg/s", "Mesazhe në sekondë, njësia e ritmit të mbërritjes dhe e throughput-it"),
@@ -180,6 +222,7 @@ FJALORI = [
     ("PH1–PH3", "Pyetjet hulumtuese të punimit, të formuluara në nënkapitullin 1.5"),
     ("PR", "Precision-Recall"),
     ("PSI", "Population Stability Index, indeksi i stabilitetit të popullatës"),
+    ("r", "Korrelacioni rank-biserial, madhësia e efektit për testin e Wilcoxon-it"),
     ("R@100", "Recall me 100 alarme për bllok testimi"),
     ("RBF", "Radial Basis Function, kerneli gausian i përdorur nga One-Class SVM"),
     ("ROC", "Receiver Operating Characteristic"),
@@ -189,6 +232,7 @@ FJALORI = [
         "pas, në disa pika prerjeje të njëpasnjëshme",
     ),
     ("s.d.", "Devijimi standard (standard deviation)"),
+    ("semi-supervised", "Mësim ku etiketat e trajnimit dihen vetëm për klasën normale"),
     ("supervised", "Mësim me etiketa gjatë trajnimit"),
     ("Throughput", "Numri i mesazheve të përpunuara për sekondë"),
     ("TPE", "Tree-structured Parzen Estimator, mostruesi i përdorur nga Optuna"),
@@ -228,6 +272,23 @@ def _title(doc, text: str):
     return para
 
 
+def _keywords(doc, label: str, words: str) -> None:
+    """The keywords under an abstract: the label in bold on a line of its own
+    and the terms below it, so the abstract needs no colon."""
+    head = doc.add_paragraph()
+    head.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    pf = head.paragraph_format
+    pf.line_spacing = 1.5
+    pf.space_before = Pt(6)
+    pf.space_after = Pt(0)
+    pf.keep_with_next = True
+    run = head.add_run(label)
+    run.font.name = "Times New Roman"
+    run.font.size = Pt(12)
+    run.bold = True
+    add_paragraph(doc, words, align=WD_ALIGN_PARAGRAPH.LEFT)
+
+
 def _listed_title(doc, text: str, *, space_before: int = 0, new_page: bool = False):
     """A front-matter title that the contents lists. It is a Heading 1 with
     no number, which is how the template marks these three and how Word's
@@ -247,6 +308,9 @@ def _list_entries(captions, bookmark, page_map):
     for number, caption in enumerate(captions, start=1):
         label, _, text = caption.partition(". ")
         title, _ = split_caption(text)
+        # The caption paragraph keeps a number such as "80 000" on one line
+        # with a no-break space; the entry Word copies from it carries the same.
+        title = keep_numbers_whole(title)
         entries.append(
             ("table of figures", f"{label}. {title}", page_map.get(caption), bookmark(number))
         )
@@ -268,6 +332,13 @@ def render_prelims(doc, outline, figures, tables, page_map, break_before=frozens
     _title(doc, "ABSTRAKT")
     for para in ABSTRAKT:
         add_paragraph(doc, keep_numbers_whole(para))
+    _keywords(doc, "Fjalët kyçe", FJALET_KYCE)
+    page_break(doc)
+
+    _title(doc, "ABSTRACT")
+    for para in ABSTRACT_EN:
+        add_paragraph(doc, para)
+    _keywords(doc, "Keywords", KEYWORDS_EN)
     page_break(doc)
 
     _title(doc, "MIRËNJOHJE/FALËNDERIME")

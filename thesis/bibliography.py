@@ -124,6 +124,15 @@ def ieee_entry(source: Source) -> list[tuple[str, bool]]:
     raise ValueError(f"no IEEE format for source type {source.kind}")
 
 
+def word_pages(pages: str) -> str:
+    """A page range as Word's IEEE style reads it. The style decides between
+    "p." and "pp." by looking for a hyphen, so a range written with an en dash
+    came out as "p. 3784–3797" once Word refreshed the list, and the ranges of
+    conference papers were left out. The printed list keeps the en dash; only
+    the copy Word formats from gets the hyphen."""
+    return pages.replace("\u2013", "-")
+
+
 def _field(name: str, value) -> str:
     return f"<b:{name}>{escape(str(value))}</b:{name}>" if value else ""
 
@@ -169,14 +178,14 @@ def _source(key: str, source: Source, order: int) -> str:
             _field("JournalName", source.container),
             _field("Volume", source.volume),
             _field("Issue", issue),
-            _field("Pages", source.pages),
+            _field("Pages", word_pages(source.pages)),
         ]
     elif source.kind == "ConferenceProceedings":
         fields += [
             _field("ConferenceName", source.container),
             _field("Volume", source.volume),
             _field("City", source.city),
-            _field("Pages", source.pages),
+            _field("Pages", word_pages(source.pages)),
         ]
     elif source.kind == "InternetSite":
         fields.append(_field("InternetSiteTitle", source.container))

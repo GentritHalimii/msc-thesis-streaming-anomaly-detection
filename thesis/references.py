@@ -332,16 +332,88 @@ REFERENCES: dict[str, Source] = {
         url="https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud",
         accessed=CONSULTED,
     ),
-    "ecb2021": report(
-        "European Central Bank",
-        "Seventh report on card fraud",
-        "European Central Bank",
-        "Frankfurt am Main, Germany",
-        2021,
-        10,
-        url="https://www.ecb.europa.eu/pub/pdf/cardfraud/"
-        "ecb.cardfraudreport202110~cac4c418e8.en.pdf",
-        accessed=CONSULTED,
+    "ebaecb2025": report(
+        "European Banking Authority and European Central Bank",
+        "2025 report on payment fraud",
+        "European Banking Authority and European Central Bank",
+        "Paris, France",
+        2025,
+        12,
+        url="https://www.ecb.europa.eu/press/intro/publications/pdf/ecb.ebaecb202512.en.pdf",
+        accessed=(2026, 11, 16),
+    ),
+    # --- published results on the ULB dataset ----------------------------
+    "pumsirirat2018": article(
+        "A. Pumsirirat, L. Yan",
+        "Credit card fraud detection using deep learning based on auto-encoder and restricted "
+        "Boltzmann machine",
+        "International Journal of Advanced Computer Science and Applications",
+        2018,
+        volume=9,
+        issue=1,
+        pages="18–25",
+    ),
+    "ileberi2022": article(
+        "E. Ileberi, Y. Sun, Z. Wang",
+        "A machine learning based credit card fraud detection using the GA algorithm for "
+        "feature selection",
+        "Journal of Big Data",
+        2022,
+        volume=9,
+        issue=1,
+        number="24",
+    ),
+    "alarfaj2022": article(
+        "F. K. Alarfaj, I. Malik, H. U. Khan, N. Almusallam, M. Ramzan, M. Ahmed",
+        "Credit card fraud detection using state-of-the-art machine learning and deep learning "
+        "algorithms",
+        "IEEE Access",
+        2022,
+        volume=10,
+        pages="39700–39715",
+    ),
+    "esenogho2022": article(
+        "E. Esenogho, I. D. Mienye, T. G. Swart, K. Aruleba, G. Obaido",
+        "A neural network ensemble with feature engineering for improved credit card fraud "
+        "detection",
+        "IEEE Access",
+        2022,
+        volume=10,
+        pages="16400–16407",
+    ),
+    "mienye2023": article(
+        "I. D. Mienye, Y. Sun",
+        "A deep learning ensemble with data resampling for credit card fraud detection",
+        "IEEE Access",
+        2023,
+        volume=11,
+        pages="30628–30638",
+    ),
+    "han2022adbench": proceedings(
+        "S. Han, X. Hu, H. Huang, M. Jiang, Y. Zhao",
+        "ADBench: Anomaly detection benchmark",
+        "Proc. 36th Conf. Neural Information Processing Systems (NeurIPS), Track on Datasets "
+        "and Benchmarks",
+        "New Orleans, LA, USA",
+        2022,
+    ),
+    "leveni2024": proceedings(
+        "F. Leveni, G. W. Cassales, B. Pfahringer, A. Bifet, G. Boracchi",
+        "Online isolation forest",
+        "Proc. 41st Int. Conf. Machine Learning (ICML)",
+        "Vienna, Austria",
+        2024,
+        volume=235,
+        pages="27288–27298",
+    ),
+    "daksa2025": article(
+        "R. P. Daksa, A. P. Kemala",
+        "A comparative study on real time data streaming for fraud detection using Kafka with "
+        "Apache Flink and Apache Spark",
+        "Procedia Computer Science",
+        2025,
+        volume=269,
+        pages="192–199",
     ),
     # --- class imbalance and cost ----------------------------------------
     "chawla2002": article(

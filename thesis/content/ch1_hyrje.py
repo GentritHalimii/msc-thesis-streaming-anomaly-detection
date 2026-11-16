@@ -6,11 +6,13 @@ BLOCKS = [
     h1("1", "Hyrje"),
     h2("1.1", "Konteksti dhe motivimi"),
     p("""Pagesat me karta janë sot pjesë e pandashme e ekonomisë evropiane, dhe bashkë me vëllimin e
-      tyre është rritur edhe mashtrimi. Raporti i Bankës Qendrore Evropiane për mashtrimet me karta
-      i vlerëson humbjet vjetore në Zonën e Vetme të Pagesave në Euro në qindra milionë euro, ku
-      pjesa më e madhe vjen nga transaksionet në të cilat karta nuk paraqitet fizikisht [@ecb2021].
-      Për këto transaksione kontrollet që mbështeten te karta ose te terminali kanë pak vlerë,
-      prandaj vendimi duhet marrë kryesisht nga të dhënat e vetë transaksionit."""),
+      tyre është rritur edhe mashtrimi. Raporti i përbashkët i Autoritetit Bankar Evropian dhe i
+      Bankës Qendrore Evropiane për mashtrimet në pagesa e vlerëson vlerën e pagesave të mashtruara
+      me karta në Bashkimin Evropian dhe në Zonën Ekonomike Evropiane në 1.3 miliardë euro për vitin
+      2024. Rreth 83% e kësaj vlere vjen nga pagesat në distancë, në të cilat karta nuk paraqitet
+      fizikisht [@ebaecb2025]. Për këto transaksione kontrollet që mbështeten te karta ose te
+      terminali kanë pak vlerë, prandaj vendimi duhet marrë kryesisht nga të dhënat e vetë
+      transaksionit."""),
     p("""Problemi është i vështirë sepse tri kufizime veprojnë njëkohësisht. Klasat janë
       jashtëzakonisht të çekuilibruara: mashtrimet zakonisht përbëjnë më pak se një për qind të
       trafikut, dhe në këto kushte metrika si saktësia (accuracy) nuk thonë pothuajse asgjë

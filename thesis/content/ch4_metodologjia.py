@@ -20,12 +20,13 @@ _DATA = [
       të mbajtësve evropianë gjatë dy ditëve të shtatorit 2013. Struktura është e thjeshtë: kolona
       Time me sekondat nga transaksioni i parë, 28 kolona V1 deri V28 që janë komponentë kryesorë të
       një transformimi PCA të bërë nga publikuesit për ruajtjen e konfidencialitetit, kolona Amount
-      me shumën e transaksionit dhe kolona Class me etiketën binare."""),
+      me shumën e transaksionit dhe kolona Class me etiketën binare. Tabela [[tab:eda_overview]] jep
+      numrin e transaksioneve dhe të mashtrimeve, normën e mashtrimit, kohëzgjatjen e regjistrimit
+      dhe shumat tipike të transaksioneve sipas klasës."""),
     tab(
         "eda_overview",
         "Karakteristikat kryesore të dataset-it.",
         rename={"treguesi": "Treguesi", "vlera": "Vlera"},
-        font_size=10,
     ),
     p("""Anonimizimi me PCA ka një pasojë që shfaqet gjatë gjithë punimit: veçoritë nuk mund të
       interpretohen semantikisht, sepse komponentët nuk kanë emra dhe nuk mund të thuhet cila
@@ -114,7 +115,10 @@ _PROTOKOLLI = [
       rreshtat me të njëjtën vlerë kohe ruajnë rendin e skedarit, kështu që ndarja është plotësisht
       deterministe. Të dhënat ndahen sipas kohës dhe nuk përzihen kurrë. Modelet unsupervised
       trajnohen vetëm mbi transaksionet normale të dritares së trajnimit, ndërsa skaluesi përshtatet
-      mbi të gjithë dritaren e trajnimit dhe pastaj zbatohet mbi bllokun e testimit."""),
+      mbi të gjithë dritaren e trajnimit dhe pastaj zbatohet mbi bllokun e testimit. Pastrimi i
+      dritares nga mashtrimet kërkon etiketat historike, prandaj ky regjim, në taksonominë e
+      nënkapitullit 2.1.3, është semi-supervised. Nënkapitulli 5.6 mat edhe regjimin pa
+      pastrim."""),
     p("""Kolona Time nuk përdoret si veçori. Vektori i veçorive përbëhet nga V1 deri V28 dhe Amount,
       gjithsej 29 dimensione. Kjo është e domosdoshme: meqë Time përcakton ndarjen, në një ndarje
       kronologjike vlerat e saj në bllokun e testimit janë gjithmonë jashtë intervalit të parë gjatë
@@ -176,9 +180,9 @@ _PROTOKOLLI = [
             "test_time_end_h": "Deri (orë)",
         },
         round={"test_fraud_rate": 5, "test_time_start_h": 1, "test_time_end_h": 1},
-        font_size=9.0,
     ),
-    p("""Tabela tregon se blloqet me numër të njëjtë rreshtash mbulojnë intervale kohore shumë të
+    p("""Tabela [[tab:fold_summary]] tregon se blloqet me numër të njëjtë rreshtash mbulojnë
+      intervale kohore shumë të
       ndryshme, sepse dendësia e transaksioneve ndryshon me orën. Fold-i 1 dallohet me 88 mashtrime,
       gati katër herë më shumë se mesatarja e blloqeve të tjera, sepse përfshin një grumbull
       mashtrimesh që shpjegon pjesën më të madhe të variancës së rezultateve."""),
@@ -189,10 +193,13 @@ _PROTOKOLLI = [
       paraprocesimi, ndonëse skaluesi zakonisht zgjidhet një herë dhe nuk rishikohet. Në këtë punim
       paraprocesimi trajtohet si variabël eksperimentale."""),
     p("""Skaluesi përshtatet mbi të gjithë dritaren e trajnimit, mashtrimet përfshirë, dhe jo vetëm
-      mbi transaksionet normale. Në momentin e vendosjes etiketat e dritares aktuale nuk dihen, dhe
-      një skalues i përshtatur mbi të dhëna të pastra do t'i jepte modelit një avantazh që sistemi
-      real nuk e ka. Pasoja është se statistikat e skaluesit ndikohen nga vetë vlerat ekstreme që
-      duhen nxjerrë në pah, dhe kjo pasojë matet."""),
+      mbi transaksionet normale. Kjo është zgjedhja konservative, sepse një skalues i përshtatur mbi
+      të dhëna të pastra do t'i jepte modelit një avantazh që një sistem pa etiketa nuk e ka. Pasoja
+      është se statistikat e skaluesit ndikohen nga vetë vlerat ekstreme që duhen nxjerrë në pah,
+      dhe kjo pasojë matet. Detektorët, përkundrazi, trajnohen në protokollin kryesor mbi
+      transaksionet normale të pastruara me etiketat historike (nënkapitulli 4.2.1). Që të dy
+      zgjedhjet të mos mbeten të pakrahasueshme, protokolli përsëritet edhe me detektorët e
+      trajnuar mbi gjithë dritaren, dhe rezultati jepet në nënkapitullin 5.6."""),
     p("""Krahasohen shtatë opsione: StandardScaler, RobustScaler me interval ndërkuartilor,
       transformimi kuantil me dalje normale dhe me dalje uniforme, PowerTransformer me metodën
       Yeo-Johnson, MinMaxScaler dhe mungesa e skalimit. Opsioni i fundit është model bazë i
@@ -209,13 +216,14 @@ _PROTOKOLLI = [
       Konventa e shenjës është e njëjtë për të gjithë: vlerë më e lartë e pikës do të thotë më
       anormale. Konventa kontrollohet me test automatik mbi të dhëna reale për secilin model, duke
       krahasuar medianën e pikëve të mashtrimeve me atë të transaksioneve legjitime. Falë kësaj,
-      kodi i vlerësimit, ansamblet dhe consumer-i i rrjedhës nuk varen nga modeli konkret."""),
+      kodi i vlerësimit, ansamblet dhe consumer-i i rrjedhës nuk varen nga modeli konkret. Tabela
+      [[tab:model_zoo]] i përmbledh detektorët, pikën e anomalisë që llogarit secili dhe
+      hiperparametrat e konfigurimit bazë."""),
     tab(
         "model_zoo",
         "Detektorët, pika e anomalisë që llogarit secili dhe hiperparametrat bazë.",
         query="Detektori != 'PCA lineare (ablacion)'",
         columns=["Detektori", "Familja", "Pika e anomalisë", "Hiperparametrat"],
-        font_size=8.5,
     ),
     h3("4.4.2", "Isolation Forest"),
     p("""Implementimi ndjek formulimin origjinal [@liu2008], me pikën e marrë me shenjë të kundërt
@@ -251,6 +259,25 @@ _PROTOKOLLI = [
       saj, përfshirë mashtrimet që ndodhen aty, dhe raportohet gjithmonë si referencë supervised. Ai
       tregon çfarë do të arrihej nëse do të përdoreshin etiketat historike, pra shërben si kufi i
       sipërm."""),
+    h3("4.4.6", "Kombinimi i detektorëve"),
+    p("""Për pyetjen e tretë hulumtuese pikët e tri detektorëve unsupervised kombinohen në një pikë
+      të vetme. Detektorët japin pikë në shkallë krejt të ndryshme, prandaj pikët normalizohen
+      fillimisht në një nga dy mënyra, të dyja vetëm me pikët e dritares së trajnimit. Normalizimi
+      me rang e zëvendëson çdo pikë me pozicionin e saj në shpërndarjen e pikëve të trajnimit, në
+      intervalin nga 0 deri në 1. Normalizimi me z-score i zbret pikës mesataren e pikëve të
+      trajnimit dhe e pjesëton me devijimin e tyre standard."""),
+    p("""Mbi pikët e normalizuara krahasohen pesë rregulla: mesatarja e rangjeve, mesatarja e
+      z-pikëve, mediana e rangjeve, maksimumi i rangjeve dhe votimi me shumicë. Te votimi, çdo
+      detektor voton me pragun e vet nga percentili i trajnimit (nënkapitulli 4.5.1), dhe pika e
+      ansamblit është pjesa e detektorëve që e shënojnë transaksionin; një alarm kërkon shumicën e
+      votave."""),
+    p("""Përveç rregullave fikse provohet edhe një procedurë lakmitare (greedy forward selection).
+      Ajo shton anëtarë një nga një, me mesataren e rangjeve si rregull kombinimi, për sa kohë AP-ja
+      mesatare përmirësohet; i njëjti detektor mund të shtohet më shumë se një herë, që është mënyra
+      si një mesatare e thjeshtë i jep peshë një anëtari. Për fold-in i anëtarët zgjidhen vetëm nga
+      fold-et 0 deri i−1, kështu që zgjedhja nuk sheh kurrë bllokun që vlerësohet; fold-i 0, pa
+      histori, përdor të tre detektorët. Referenca supervised nuk hyn në asnjë ansambël, sepse kjo
+      do ta kthente kombinimin në një model me etiketa."""),
 ]
 
 _PRAGU = [
@@ -282,6 +309,12 @@ _PRAGU = [
       rifreskohet çdo 500 mesazhe, që kostoja të mbetet e vogël. Vendimi për një mesazh përdor vetëm
       mesazhet që kanë ardhur para tij; mesazhi që gjykohet nuk hyn kurrë në dritaren që e gjykon,
       kështu që procedura mund të zbatohet në një rrjedhë reale."""),
+    p("""Cilësia dhe ngarkesa e pragut adaptiv maten offline: pikët e ruajta të çdo blloku testimi
+      riprodhohen sipas rendit kohor, njësoj si do të mbërrinin në rrjedhë, dhe mbi to zbatohen të
+      dy pragjet. Në rrjedhën reale mbi Kafka matet vetëm kostoja e tij operacionale (nënkapitulli
+      5.1). Meqë F1 ndryshon edhe vetëm nga numri i alarmeve, pragu adaptiv krahasohet edhe me një
+      prag statik që në të njëjtin bllok jep po aq alarme; ky krahasim ndan efektin e përshtatjes në
+      kohë nga efekti i numrit të alarmeve."""),
     h2("4.6", "Metrikat"),
     h3("4.6.1", "Metrikat e cilësisë së renditjes"),
     p("""Metrika kryesore është Average Precision, e përkufizuar në nënkapitullin 3.3, e cila
@@ -363,7 +396,7 @@ _ARKITEKTURA = [
     p("""Apache Kafka punon në modalitetin KRaft, pa ZooKeeper, me një broker dhe një particion për
       topic. Kafka u zgjodh në vend të alternativave si Redpanda sepse është pjesë e vetë
       temës së punimit, dhe sepse një shërbim KRaft me një nyje konfigurohet lehtë [@kreps2011].
-      Mesazhet serializohen në JSON: në ritmet e testuara kostoja e kodimit është e papërfillshme,
+      Mesazhet serializohen në JSON: në ritmet e hipotezës H1 kostoja e kodimit është e vogël,
       ndërsa mesazhet e lexueshme e bëjnë pipeline-in të lehtë për diagnostikim dhe lejojnë
       krahasimin e saktë të pikëve mes dy regjimeve."""),
     p("""Producer-i riprodhon bllokun e testimit me ritëm konstant të konfigurueshëm dhe ndjek një
@@ -421,11 +454,13 @@ _ARKITEKTURA = [
       ndryshim. Ato mbulojnë ndarjen kronologjike, mungesën e rrjedhjes së informacionit, kontratën
       e modeleve, konventën e shenjës mbi të dhëna reale, saktësinë e metrikave dhe barazinë e
       pikëve mes regjimit offline dhe atij në rrjedhë. Figurat e punimit vizatohen nga tabelat e
-      ruajtura të eksperimenteve dhe mund të rindërtohen pa trajnuar përsëri asnjë model."""),
+      ruajtura të eksperimenteve dhe mund të rindërtohen pa trajnuar përsëri asnjë model. Të gjitha
+      figurat dhe diagramet janë të autorit; asnjëra nuk është huazuar nga burime të tjera. Tabela
+      [[tab:environment]] përshkruan mjedisin e eksperimenteve: harduerin, sistemin operativ,
+      versionet e bibliotekave dhe të shërbimeve, dhe seed-in global."""),
     tab(
         "environment",
         "Mjedisi eksperimental.",
-        font_size=9.5,
     ),
     p("""Implementimi mbështetet në softuer të lirë: scikit-learn për modelet klasike dhe metrikat
       [@pedregosa2011], PyTorch për Autoencoder-in [@paszke2019], NumPy për llogaritjet numerike dhe

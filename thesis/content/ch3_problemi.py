@@ -86,18 +86,28 @@ BLOCKS = [
             "H1, realizueshmëria operacionale. Një pipeline me Kafka dhe inferencë unsupervised "
             "mund të mbajë vonesë mesatare end-to-end nën një sekondë me ritme sintetike "
             "mbërritjeje deri në 1000 mesazhe në sekondë. Hipoteza refuzohet nëse vonesa mesatare "
-            "e matur e kalon këtë kufi në ndonjë nga konfigurimet e testuara.",
+            "e matur e kalon këtë kufi në ndonjë konfigurim me ritëm deri në 1000 mesazhe në "
+            "sekondë. Ritmet më të larta, nga 2000 mesazhe në sekondë e lart, janë teste "
+            "kapaciteti jashtë hipotezës: ato tregojnë sa larg kufirit të saj shkon sistemi, por "
+            "nuk e konfirmojnë dhe nuk e refuzojnë atë.",
             "H2, vlera e metodave unsupervised. Të paktën një metodë unsupervised arrin cilësi "
             "zbulimi qartësisht mbi rastësinë dhe e ruan atë në të gjitha pikat kohore të prerjes. "
             "Hipoteza refuzohet nëse asnjë metodë nuk e kalon bindshëm nivelin e rastësisë ose "
-            "nëse renditja ndryshon pa ndonjë rregull nga një fold në tjetrin.",
+            "nëse renditja ndryshon pa ndonjë rregull nga një fold në tjetrin. Rregullsia e "
+            "renditjes matet me testin Friedman mbi renditjet e AP-së në tetë fold-et dhe me "
+            "koeficientin e përputhjes së Kendall-it W: renditja quhet pa rregull kur testi nuk e "
+            "hedh poshtë, në nivelin 0.05, hipotezën se fold-et i renditin detektorët rastësisht.",
             "H3, vlera e ansamblit. Kombinimi i disa detektorëve e kalon modelin më të mirë "
             "individual. Hipoteza refuzohet nëse asnjë variant kombinimi nuk e kalon atë në "
             "Average Precision mesatare mbi fold-et.",
         ]
     ),
     p("""Kriteret e refuzimit u përcaktuan para eksperimenteve, në mënyrë që hipotezat të mos
-      konfirmohen pas faktit duke zgjedhur metrikën ose fold-et ku rezultati del i favorshëm."""),
+      konfirmohen pas faktit duke zgjedhur metrikën ose fold-et ku rezultati del i favorshëm. Masa
+      konkrete e rregullsisë së renditjes në H2 u shtua gjatë rishikimit të punimit, sepse formulimi
+      fillestar nuk e përcaktonte atë. Testi Friedman ishte pjesë e analizës që në fillim dhe
+      rezultati i tij ishte i njohur, prandaj kjo masë duhet lexuar si saktësim i formulimit dhe jo
+      si kriter i paracaktuar."""),
     h2("3.6", "Rreziqet metodologjike dhe masat mbrojtëse"),
     p("""Informacioni nga e ardhmja mund të hyjë në eksperiment nga katër rrugë të ndryshme, dhe
       secila prej tyre do ta bënte vlerësimin vetëkonfirmues. Figura [[fig:diagram_leakage]] i
