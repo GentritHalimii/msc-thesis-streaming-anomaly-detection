@@ -40,6 +40,9 @@ CM = 1 / 2.54  # inches per centimetre
 TEXT_WIDTH_CM = 15.0
 FULL_WIDTH = TEXT_WIDTH_CM * CM
 
+# Saved CSVs are records, not print: see save_table.
+CSV_FLOAT_FORMAT = "%.10g"
+
 # Ink and chrome, light surface.
 INK = "#0b0b0b"
 INK_2 = "#3d3c39"  # axis labels and tick labels: darker than screen grey, for print
@@ -376,10 +379,17 @@ def _booktabs(df: pd.DataFrame, float_fmt: str) -> str:
 
 
 def save_table(df: pd.DataFrame, results_dir: Path | str, name: str, float_fmt: str = "%.4f"):
+    """Write a table as CSV and as a booktabs fragment.
+
+    `float_fmt` shapes only the LaTeX copy. The CSV always keeps ten
+    significant digits, because the thesis and the web panel round every
+    number once, when they print it. A CSV already cut to four decimals rounds
+    twice: an AP of 0.04748 is stored as 0.0475 and then printed as 0.048.
+    """
     out_dir = Path(results_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     csv_path = out_dir / f"{name}.csv"
-    df.to_csv(csv_path, index=False, float_format=float_fmt)
+    df.to_csv(csv_path, index=False, float_format=CSV_FLOAT_FORMAT)
     (out_dir / f"{name}.tex").write_text(_booktabs(df, float_fmt))
     return csv_path
 
