@@ -88,15 +88,21 @@ def run_fold(
     df: pd.DataFrame,
     model_names: list[str],
     overrides: dict[str, dict] | None = None,
+    unfiltered: bool = False,
 ) -> dict:
     """Fit and score every model on one fold. Returns raw material only —
     scores, costs, labels — so that thresholds, metrics, ensembles and cost
     curves can all be recomputed later without refitting anything.
+
+    By default the detectors learn from the window's legitimate transactions,
+    which needs the historical labels to remove the frauds. `unfiltered=True`
+    fits them on the whole window instead, frauds included, which is the
+    regime of a system that has no labels at all.
     """
     overrides = overrides or {}
     train = df.iloc[: fold.train_end]
     test = df.iloc[fold.test_start : fold.test_end]
-    train_normal = train[train["Class"] == 0]
+    train_normal = train if unfiltered else train[train["Class"] == 0]
 
     scaler = fit_scaler(train)
     X_train_full = transform(scaler, train)

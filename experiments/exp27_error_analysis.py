@@ -50,7 +50,7 @@ def figure(cfg, coverage: pd.DataFrame, found: pd.DataFrame, dark: pd.DataFrame)
             xytext=(0, 3),
             textcoords="offset points",
             ha="center",
-            fontsize=7.5,
+            fontsize=9.5,
             color=INK_2,
         )
     ax1.set_xlabel("Detektorë unsupervised që e arrijnë")
@@ -78,14 +78,16 @@ def figure(cfg, coverage: pd.DataFrame, found: pd.DataFrame, dark: pd.DataFrame)
             label=f"{label} ({len(values)})",
         )
     ax2.set_xscale("log")
-    ax2.set_xticks([5, 10, 20, 50])
+    # Room on the right, so the legend in the corner stays clear of the curves.
+    ax2.set_xlim(right=250)
+    ax2.set_xticks([5, 10, 20, 50, 100, 200])
     ax2.xaxis.set_major_formatter(mpl.ticker.FuncFormatter(lambda v, _: f"{v:g}"))
     ax2.xaxis.set_minor_formatter(mpl.ticker.NullFormatter())
     ax2.set_xlabel("Distanca ‖z‖ nga qendra legjitime")
     ax2.set_ylabel("Pjesa kumulative")
     ax2.yaxis.set_major_formatter(mpl.ticker.PercentFormatter(xmax=1.0, decimals=0))
     value_grid(ax2, "both")
-    ax2.legend(loc="lower right", fontsize=7.5, handlelength=1.4)
+    ax2.legend(loc="lower right", fontsize=9.5, handlelength=1.4)
     save_figure(fig, REPO_ROOT / cfg.results_dir, "error_analysis")
 
 

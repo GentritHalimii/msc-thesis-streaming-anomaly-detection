@@ -61,11 +61,15 @@ def friedman(scores: pd.DataFrame) -> dict:
             "note": "needs at least 3 folds",
         }
     stat, p = stats.friedmanchisquare(*[scores[c].to_numpy() for c in scores.columns])
+    n, k = scores.shape
     return {
         "statistic": float(stat),
         "p_value": float(p),
-        "n_folds": int(scores.shape[0]),
-        "n_models": int(scores.shape[1]),
+        # Kendall's coefficient of concordance: 0 when the folds rank the
+        # detectors at random, 1 when every fold ranks them the same way.
+        "kendall_w": float(stat / (n * (k - 1))),
+        "n_folds": int(n),
+        "n_models": int(k),
     }
 
 
@@ -112,12 +116,28 @@ def wilcoxon_pairs(scores: pd.DataFrame, pairs: list[tuple[str, str]]) -> pd.Dat
                 "statistic": float(stat) if stat == stat else np.nan,
                 "p_value": float(p),
                 "min_attainable_p": float(2.0 / 2**n) if n else np.nan,
+                "rank_biserial": rank_biserial(d),
             }
         )
     out = pd.DataFrame(rows)
     out["p_holm"] = holm_correction(out["p_value"].to_numpy())
     out["significant_holm_05"] = out["p_holm"] < 0.05
     return out
+
+
+def rank_biserial(d: np.ndarray) -> float:
+    """Matched-pairs rank-biserial correlation, the effect size that goes with
+    the Wilcoxon signed-rank test: (T+ - T-) / (T+ + T-) over the ranks of the
+    non-zero differences. It runs from -1 (b better in every pair) to +1 (a
+    better in every pair), and unlike the p-value it does not depend on how
+    many folds there are."""
+    d = np.asarray(d, dtype=float)
+    d = d[d != 0]
+    if d.size == 0:
+        return 0.0
+    ranks = stats.rankdata(np.abs(d))
+    t_plus, t_minus = ranks[d > 0].sum(), ranks[d < 0].sum()
+    return float((t_plus - t_minus) / (t_plus + t_minus))
 
 
 def holm_correction(pvals: np.ndarray) -> np.ndarray:

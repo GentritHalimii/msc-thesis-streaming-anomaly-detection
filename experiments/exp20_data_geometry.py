@@ -94,7 +94,7 @@ def figures(cfg):
         p95 * 1.06,
         ax.get_ylim()[1] * 0.93,
         f"95% e legjitimeve\njanë nën {p95:.1f}",
-        fontsize=7.5,
+        fontsize=9.5,
         color=INK_2,
         va="top",
     )
@@ -129,7 +129,7 @@ def figures(cfg):
             budget * 1.08,
             0.98,
             f"{budget} alarme",
-            fontsize=7.5,
+            fontsize=9.5,
             color=MUTED,
             va="top",
         )

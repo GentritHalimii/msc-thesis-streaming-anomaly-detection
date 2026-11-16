@@ -144,12 +144,12 @@ STYLE = {
     "pdf.fonttype": 42,
     "font.family": "sans-serif",
     "font.sans-serif": ["Liberation Sans", "Arial", "Helvetica", "DejaVu Sans"],
-    "font.size": 9,
-    "axes.titlesize": 9,
+    "font.size": 10.5,
+    "axes.titlesize": 10.5,
     "axes.titleweight": "bold",
     "axes.titlecolor": INK,
     "axes.titlepad": 5,
-    "axes.labelsize": 9,
+    "axes.labelsize": 10.5,
     "axes.labelcolor": INK_2,
     "axes.labelpad": 3,
     "axes.edgecolor": BASELINE,
@@ -163,8 +163,8 @@ STYLE = {
     "grid.color": GRID,
     "grid.linewidth": 0.6,
     "grid.linestyle": "-",
-    "xtick.labelsize": 8,
-    "ytick.labelsize": 8,
+    "xtick.labelsize": 10,
+    "ytick.labelsize": 10,
     "xtick.color": BASELINE,
     "ytick.color": BASELINE,
     "xtick.labelcolor": INK_2,
@@ -181,7 +181,7 @@ STYLE = {
     "lines.solid_joinstyle": "round",
     "patch.linewidth": 0,
     "legend.frameon": False,
-    "legend.fontsize": 8,
+    "legend.fontsize": 10,
     "legend.handlelength": 2.0,
     "legend.handletextpad": 0.5,
     "legend.columnspacing": 1.4,
@@ -247,6 +247,11 @@ def legend_above(ax, handles=None, labels=None, ncol: int | None = None, **kwarg
     if handles is None:
         handles, labels = ax.get_legend_handles_labels()
     ncol = ncol or len(handles)
+    # Tighter than matplotlib's defaults, so that four entries at the thesis
+    # font size stay within the width of the plot instead of running over the
+    # axis label beside it.
+    kwargs.setdefault("columnspacing", 1.2)
+    kwargs.setdefault("handletextpad", 0.5)
     return ax.legend(
         handles,
         labels,
@@ -277,7 +282,7 @@ def text_color_for(background) -> str:
     return INK if luminance > 0.55 else SURFACE
 
 
-def annotate_cells(ax, values: np.ndarray, image, fmt: str = "{:.3f}", fontsize: float = 7.5):
+def annotate_cells(ax, values: np.ndarray, image, fmt: str = "{:.3f}", fontsize: float = 9.5):
     """Write each cell's value on a heatmap in a colour that stays legible."""
     for i in range(values.shape[0]):
         for j in range(values.shape[1]):

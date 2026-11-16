@@ -73,13 +73,13 @@ def critical_difference_diagram(ranks: pd.Series, cd: float, n_folds: int, cfg, 
     ax.plot([1, k], [y_axis, y_axis], color=INK_2, lw=0.9)
     for tick in range(1, k + 1):
         ax.plot([tick, tick], [y_axis, y_axis + 0.12], color=INK_2, lw=0.9)
-        ax.text(tick, y_axis + 0.2, str(tick), ha="center", va="bottom", fontsize=8, color=INK_2)
+        ax.text(tick, y_axis + 0.2, str(tick), ha="center", va="bottom", fontsize=10, color=INK_2)
     # The critical difference to scale, starting at rank 1.
     y_cd = -0.32
     ax.plot([1, 1 + cd], [y_cd, y_cd], color=INK, lw=1.0)
     for end in (1, 1 + cd):
         ax.plot([end, end], [y_cd - 0.08, y_cd + 0.08], color=INK, lw=1.0)
-    ax.text(1 + cd + 0.06, y_cd, f"CD = {cd:.2f}", ha="left", va="center", fontsize=8, color=INK)
+    ax.text(1 + cd + 0.06, y_cd, f"CD = {cd:.2f}", ha="left", va="center", fontsize=10, color=INK)
 
     half = (k + 1) // 2
     for i, (name, val) in enumerate(zip(names, values, strict=True)):
@@ -95,7 +95,7 @@ def critical_difference_diagram(ranks: pd.Series, cd: float, n_folds: int, cfg, 
             f"{MODEL_LABELS.get(name, name)}  {val:.2f}",
             ha="right" if left else "left",
             va="center",
-            fontsize=8.2,
+            fontsize=10.2,
             color=INK,
         )
 
@@ -122,7 +122,7 @@ def critical_difference_diagram(ranks: pd.Series, cd: float, n_folds: int, cfg, 
         f"{AX['rank']} i AP-së nëpër {n_folds} fold-e (1 = më i miri)",
         ha="center",
         va="bottom",
-        fontsize=8,
+        fontsize=10,
         color=INK_2,
     )
     save_figure(fig, REPO_ROOT / cfg.results_dir, fname)
@@ -152,6 +152,7 @@ def main(cfg=None):
                 "N_folde": n_folds,
                 "friedman_chi2": res["statistic"],
                 "p_value": res["p_value"],
+                "kendall_w": res["kendall_w"],
                 "nemenyi_CD": cd,
                 "range_i_rangjeve": float(average_ranks(sub).max() - average_ranks(sub).min()),
             }
@@ -189,6 +190,8 @@ def main(cfg=None):
             for a, b in zip(wilcox["model_a"], wilcox["model_b"], strict=True)
         ],
     )
+    # Folds won by each side, as one column the table can print.
+    wilcox["fitore"] = [f"{a}:{b}" for a, b in zip(wilcox["wins_a"], wilcox["wins_b"], strict=True)]
     save_table(wilcox, results_dir, "significance_wilcoxon", float_fmt="%.5f")
     print(
         "\n"

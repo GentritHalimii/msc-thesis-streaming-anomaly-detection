@@ -50,7 +50,7 @@ def draw(table: pd.DataFrame, train_fraud_rate: float, results_dir) -> None:
         ax.set_ylim(0, 1)
         ax.xaxis.set_major_formatter(lambda value, _pos: f"{100 * value:.1f}%".replace(".0%", "%"))
     axes[0].set_ylabel("Vlera në bllokun e testimit")
-    fig.supxlabel("Kontaminimi c (pjesa e pikëve të trajnimit mbi prag)", fontsize=9)
+    fig.supxlabel("Kontaminimi c (pjesa e pikëve të trajnimit mbi prag)", fontsize=11)
     handles, labels = axes[0].get_legend_handles_labels()
     handles.append(Line2D([], [], color=MUTED, linestyle="--", linewidth=0.9))
     labels.append("norma e mashtrimit në trajnim")

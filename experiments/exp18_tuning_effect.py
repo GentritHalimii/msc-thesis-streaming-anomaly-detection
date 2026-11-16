@@ -83,7 +83,7 @@ def figures(cfg, table: pd.DataFrame, label_to_key: dict, clean: list[int]) -> N
             xytext=(8, 0),
             textcoords="offset points",
             va="center",
-            fontsize=7.5,
+            fontsize=9.5,
             color=INK_2,
         )
     ax.set_yticks(range(len(order)), order["Detektori"])
@@ -122,7 +122,7 @@ def figures(cfg, table: pd.DataFrame, label_to_key: dict, clean: list[int]) -> N
                 textcoords="offset points",
                 va="center",
                 ha="left" if value >= 0 else "right",
-                fontsize=7,
+                fontsize=9,
                 color=INK_2,
             )
     ax.axvline(0, color=INK_2, lw=0.8)

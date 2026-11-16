@@ -262,7 +262,7 @@ def figure(cfg, summary: pd.DataFrame) -> None:
             xytext=(0, 8),
             textcoords="offset points",
             ha="center",
-            fontsize=7.5,
+            fontsize=9.5,
             color=INK_2,
         )
     ax.set_xticks(x, [label for _, _, label in CELLS])

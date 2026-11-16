@@ -226,7 +226,8 @@ def inventory() -> dict[str, Any]:
             "verdicts": len(verdicts),
             "manifests": len(manifests),
             "folds": len(list((root / "folds").glob("*.npz"))),
-            "latency_runs": len(list((root / "latency").glob("latency_*.csv"))),
+            # Repeated runs live in runs/rep*/ and capacity/rep*/.
+            "latency_runs": len(list((root / "latency").glob("*/rep*/latency_*.csv"))),
         },
         "newest_artifact": datetime.fromtimestamp(newest, UTC).isoformat() if newest else None,
     }

@@ -516,10 +516,11 @@ _RESULTS = page(
         ),
         figure("adaptive_tradeoff", "Kompromisi mes qëndrueshmërisë dhe cilësisë."),
         callout(
-            "Për të tre detektorët unsupervised F1 rritet, kryesisht sepse pragu adaptiv "
-            "rikthen numrin e synuar të alarmeve; për referencën supervised ai bie. Pragu "
-            "statik i saj është tashmë i kalibruar, prandaj një kuantil mbi dritare "
-            "rrëshqitëse vetëm sa e detyron të alarmojë më shumë se ç'duhet.",
+            "Për të tre detektorët unsupervised F1 rritet, por vetëm sepse pragu adaptiv jep "
+            "më shumë alarme: një prag statik me po aq alarme arrin të njëjtin F1. Vlera e tij "
+            "është ngarkesa më e qëndrueshme. Për referencën supervised F1 bie, sepse pragu "
+            "statik i saj është tashmë i kalibruar dhe një kuantil mbi dritare rrëshqitëse "
+            "vetëm sa e detyron të alarmojë më shumë se ç'duhet.",
             tone="warn",
         ),
         runner("exp16_adaptive_threshold"),

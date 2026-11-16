@@ -72,8 +72,9 @@ def figures(cfg, drift: pd.DataFrame) -> None:
             label=label,
         )
     for level, text in ((PSI_MODERATE, "0.10 moderuar"), (PSI_MAJOR, "0.25 e madhe")):
-        ax.axhline(level, color=BASELINE, lw=0.8, zorder=1)
-        ax.text(x[-1] + 0.15, level, text, fontsize=7, color=MUTED, va="center")
+        # The line stops before its label, so it does not run through the text.
+        ax.hlines(level, x[0] - 0.3, x[-1] + 0.1, color=BASELINE, lw=0.8, zorder=1)
+        ax.text(x[-1] + 0.15, level, text, fontsize=9, color=MUTED, va="center")
     ax.set_yscale("log")
     ax.yaxis.set_major_formatter(mpl.ticker.FuncFormatter(lambda v, _: f"{v:g}"))
     ax.set_xticks(x, [f"{f}\n({n})" for f, n in zip(x, drift["test_frauds"], strict=True)])
