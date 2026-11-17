@@ -46,11 +46,26 @@ _HYRJE = [
       saj [@li2022ecod], ndërsa vlerësimi robust i kovariancës e modelon normalitetin si një
       elipsoid të vetëm. Të gjitha këto metoda gjenden në biblioteka të unifikuara si PyOD
       [@zhao2019pyod]. Ato mbeten jashtë krahasimit, sepse studimi zgjedh thellësinë mbi tri
-      algoritme në vend të gjerësisë mbi shumë metoda (nënkapitulli 1.4)."""),
+      algoritme në vend të gjerësisë mbi shumë metoda (nënkapitulli 1.4). Zgjedhja mbështetet edhe
+      nga një prej benchmark-eve më të gjera, ADBench, i cili krahasoi 30 algoritme mbi 57
+      dataset-e dhe nuk gjeti asnjë algoritëm unsupervised statistikisht më të mirë se të tjerët
+      [@han2022adbench]."""),
     p("""Tri algoritmet e studimit përdorin tri mekanizma të ndryshëm. Isolation Forest mat sa lehtë
       izolohet një pikë, Autoencoder-i sa keq rindërtohet ajo, dhe One-Class SVM se në cilën anë të
       një kufiri të mësuar ndodhet. Meqë mekanizmat ndryshojnë, diferencat në rezultate mund të
       lidhen me mekanizmin dhe jo vetëm me implementimin."""),
+    h3("2.1.3", "Roli i etiketave"),
+    p("""Chandola dhe bashkautorët i ndajnë teknikat edhe sipas etiketave që kërkojnë
+      [@chandola2009]. Teknikat supervised kërkojnë etiketa për të dyja klasat. Teknikat
+      semi-supervised kërkojnë që të dhënat e trajnimit të kenë etiketa vetëm për klasën normale,
+      pra që të dihet cilat instanca janë normale. Teknikat unsupervised nuk kërkojnë asnjë etiketë
+      dhe supozojnë vetëm se instancat normale janë shumë më të shpeshta se anomalitë."""),
+    p("""Dallimi ka rëndësi për mënyrën si lexohen rezultatet e këtij punimi. Tri algoritmet e
+      studimit janë unsupervised, sepse asnjëri nuk përdor etiketa gjatë mësimit. Në protokollin
+      kryesor ato trajnohen megjithatë mbi transaksionet normale të dritares, të pastruara me
+      etiketat historike, dhe ky regjim, në taksonominë e mësipërme, është semi-supervised. Regjimi
+      plotësisht unsupervised, ku mashtrimet mbeten brenda dritares së trajnimit, matet veçmas në
+      nënkapitullin 5.6, dhe dallimi mes dy regjimeve del i madh për dy nga tri algoritmet."""),
 ]
 
 _ALGORITMET = [
@@ -171,7 +186,9 @@ _DOMENI = [
       pozitive ndryshon me kohën."""),
     p("""Në një punim të mëvonshëm, të njëjtët autorë propozojnë një modelim që e merr parasysh
       vonesën e verifikimit dhe tregojnë se vlerësimi që e injoron atë e mbivlerëson performancën
-      [@dalpozzolo2018]. Ky punim nuk përdor rimostrim, në mënyrë që shpërndarja e vëzhguar të
+      [@dalpozzolo2018]. Punime të viteve të fundit e kombinojnë rimostrimin hibrid SMOTE-ENN me
+      ansamble rrjetesh nervore dhe raportojnë ndjeshmëri mbi 0.99 [@esenogho2022], [@mienye2023].
+      Ky punim nuk përdor rimostrim, në mënyrë që shpërndarja e vëzhguar të
       mbetet e paprekur dhe pragu i alarmit të mund të lexohet drejtpërsëdrejti mbi trafikun
       real."""),
     p("""Një drejtim i rëndësishëm i punës së aplikuar është ndërtimi i veçorive me agregim. Whitrow
@@ -187,10 +204,17 @@ _DOMENI = [
       të shtatorit 2013, nga të cilat 492 janë mashtrime, dhe 28 nga 30 veçoritë janë komponentë
       kryesorë të anonimizuar."""),
     p("""Punimet që e përdorin janë të shumta, por cilësia e tyre metodologjike ndryshon shumë. Një
-      pjesë e mirë raporton vlera shumë të larta të AUC-ROC, të cilat, siç shpjegohet në
-      nënkapitullin 2.8, thonë pak në këtë nivel çekuilibri. Një pjesë tjetër përdor ndarje të
-      rastësishme, ku transaksione të së njëjtës periudhë shpërndahen njëkohësisht në trajnim dhe në
-      test. Kapitulli 5 mat sa i fryn rezultatet kjo praktikë."""),
+      pjesë e mirë raporton saktësi mbi 99.9% ose vlera shumë të larta të AUC-ROC. Ileberi dhe
+      bashkautorët raportojnë saktësi 99.94% me Random Forest pas përzgjedhjes së veçorive me një
+      algoritëm gjenetik [@ileberi2022], Alarfaj dhe bashkautorët saktësi 99.9% dhe AUC 0.98 me
+      rrjete konvolucionale [@alarfaj2022], dhe Pumsirirat e Yan AUC-ROC 0.96 me një Autoencoder
+      [@pumsirirat2018]. Siç shpjegohet në nënkapitullin 2.8, këto metrika thonë pak në këtë nivel
+      çekuilibri: një klasifikues që nuk alarmon kurrë arrin saktësi 99.83%."""),
+    p("""Një pjesë tjetër përdor ndarje të rastësishme, ku transaksione të së njëjtës periudhë
+      shpërndahen njëkohësisht në trajnim dhe në test. Kështu vepron edhe benchmark-u ADBench, i
+      cili e përfshin këtë dataset dhe i ndan të dhënat rastësisht, me shtresëzim, në 70% për
+      trajnim dhe 30% për test [@han2022adbench]. Kapitulli 5 mat sa i fryn rezultatet kjo praktikë,
+      dhe nënkapitulli 6.3 i krahason rezultatet e publikuara me ato të këtij punimi."""),
     p("""Manuali praktik i Le Borgne-s dhe bashkautorëve është ndër burimet e pakta që e trajton
       riprodhueshmërinë si kërkesë qendrore dhe e diskuton hapur ndarjen kohore [@leborgne2022]. Ai
       rekomandon vlerësim me ndarje kohore dhe me vonesë verifikimi, që është edhe drejtimi i
@@ -225,13 +249,19 @@ _DOMENI = [
       dhe bashkautorëve, një kornizë e shkallëzueshme mbi Kafka, Spark dhe Cassandra
       [@carcillo2018]. SCARFF përqendrohet te shkallëzueshmëria dhe te integrimi i etiketave të
       vonuara, ndërsa ky punim te vlerësimi pa rrjedhje informacioni dhe te studimi i thelluar i tri
-      algoritmeve."""),
+      algoritmeve. Më së fundmi, Daksa dhe Kemala krahasuan Apache Flink dhe Apache Spark si motorë
+      përpunimi mbi Kafka për zbulimin e mashtrimeve në kohë reale [@daksa2025]."""),
     h3("2.7.3", "Mësimi mbi rrjedha"),
     p("""Literatura e mësimit mbi rrjedha ka traditën e vet të vlerësimit. Gama, Sebastião dhe
       Rodrigues argumentojnë se për të dhëna që mbërrijnë sipas radhës, protokolli i duhur është
       vlerësimi prekuencial (testo pastaj trajno), sepse ndjek rendin në të cilin informacioni bëhet
       i disponueshëm [@gama2013]. Protokolli rolling-origin i këtij punimi bazohet në të njëjtën
       ide, por për modele që trajnohen në grup dhe jo në mënyrë inkrementale."""),
+    p("""Edhe vetë detektorët mund të bëhen inkrementalë. Leveni dhe bashkautorët propozuan një
+      version online të Isolation Forest-it, i cili përshtatet vazhdimisht me rrjedhën në vend që të
+      ritrajnohet periodikisht. Sipas autorëve, cilësia e tij është në nivelin e alternativave
+      online dhe afër detektorëve offline që ritrajnohen periodikisht, ndërsa në efikasitet i kalon
+      të gjithë [@leveni2024]."""),
 ]
 
 _METODOLOGJIA = [
@@ -280,7 +310,11 @@ _METODOLOGJIA = [
       algoritmeve mbi disa bashkësi të dhënash, rekomandon për krahasimet dyshe testin joparametrik
       të Wilcoxon-it për çifte [@demsar2006], [@wilcoxon1945]. Kur bëhen disa krahasime
       njëkohësisht, p-vlerat duhen korrigjuar; procedura e Holm-it është më e fuqishme se ajo e
-      Bonferroni-t dhe e kontrollon njësoj gabimin [@holm1979]."""),
+      Bonferroni-t dhe e kontrollon njësoj gabimin [@holm1979]. Për pyetjen nëse disa algoritme
+      dallojnë fare nga njëri-tjetri, Demšar-i rekomandon testin Friedman mbi renditjet e
+      algoritmeve në çdo bashkësi. Nga statistika e tij del edhe koeficienti i përputhjes së
+      Kendall-it W, i cili mat sa njësoj i renditin bashkësitë algoritmet: 0 kur renditjet janë të
+      rastësishme dhe 1 kur janë identike."""),
     p("""Një çështje që literatura e aplikuar shpesh e anashkalon është fuqia statistikore. Me N
       njësi vëzhgimi, p-vlera më e vogël që mund të japë testi dypalësh i Wilcoxon-it është 2/2^N.
       Me gjashtë njësi, asnjë krahasim nuk e kalon korrigjimin e Holm-it kur testohen më shumë se
@@ -325,7 +359,10 @@ _METODOLOGJIA = [
     bullets(
         [
             "Studimet për këtë dataset i analizojnë modelet kryesisht në mënyrë statike, mbi një "
-            "ndarje të vetme, dhe shpesh testojnë një algoritëm të vetëm unsupervised. Nuk u gjet "
+            "ndarje të vetme, dhe shpesh testojnë një algoritëm të vetëm unsupervised. Punimet më "
+            "të reja ose i krahasojnë detektorët offline mbi ndarje të rastësishme "
+            "[@han2022adbench], ose përqendrohen te algoritmi online [@leveni2024] ose te motori i "
+            "përpunimit [@daksa2025]. Nuk u gjet "
             "një krahasim i Isolation Forest-it, Autoencoder-it dhe One-Class SVM-së mbi të "
             "njëjtën infrastrukturë Kafka, "
             "bashkë me një referencë supervised, me vonesë të matur dhe me një protokoll "

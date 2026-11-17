@@ -2,8 +2,8 @@ UV ?= uv
 RUN := $(UV) run
 
 .PHONY: setup lint format test test-integration train protocol protocol-tuned \
-        evaluate deep-studies figures tune stream stream-store stream-adaptive \
-        latency-report webapp thesis all clean
+        protocol-unfiltered evaluate deep-studies figures tune stream stream-store \
+        stream-adaptive stream-capacity latency-report webapp thesis all clean
 
 setup:
 	$(UV) sync
@@ -31,6 +31,10 @@ protocol:                  ## the expensive step: 8 rolling-origin folds x 4 mod
 
 tune:                      ## Optuna search on an inner temporal split of the training window
 	$(RUN) python -m experiments.exp9_tuning
+
+protocol-unfiltered:       ## the detectors fitted on the whole window, frauds included
+	$(RUN) python -m experiments.run_protocol --unfiltered
+	$(RUN) python -m experiments.exp29_training_regime
 
 protocol-tuned:            ## re-run the protocol with the tuned hyperparameters
 	$(RUN) python -m experiments.run_protocol --tuned
@@ -93,11 +97,21 @@ figures:                   ## redraw all figures from saved results, no refittin
 	$(RUN) python -m experiments.exp27_error_analysis
 
 # --- streaming pipeline (needs docker) -------------------------------------
+# Every configuration is measured three times, in interleaved passes, so the
+# report can give the spread between runs and not only one run's numbers.
 stream:
-	$(RUN) python -m experiments.run_streaming --models iforest autoencoder ocsvm logreg
+	$(RUN) python -m experiments.run_streaming --models iforest autoencoder ocsvm logreg \
+	    --rates 50 200 1000 2000 --repeats 3 --out-subdir runs
 
 stream-adaptive:
-	$(RUN) python -m experiments.run_streaming --models iforest autoencoder ocsvm --rates 200 --adaptive
+	$(RUN) python -m experiments.run_streaming --models iforest autoencoder ocsvm --rates 200 \
+	    --adaptive --repeats 3 --out-subdir runs
+
+# Rates past the operating range, with longer streams, to find where one
+# consumer stops keeping pace.
+stream-capacity:
+	$(RUN) python -m experiments.run_streaming --models iforest autoencoder ocsvm logreg \
+	    --rates 3000 5000 10000 --max-messages 80000 --repeats 3 --out-subdir capacity
 
 stream-store:
 	$(RUN) python -m experiments.run_streaming --store
@@ -113,7 +127,7 @@ webapp:                    ## interactive panel over results/ at http://127.0.0.
 thesis:                    ## build the Albanian thesis document from results/
 	$(RUN) python thesis/build_thesis.py
 
-all: setup test train protocol evaluate deep-studies thesis
+all: setup test train protocol protocol-unfiltered evaluate deep-studies thesis
 
 clean:
 	rm -rf results/*.csv results/*.tex results/*.json results/*.txt \

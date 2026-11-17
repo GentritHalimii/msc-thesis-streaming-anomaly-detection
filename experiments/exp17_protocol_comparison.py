@@ -94,14 +94,17 @@ def main(cfg=None):
         for m in sh.index:
             if m == "logreg":
                 continue
-            rows.append(
-                {
-                    "Detektori": MODEL_LABELS[m],
-                    "AP_kronologjik": sh.loc[m, "ap_chronological"],
-                    "AP_i_perzier": sh.loc[m, "ap_shuffled_LEAKY"],
-                    "fryrja": sh.loc[m, "ap_ratio_shuffled_over_chrono"],
-                }
-            )
+            row = {
+                "Detektori": MODEL_LABELS[m],
+                "AP_kronologjik": sh.loc[m, "ap_chronological"],
+                "AP_i_perzier": sh.loc[m, "ap_shuffled_LEAKY"],
+                "fryrja": sh.loc[m, "ap_ratio_shuffled_over_chrono"],
+            }
+            # Repeated shuffled splits carry their spread; one split does not.
+            if "ratio_min" in sh.columns:
+                row["fryrja_min"] = sh.loc[m, "ratio_min"]
+                row["fryrja_max"] = sh.loc[m, "ratio_max"]
+            rows.append(row)
         inflation = pd.DataFrame(rows).sort_values("fryrja", ascending=False)
         save_table(inflation, results_dir, "protocol_inflation")
         print(

@@ -105,6 +105,13 @@ def summarise(per_fold: pd.DataFrame) -> pd.DataFrame:
         fit_rss_mb=("fit_rss_mb", "mean"),
     )
     agg["avg_rank_ap"] = avg_rank
+    # AP rises with the share of frauds in a block, and one block holds far
+    # more of them than the rest, so the mean leans on it. The median and the
+    # mean without that block show whether the ranking depends on it.
+    densest = int(per_fold.groupby("fold")["test_frauds"].first().idxmax())
+    agg["ap_median"] = ap_wide.median()
+    agg["ap_mean_excl_densest_fold"] = ap_wide.drop(index=densest).mean()
+    agg["densest_fold"] = densest
     return agg.reset_index().sort_values("ap_mean", ascending=False)
 
 
@@ -160,7 +167,7 @@ def figure_ap_ranking(per_fold: pd.DataFrame, summary: pd.DataFrame, cfg):
             xytext=(0, 7),
             textcoords="offset points",
             ha="center",
-            fontsize=7.5,
+            fontsize=9.5,
             color=INK_2,
         )
     ax.set_yticks(range(len(order)), [MODEL_LABELS.get(m, m) for m in order])
@@ -196,7 +203,7 @@ def figure_quality_cost(summary: pd.DataFrame, cfg):
             xytext=(8, 0),
             textcoords="offset points",
             va="center",
-            fontsize=8,
+            fontsize=10,
             color=INK_2,
         )
     ax.set_xscale("log")
@@ -212,7 +219,7 @@ def figure_quality_cost(summary: pd.DataFrame, cfg):
         transform=ax.transAxes,
         ha="left",
         va="top",
-        fontsize=7.5,
+        fontsize=9.5,
         color=MUTED,
     )
     value_grid(ax, "both")

@@ -21,7 +21,7 @@ from src.evaluation.protocol import (
     save_fold,
 )
 from src.evaluation.report import save_table
-from src.models.build import ALL_MODELS
+from src.models.build import ALL_MODELS, UNSUPERVISED
 
 
 def main():
@@ -33,20 +33,34 @@ def main():
     parser.add_argument(
         "--tuned", action="store_true", help="apply hyperparameters from results/tuned_params.json"
     )
+    parser.add_argument(
+        "--unfiltered",
+        action="store_true",
+        help="fit the detectors on the whole training window, frauds included "
+        "(scores go to results/unfiltered)",
+    )
     args = parser.parse_args()
+    if args.tuned and args.unfiltered:
+        parser.error("--tuned and --unfiltered are separate studies; run them one at a time")
 
     cfg = load_config()
     np.random.seed(cfg.seed)
-    model_names = args.models or ALL_MODELS
+    model_names = args.models or (UNSUPERVISED if args.unfiltered else ALL_MODELS)
     results_dir = REPO_ROOT / cfg.results_dir
 
     overrides = {}
     tag = "protocol"
+    out_dir = results_dir
     if args.tuned:
         tuned_file = results_dir / "tuned_params.json"
         overrides = json.loads(tuned_file.read_text())
         tag = "protocol_tuned"
+        out_dir = results_dir / "tuned"
         print(f"applying tuned hyperparameters for {sorted(overrides)}")
+    if args.unfiltered:
+        tag = "protocol_unfiltered"
+        out_dir = results_dir / "unfiltered"
+        print("fitting the detectors on the whole training window, frauds included")
 
     df = load_transactions(REPO_ROOT / cfg.data.raw_csv)
     folds = rolling_origin_folds(len(df), cfg.protocol.n_folds, cfg.protocol.initial_train_fraction)
@@ -61,10 +75,8 @@ def main():
             f"test[{fold.test_start}:{fold.test_end}) ===",
             flush=True,
         )
-        payload = run_fold(cfg, fold, df, model_names, overrides)
-        out = save_fold(
-            results_dir if not args.tuned else results_dir / "tuned", fold.index, payload
-        )
+        payload = run_fold(cfg, fold, df, model_names, overrides, unfiltered=args.unfiltered)
+        out = save_fold(out_dir, fold.index, payload)
         costs = json.loads(payload["costs_json"])
         for name, c in costs.items():
             print(

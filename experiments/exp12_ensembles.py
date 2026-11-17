@@ -16,6 +16,7 @@ import argparse
 
 import numpy as np
 import pandas as pd
+from scipy.stats import spearmanr
 from sklearn.metrics import average_precision_score
 
 from src.config import REPO_ROOT, load_config
@@ -188,21 +189,45 @@ def main(cfg=None, tuned: bool = False):
 
     # Rank agreement in every fold, not just the last one: the claim that the
     # members rank transactions alike has to hold across the whole stream.
+    # Over all transactions the correlation is dominated by the legitimate
+    # ones, while an ensemble is decided at the head of the ranking and on the
+    # frauds. Both of those are measured too: the correlation over the frauds
+    # alone, and the overlap of the alert lists at the operational budget.
+    k = 100
     corr_rows = []
     for i, f in enumerate(folds):
         matrix = pairwise_rank_correlation(f, pool_full)
+        frauds = f.y == 1
+        scores = {m: f.test_scores(m) for m in pool_full}
+        top = {m: set(np.argsort(-scores[m], kind="stable")[:k]) for m in pool_full}
         for a in range(len(pool_full)):
             for b in range(a + 1, len(pool_full)):
+                ma, mb = pool_full[a], pool_full[b]
                 corr_rows.append(
                     {
                         "fold": i,
-                        "model_a": pool_full[a],
-                        "model_b": pool_full[b],
+                        "model_a": ma,
+                        "model_b": mb,
                         "spearman": float(matrix[a, b]),
+                        "spearman_frauds": float(
+                            spearmanr(scores[ma][frauds], scores[mb][frauds])[0]
+                        ),
+                        f"jaccard_top{k}": len(top[ma] & top[mb]) / len(top[ma] | top[mb]),
                     }
                 )
     corr_per_fold = pd.DataFrame(corr_rows)
     save_table(corr_per_fold, results_dir, f"ensemble_rank_correlation_per_fold{suffix}")
+    agreement = (
+        corr_per_fold.groupby(["model_a", "model_b"])[
+            ["spearman", "spearman_frauds", f"jaccard_top{k}"]
+        ]
+        .mean()
+        .reset_index()
+    )
+    agreement["model_a"] = agreement["model_a"].map(lambda m: MODEL_LABELS.get(m, m))
+    agreement["model_b"] = agreement["model_b"].map(lambda m: MODEL_LABELS.get(m, m))
+    save_table(agreement, results_dir, f"ensemble_agreement{suffix}", float_fmt="%.3f")
+    print(agreement.to_string(index=False))
     mean_corr = corr_per_fold.groupby(["model_a", "model_b"])["spearman"].mean()
     corr = np.eye(len(pool_full))
     for (a, b), value in mean_corr.items():
@@ -272,14 +297,18 @@ def _figures(cfg, corr_per_fold, ens, best_single, best_single_per_fold):
             markeredgewidth=0.9,
             zorder=4,
         )
+        # The minus sign of the axis, and a white ground so that the zero
+        # line does not run through a label that sits on it.
         ax.annotate(
-            f"{delta.mean():+.3f}",
+            f"{delta.mean():+.3f}".replace("-", "\u2212"),
             (delta.mean(), y),
             xytext=(0, 7),
             textcoords="offset points",
             ha="center",
-            fontsize=7.5,
+            fontsize=9.5,
             color=INK_2,
+            bbox={"boxstyle": "square,pad=0.1", "facecolor": "#ffffff", "edgecolor": "none"},
+            zorder=5,
         )
     ax.axvline(0, color=INK_2, lw=0.9, zorder=1)
     best_name = MODEL_LABELS.get(best_single["model"], best_single["model"])
@@ -316,7 +345,7 @@ def _figures(cfg, corr_per_fold, ens, best_single, best_single_per_fold):
             xytext=(0, 7),
             textcoords="offset points",
             ha="center",
-            fontsize=7.5,
+            fontsize=9.5,
             color=INK_2,
         )
     ax.set_yticks(

@@ -90,6 +90,7 @@ make train              # përshtat modelet mbi ndarjen 70/30
 make protocol           # 8 fold-e rolling-origin (hapi bazë, ~2 min)
 make tune               # kërkim Optuna mbi ndarje të brendshme kohore
 make protocol-tuned     # ri-ekzekuton protokollin me hiperparametrat e akorduar
+make protocol-unfiltered # detektorët e trajnuar mbi gjithë dritaren, mashtrimet përfshirë
 make evaluate           # tabelat dhe figurat nga pikët e ruajtura (minuta)
 make deep-studies       # studimet për algoritëm; ripërshtatin modelet (orë)
 make thesis             # gjeneron punimin .docx nga results/
@@ -97,8 +98,9 @@ make webapp             # paneli interaktiv mbi results/
 
 docker compose -f docker/docker-compose.yml up -d
 make test-integration   # pariteti offline≈streaming + PostgreSQL
-make stream             # skanimi i vonesës: modele × ritme
+make stream             # skanimi i vonesës: modele × ritme, tri herë
 make stream-adaptive    # i njëjti skanim me prag adaptiv
+make stream-capacity    # ritme mbi atë të operimit, për kufirin e një consumer-i
 make latency-report
 ```
 
@@ -111,7 +113,8 @@ Kafka lidhet në portën **19092**, PostgreSQL në **15432** dhe Grafana në **3
 
 **Ndarje kronologjike, pa përzierje.** Renditje e qëndrueshme sipas `Time`; asnjë rresht i
 testimit nuk paraprin një rresht trajnimi. Modelet unsupervised shohin vetëm transaksione
-normale të dritares së trajnimit.
+normale të dritares së trajnimit, të pastruara me etiketat historike; `make protocol-unfiltered`
+mat edhe regjimin pa këtë pastrim.
 
 **`Time` nuk është veçori hyrëse.** Ajo rendit rrjedhën dhe përcakton ndarjen. Po të ishte
 veçori, në ndarje kronologjike çdo pikë testimi do të merrte një z-vlerë ekstreme në atë

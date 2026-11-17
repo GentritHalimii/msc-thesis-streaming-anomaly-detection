@@ -88,8 +88,8 @@ def figure_volume_and_fraud(df: pd.DataFrame, cfg):
     for ax in (ax1, ax2):
         for start in (0, 24):
             ax.axvspan(start + 1, start + 7, color="#f1f0eb", zorder=0, linewidth=0)
-    ax1.text(4, vol.max() * 0.98, "natë", ha="center", va="top", fontsize=7.5, color=MUTED)
-    ax1.text(28, vol.max() * 0.98, "natë", ha="center", va="top", fontsize=7.5, color=MUTED)
+    ax1.text(4, vol.max() * 0.98, "natë", ha="center", va="top", fontsize=9.5, color=MUTED)
+    ax1.text(28, vol.max() * 0.98, "natë", ha="center", va="top", fontsize=9.5, color=MUTED)
 
     ax1.fill_between(centres, vol, color=CLASS_COLORS[0], alpha=0.15, linewidth=0)
     ax1.plot(centres, vol, color=CLASS_COLORS[0], linewidth=1.5)
@@ -129,7 +129,7 @@ def figure_amounts(df: pd.DataFrame, cfg):
             f"mediana {median:.2f} EUR",
             xy=(median, 0.5),
             xytext=target,
-            fontsize=7.5,
+            fontsize=9.5,
             color=INK_2,
             ha="center",
             va="center",
@@ -193,8 +193,8 @@ def figure_correlation(df: pd.DataFrame, cfg):
     shown = shown[1:, :-1]
     fig, ax = new_figure(figsize=(12.0 * CM, 10.6 * CM))
     im = ax.imshow(shown, cmap="RdBu_r", vmin=-limit, vmax=limit)
-    ax.set_xticks(range(shown.shape[1]), FEATURE_COLUMNS[:-1], rotation=90, fontsize=6.5)
-    ax.set_yticks(range(shown.shape[0]), FEATURE_COLUMNS[1:], fontsize=6.5)
+    ax.set_xticks(range(shown.shape[1]), FEATURE_COLUMNS[:-1], rotation=90, fontsize=8.5)
+    ax.set_yticks(range(shown.shape[0]), FEATURE_COLUMNS[1:], fontsize=8.5)
     ax.tick_params(length=0)
     for side in ("left", "bottom"):
         ax.spines[side].set_visible(False)
@@ -221,7 +221,7 @@ def figure_hourly_rate(df: pd.DataFrame, cfg):
         f"mesatarja për të gjitha orët: {100 * overall:.3f}%",
         ha="left",
         va="bottom",
-        fontsize=7.5,
+        fontsize=9.5,
         color=INK_2,
     )
     ax.set_xlabel("Ora e ditës")

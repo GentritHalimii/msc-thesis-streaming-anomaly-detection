@@ -218,7 +218,7 @@ def figures(cfg, results_dir, df, folds, table):
     for i, j in zip(*np.where(~np.isfinite(values)), strict=True):
         # A latent layer at least as wide as the hidden one is not a
         # bottleneck, so those cells were never fitted.
-        ax.text(j, i, "pa ngushticë", ha="center", va="center", fontsize=7, color=MUTED)
+        ax.text(j, i, "pa\nngushticë", ha="center", va="center", fontsize=9, color=MUTED)
     default = (list(grid.index).index(16), list(grid.columns).index(8))
     best = np.unravel_index(np.nanargmax(values), values.shape)
     outline_cell(ax, *default, color=INK, lw=1.2, ls=(0, (2, 1.5)))
@@ -248,7 +248,7 @@ def figures(cfg, results_dir, df, folds, table):
             transform=ax.get_xaxis_transform(),
             ha="center",
             va="top",
-            fontsize=7,
+            fontsize=9,
             color=MUTED,
         )
     ax.plot(
@@ -304,7 +304,7 @@ def figures(cfg, results_dir, df, folds, table):
         (per_fold.columns[-1], per_fold.loc[worst].iloc[-1]),
         xytext=(4, 0),
         textcoords="offset points",
-        fontsize=7,
+        fontsize=9,
         color=INK_2,
         va="center",
     )

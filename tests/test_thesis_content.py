@@ -224,17 +224,20 @@ def test_sources_carry_the_fields_word_formats_them_from():
     from lxml import etree
 
     b = f"{{{BIBLIOGRAPHY_NS}}}"
-    pang, liu, ecb = etree.fromstring(word_sources(["pang2021", "liu2008", "ecb2021"]))
+    pang, liu, ecb = etree.fromstring(word_sources(["pang2021", "liu2008", "ebaecb2025"]))
     names = [(p.findtext(f"{b}First"), p.findtext(f"{b}Last")) for p in pang.iter(f"{b}Person")]
     assert names[-1] == ("A.", "van den Hengel"), "a surname of several words stays whole"
     # Word's journal article has no article-number field; it follows the issue.
     assert pang.findtext(f"{b}Issue") == "2, Art. no. 38"
     assert liu.findtext(f"{b}SourceType") == "ConferenceProceedings"
     assert liu.findtext(f"{b}ConferenceName") == "Proc. 8th IEEE Int. Conf. Data Mining (ICDM)"
-    assert liu.findtext(f"{b}Pages") == "413–422"
-    assert ecb.findtext(f".//{b}Corporate") == "European Central Bank"
+    # Word's IEEE style prints "pp." only for a range written with a hyphen.
+    assert liu.findtext(f"{b}Pages") == "413-422"
+    assert ecb.findtext(f".//{b}Corporate") == (
+        "European Banking Authority and European Central Bank"
+    )
     accessed = [ecb.findtext(f"{b}{part}Accessed") for part in ("Year", "Month", "Day")]
-    assert accessed == ["2026", "September", "13"]
+    assert accessed == ["2026", "November", "16"]
 
 
 def test_reference_entries_print_in_ieee_style():
@@ -466,6 +469,151 @@ def test_figure_references_in_the_thesis_carry_their_label():
         if not text[: m.start()].endswith(("Figura ", "Figura\u00a0"))
     ]
     assert not bare, f"write these as 'Figura [[fig:name]]': {bare}"
+
+
+def test_a_table_reference_is_plain_text_with_its_label():
+    """Tables are referenced like figures: "Tabela [[tab:name]]", where the
+    name is the results file the table is drawn from, becomes the label and
+    the table's number joined by a no-break space."""
+    from build_thesis import Numbering, resolve_citations
+
+    numbering = Numbering()
+    numbering.table_numbers["fold_summary"] = 2
+    text = resolve_citations("Tabela [[tab:fold_summary]] tregon blloqet.", numbering)
+    assert text == "Tabela\u00a02 tregon blloqet."
+    with pytest.raises(ValueError, match="Tabela"):
+        resolve_citations("Siç tregon [[tab:fold_summary]].", numbering)
+    numbering.ambiguous_tables.add("fold_summary")
+    with pytest.raises(ValueError, match="more than one table"):
+        resolve_citations("Tabela [[tab:fold_summary]].", numbering)
+
+
+def test_every_figure_and_table_is_referenced_in_the_text():
+    """The mentor's rule: the text refers to every figure and every table by
+    its number, so none of them stands unexplained."""
+    chapters = all_chapters()
+    prose = " ".join(
+        text
+        for blocks in chapters.values()
+        for block in blocks
+        if block[0] in ("p", "note", "bullets", "numbers")
+        for text in ([block[1]] if block[0] in ("p", "note") else block[1])
+    )
+    missing = [
+        f"{kind}:{block[1]}"
+        for blocks in chapters.values()
+        for block in blocks
+        for kind in [{"fig": "fig", "tab": "tab"}.get(block[0])]
+        if kind and f"[[{kind}:{block[1]}]]" not in prose
+    ]
+    assert not missing, f"never referenced in the text: {missing}"
+
+
+ALBANIAN_ALPHABET = [
+    "a",
+    "b",
+    "c",
+    "ç",
+    "d",
+    "dh",
+    "e",
+    "ë",
+    "f",
+    "g",
+    "gj",
+    "h",
+    "i",
+    "j",
+    "k",
+    "l",
+    "ll",
+    "m",
+    "n",
+    "nj",
+    "o",
+    "p",
+    "q",
+    "r",
+    "rr",
+    "s",
+    "sh",
+    "t",
+    "th",
+    "u",
+    "v",
+    "w",
+    "x",
+    "xh",
+    "y",
+    "z",
+    "zh",
+]
+
+
+def albanian_sort_key(text: str) -> list[tuple[int, int]]:
+    """Order of the Albanian alphabet, as in the CLDR collation for Albanian:
+    the digraphs are letters of their own, so a term starting with "th" comes
+    after every term starting with "t", and case does not count. Spaces and
+    punctuation come before digits, digits before letters, and a letter of
+    another script, such as µ, after the Latin ones."""
+    rank = {letter: i for i, letter in enumerate(ALBANIAN_ALPHABET)}
+    s, key, i = text.casefold(), [], 0
+    while i < len(s):
+        letter = s[i : i + 2] if s[i : i + 2] in rank else s[i]
+        if letter in rank:
+            key.append((2, rank[letter]))
+        elif letter.isdigit():
+            key.append((1, int(letter)))
+        else:
+            key.append((3 if letter.isalpha() else 0, ord(letter)))
+        i += len(letter)
+    return key
+
+
+def test_albanian_sort_key_treats_digraphs_as_letters():
+    words = ["Throughput", "TPE", "dhe", "dy", "çelës", "cikël", "ëndërr", "emër", "AP", "AE"]
+    assert sorted(words, key=albanian_sort_key) == [
+        "AE",
+        "AP",
+        "cikël",
+        "çelës",
+        "dy",
+        "dhe",
+        "emër",
+        "ëndërr",
+        "TPE",
+        "Throughput",
+    ]
+
+
+def test_glossary_is_in_alphabetical_order():
+    """The mentor asked for the terms in alphabetical order (AE before AP);
+    in an Albanian text that is the Albanian alphabet."""
+    from content.front_matter import FJALORI
+
+    terms = [term for term, _ in FJALORI]
+    assert terms == sorted(terms, key=albanian_sort_key)
+
+
+def test_keywords_follow_the_apa_form():
+    """One line under each abstract: the label in italics with its colon, then
+    the terms in roman type, lowercase except proper names, separated by
+    commas, with no full stop after the last one."""
+    from content.front_matter import FJALET_KYCE, KEYWORDS_EN, _keywords
+    from docx_helpers import new_document
+
+    names = {"Apache Kafka", "Isolation Forest", "Autoencoder", "One-Class SVM"}
+    for words in (FJALET_KYCE, KEYWORDS_EN):
+        assert not words.endswith((".", ",", ";"))
+        terms = words.split(", ")
+        assert all(term[0].islower() for term in terms if term not in names), terms
+
+    doc = new_document()
+    _keywords(doc, "Fjalët kyçe", FJALET_KYCE)
+    (para,) = doc.paragraphs
+    label, words = para.runs
+    assert (label.text, label.italic, label.bold) == ("Fjalët kyçe:", True, None)
+    assert (words.text, words.italic) == (f" {FJALET_KYCE}", False)
 
 
 def test_headings_and_captions_take_their_look_from_word_styles():

@@ -122,7 +122,10 @@ def figures(cfg):
     pivot = max_features_tab.pivot(index="fold", columns="max_features", values="ap")
     delta = pivot.sub(pivot[1.0], axis=0)
 
-    fig, (ax1, ax2) = new_figure(ncols=2, figsize=(FULL_WIDTH, 6.6 * CM))
+    # The left panel is a little wider: its ticks at 0.1 and 0.2 sit close together.
+    fig, (ax1, ax2) = new_figure(
+        ncols=2, figsize=(FULL_WIDTH, 6.6 * CM), gridspec_kw={"width_ratios": [1.2, 1]}
+    )
     color = model_color("iforest")
     for mf in delta.columns:
         strip_vertical(ax1, mf, delta[mf].to_numpy(), color)
@@ -172,6 +175,10 @@ def figures(cfg):
         uniform, color=INK_2, lw=0.8, ls=(0, (4, 2)), zorder=1, label="pjesa e pritur nga rastësia"
     )
     rho = spearmanr(share, signal).statistic
+    # Headroom above the highest point, so the coefficient in the corner
+    # never sits on a marker.
+    low, high = share.min(), share.max()
+    ax2.set_ylim(low - 0.05 * (high - low), high + 0.25 * (high - low))
     ax2.text(
         0.98,
         0.97,
@@ -179,10 +186,10 @@ def figures(cfg):
         transform=ax2.transAxes,
         ha="right",
         va="top",
-        fontsize=7.5,
+        fontsize=9.5,
         color=INK_2,
     )
-    ax2.set_xlabel("Fuqia diskriminuese |AUC − 0.5|")
+    ax2.set_xlabel("Fuqia diskriminuese\n|AUC − 0.5|")
     ax2.set_ylabel("Pjesa e ndarjeve")
     ax2.yaxis.set_major_formatter(mpl.ticker.PercentFormatter(xmax=1.0, decimals=1))
     value_grid(ax2, "both")

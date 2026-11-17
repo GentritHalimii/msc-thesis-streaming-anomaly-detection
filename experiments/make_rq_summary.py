@@ -11,6 +11,10 @@ from src.config import REPO_ROOT, load_config
 from src.evaluation.manifest import write_manifest
 from src.evaluation.report import MODEL_LABELS, save_table
 
+# H1 covers arrival rates up to this value (Chapter 3.5); faster rates are
+# capacity tests outside the hypothesis.
+H1_MAX_RATE = 1000
+
 
 def _read(results_dir, name):
     path = results_dir / f"{name}.csv"
@@ -24,6 +28,7 @@ def main(cfg=None):
     lat = _read(results_dir, "latency_summary")
     ens = _read(results_dir, "ensemble_summary")
     budget = _read(results_dir, "budget_summary")
+    capacity = _read(results_dir, "capacity_summary")
 
     label_to_key = {v: k for k, v in MODEL_LABELS.items()}
     bench["key"] = bench["model"].map(label_to_key)
@@ -32,7 +37,21 @@ def main(cfg=None):
     reference = bench[bench["key"] == "logreg"].iloc[0]
 
     static = lat[~lat["prag_adaptiv"]]
-    top_rate = static[static["rate_msg_s"] == static["rate_msg_s"].max()]
+    within = static[static["rate_msg_s"] <= H1_MAX_RATE]
+    capacity_note = ""
+    if capacity is not None:
+        over = capacity[capacity["e2e_ms_mean"] > 1000]
+        if over.empty:
+            capacity_note = (
+                f" Në testin e kapacitetit, deri në {capacity['rate_msg_s'].max():.0f} msg/s, "
+                f"vonesa mesatare mbetet nën 1 s për çdo model."
+            )
+        else:
+            names = ", ".join(sorted(over["model"].unique()))
+            capacity_note = (
+                f" Në testin e kapacitetit vonesa mesatare e kalon 1 s vetëm për {names}, nga "
+                f"{over['rate_msg_s'].min():.0f} msg/s."
+            )
     best_ens = ens.sort_values("ap_mean", ascending=False).iloc[0]
     b100 = budget[budget["budget_k"] == 100].sort_values("recall_at_k", ascending=False)
     cheapest = bench.sort_values("score_us_per_tx").iloc[0]["key"] == best_unsup["key"]
@@ -52,6 +71,17 @@ def main(cfg=None):
         )
     else:
         tuning_note = "Efekti i akordimit nuk është matur ende."
+    # The baseline cleans the training window with historical labels; the
+    # regime without that cleaning answers the same question differently.
+    regime = _read(results_dir, "training_regime")
+    regime_note = ""
+    if regime is not None:
+        rg = regime.sort_values("AP_gjithe_dritarja", ascending=False)
+        regime_note = (
+            " Me trajnim mbi gjithë dritaren, pa pastrim me etiketa, renditja bëhet "
+            + ", ".join(f"{r['Detektori']} {r['AP_gjithe_dritarja']:.3f}" for _, r in rg.iterrows())
+            + "."
+        )
     best_effort = _read(results_dir, "best_effort_interaction")
     if best_effort is not None:
         be = best_effort.sort_values("AP më i mirë i arritshëm", ascending=False)
@@ -87,24 +117,23 @@ def main(cfg=None):
             "Formulimi": "A arrihet vonesë mesatare nën 1 sekondë?",
             "Përgjigjja": "Po",
             "Evidenca": (
-                f"Vonesa mesatare end-to-end {static['e2e_ms_mean'].min():.1f} deri "
-                f"{static['e2e_ms_mean'].max():.1f} ms në {len(static)} konfigurime "
-                f"({static['rate_msg_s'].min():.0f} deri {static['rate_msg_s'].max():.0f} msg/s); "
-                f"p99 më i lartë {static['e2e_ms_p99'].max():.0f} ms. Edhe me "
-                f"{top_rate['rate_msg_s'].iloc[0]:.0f} msg/s consumer-i nuk mbetet pas: "
-                f"throughput {top_rate['throughput_msg_s'].min():.0f} deri "
-                f"{top_rate['throughput_msg_s'].max():.0f} msg/s."
+                f"Në ritmet e hipotezës ({within['rate_msg_s'].min():.0f} deri "
+                f"{within['rate_msg_s'].max():.0f} msg/s) vonesa mesatare end-to-end është "
+                f"{within['e2e_ms_mean'].min():.1f} deri {within['e2e_ms_mean'].max():.1f} ms në "
+                f"{len(within)} konfigurime, mesatare e {within['n_runs'].min():.0f} "
+                f"ekzekutimeve; p99 më i lartë {within['e2e_ms_p99'].max():.0f} ms."
+                f"{capacity_note}"
             ),
         },
         {
             "Pyetja": "PH2",
             "Formulimi": "Cili algoritëm ofron balancën më të mirë?",
-            "Përgjigjja": f"{best_unsup['model']} (konfigurimi bazë)",
+            "Përgjigjja": f"{best_unsup['model']} (konfigurimi bazë, dritare e pastruar)",
             "Evidenca": (
                 f"AP {best_unsup['ap_mean']:.3f} (s.d. {best_unsup['ap_std']:.3f}) në protokollin "
                 f"8-fold, me koston e inferencës {best_unsup['score_us_per_tx']:.2f} µs/tx"
                 f"{', më e ulëta' if cheapest else ''}. Referenca supervised: AP "
-                f"{reference['ap_mean']:.3f}. {tuning_note}"
+                f"{reference['ap_mean']:.3f}. {tuning_note}{regime_note}"
             ),
         },
         {

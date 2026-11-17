@@ -6,11 +6,13 @@ BLOCKS = [
     h1("1", "Hyrje"),
     h2("1.1", "Konteksti dhe motivimi"),
     p("""Pagesat me karta janë sot pjesë e pandashme e ekonomisë evropiane, dhe bashkë me vëllimin e
-      tyre është rritur edhe mashtrimi. Raporti i Bankës Qendrore Evropiane për mashtrimet me karta
-      i vlerëson humbjet vjetore në Zonën e Vetme të Pagesave në Euro në qindra milionë euro, ku
-      pjesa më e madhe vjen nga transaksionet në të cilat karta nuk paraqitet fizikisht [@ecb2021].
-      Për këto transaksione kontrollet që mbështeten te karta ose te terminali kanë pak vlerë,
-      prandaj vendimi duhet marrë kryesisht nga të dhënat e vetë transaksionit."""),
+      tyre është rritur edhe mashtrimi. Raporti i përbashkët i Autoritetit Bankar Evropian dhe i
+      Bankës Qendrore Evropiane për mashtrimet në pagesa e vlerëson vlerën e pagesave të mashtruara
+      me karta në Bashkimin Evropian dhe në Zonën Ekonomike Evropiane në 1.3 miliardë euro për vitin
+      2024. Rreth 83% e kësaj vlere vjen nga pagesat në distancë, në të cilat karta nuk paraqitet
+      fizikisht [@ebaecb2025]. Për këto transaksione kontrollet që mbështeten te karta ose te
+      terminali kanë pak vlerë, prandaj vendimi duhet marrë kryesisht nga të dhënat e vetë
+      transaksionit."""),
     p("""Problemi është i vështirë sepse tri kufizime veprojnë njëkohësisht. Klasat janë
       jashtëzakonisht të çekuilibruara: mashtrimet zakonisht përbëjnë më pak se një për qind të
       trafikut, dhe në këto kushte metrika si saktësia (accuracy) nuk thonë pothuajse asgjë
@@ -104,18 +106,20 @@ BLOCKS = [
     bullets(
         [
             "Një pipeline i plotë mbi Apache Kafka, nga riprodhimi kronologjik i transaksioneve "
-            "deri te alarmet në PostgreSQL dhe Grafana, me vonesë end-to-end të matur në katër "
-            "ritme mbërritjeje.",
+            "deri te alarmet në PostgreSQL dhe Grafana. Vonesa end-to-end, nga producer-i deri te "
+            "vendimi, u mat në ritme nga 50 deri 10 000 mesazhe në sekondë, tri herë për çdo "
+            "konfigurim.",
             "Krahasimi i unifikuar i Isolation Forest-it, Autoencoder-it dhe One-Class SVM-së me "
             "një referencë supervised mbi të njëjtën infrastrukturë, me cilësinë dhe koston "
             "operacionale krahas njëra-tjetrës, në një protokoll rolling-origin 8-fold ku në çdo "
             "fold rindërtohen nga fillimi skaluesi, modelet dhe pragjet.",
             "Rezultati negativ për ansamblet, i shpjeguar në nivel transaksioni: detektorët "
             "gabojnë njësoj, prandaj kombinimi i tyre nuk sjell informacion të ri.",
-            "Dy gjetje metodologjike të matura mbi të njëjtat të dhëna dhe të njëjtat modele: "
+            "Tri gjetje metodologjike të matura mbi të njëjtat të dhëna dhe të njëjtat modele: "
             "ndarja e rastësishme e rrit Average Precision të metodave unsupervised rreth tri "
-            "herë, dhe zgjedhja e paraprocesimit ndikon në rezultat më shumë se zgjedhja mes tri "
-            "algoritmeve.",
+            "herë; konfigurimi i detektorëve peshon sa zgjedhja mes tri algoritmeve ose më shumë; "
+            "dhe trajnimi pa pastrimin e dritares me etiketat historike e përmbys renditjen e "
+            "detektorëve.",
             "Një prag adaptiv me dritare rrëshqitëse për shtresën e alarmeve, i cili e bën "
             "ngarkesën e hetimeve më të qëndrueshme për detektorët unsupervised.",
         ]

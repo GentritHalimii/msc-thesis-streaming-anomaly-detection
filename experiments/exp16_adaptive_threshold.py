@@ -49,7 +49,13 @@ def alert_rate_profile(flags: np.ndarray, n_slices: int = SUBBLOCKS) -> np.ndarr
     return np.array([part.mean() for part in np.array_split(flags, n_slices)])
 
 
-def figures(cfg, prof: pd.DataFrame, per_fold: pd.DataFrame, fold_info: pd.DataFrame) -> None:
+def figures(
+    cfg,
+    prof: pd.DataFrame,
+    per_fold: pd.DataFrame,
+    fold_info: pd.DataFrame,
+    same_f1: dict[str, float] | None = None,
+) -> None:
     # --- Workload over time, one panel per unsupervised detector ----------
     # The supervised reference is left out here: its alert rate is the same
     # story told by the table, and pooling it with the detectors would
@@ -73,7 +79,7 @@ def figures(cfg, prof: pd.DataFrame, per_fold: pd.DataFrame, fold_info: pd.DataF
             ax.plot([f, f + 1], [target[f]] * 2, color=INK_2, lw=0.8, ls=(0, (2, 2)))
             if f > 0:
                 ax.axvline(f, color=GRID, lw=0.8, zorder=0)
-        ax.set_title(MODEL_LABELS[name], loc="left", fontsize=8.2)
+        ax.set_title(MODEL_LABELS[name], loc="left", fontsize=10.2)
         ax.yaxis.set_major_formatter(mpl.ticker.PercentFormatter(xmax=1.0, decimals=1))
         ax.yaxis.set_major_locator(mpl.ticker.MaxNLocator(3))
         ax.set_ylim(0, None)
@@ -133,12 +139,26 @@ def figures(cfg, prof: pd.DataFrame, per_fold: pd.DataFrame, fold_info: pd.DataF
             markeredgewidth=0.8,
             linestyle="none",
         )
+        if same_f1 and name in same_f1:
+            # A static cut with the adaptive rule's alert count: where it
+            # lands next to the filled marker shows how much of the F1 gain
+            # the number of alerts alone explains.
+            ax.plot(
+                end["cv"],
+                same_f1[name],
+                marker="x",
+                markersize=7,
+                markeredgewidth=1.4,
+                color=INK_2,
+                linestyle="none",
+                zorder=5,
+            )
         ax.annotate(
             MODEL_LABELS[name],
             (start["cv"], start["f1"]),
             xytext=(8, -2),
             textcoords="offset points",
-            fontsize=7.5,
+            fontsize=9.5,
             color=INK_2,
             va="center",
         )
@@ -159,8 +179,27 @@ def figures(cfg, prof: pd.DataFrame, per_fold: pd.DataFrame, fold_info: pd.DataF
                 linestyle="none",
             ),
             Line2D([], [], marker="o", markersize=7, color=INK_2, linestyle="none"),
+            *(
+                [
+                    Line2D(
+                        [],
+                        [],
+                        marker="x",
+                        markersize=7,
+                        markeredgewidth=1.4,
+                        color=INK_2,
+                        linestyle="none",
+                    )
+                ]
+                if same_f1
+                else []
+            ),
         ],
-        labels=["Prag statik", "Prag adaptiv"],
+        labels=[
+            "Prag statik",
+            "Prag adaptiv",
+            *(["Prag statik me po aq alarme sa ai adaptiv"] if same_f1 else []),
+        ],
     )
     save_figure(fig, REPO_ROOT / cfg.results_dir, "adaptive_tradeoff")
 
@@ -172,7 +211,7 @@ def main(cfg=None):
     folds = load_folds(results_dir, cfg.protocol.n_folds)
     at = cfg.kafka.adaptive_threshold
 
-    rows, profiles = [], []
+    rows, profiles, same_rows = [], [], []
     for i, f in enumerate(folds):
         contamination = (
             float(cfg.contamination)
@@ -232,6 +271,31 @@ def main(cfg=None):
                         }
                     )
                 )
+                if mode == "adaptiv":
+                    # A fair comparison holds the workload fixed: one static
+                    # cut for the whole block that raises exactly as many
+                    # alerts as the adaptive rule did. If F1 is the same, the
+                    # adaptive gain came from the number of alerts, not from
+                    # where in time they were placed.
+                    n = int(flags.sum())
+                    top = np.zeros_like(flags)
+                    top[np.argsort(-s, kind="stable")[:n]] = True
+                    tp_same = float(np.sum(top & (y == 1)))
+                    p_same = tp_same / max(n, 1)
+                    r_same = tp_same / max(int((y == 1).sum()), 1)
+                    same_rows.append(
+                        {
+                            "fold": i,
+                            "model": name,
+                            "target_rate": contamination,
+                            "n_alerts": n,
+                            "precision_same": p_same,
+                            "recall_same": r_same,
+                            "f1_same": 2 * p_same * r_same / (p_same + r_same)
+                            if (p_same + r_same) > 0
+                            else 0.0,
+                        }
+                    )
 
     per_fold = pd.DataFrame(rows)
     save_table(per_fold, results_dir, "adaptive_threshold_per_fold", float_fmt="%.5f")
@@ -255,7 +319,30 @@ def main(cfg=None):
 
     prof = pd.concat(profiles, ignore_index=True)
     save_table(prof, results_dir, "adaptive_threshold_profiles", float_fmt="%.6f")
-    figures(cfg, prof, per_fold, fold_info)
+
+    # The same workload, placed once for the whole block instead of by the
+    # sliding window: the comparison that separates the effect of adapting
+    # from the effect of simply raising more alerts.
+    same = pd.DataFrame(same_rows)
+    figures(cfg, prof, per_fold, fold_info, same.groupby("model")["f1_same"].mean().to_dict())
+    f1_by = per_fold.pivot_table(index=["fold", "model"], columns="regjimi", values="f1")
+    same = same.join(f1_by, on=["fold", "model"])
+    same_summary = (
+        same.groupby("model")
+        .agg(
+            target_rate=("target_rate", "mean"),
+            alerts_per_block=("n_alerts", "mean"),
+            f1_statik=("statik", "mean"),
+            f1_adaptiv=("adaptiv", "mean"),
+            f1_statik_i_njejti_numer=("f1_same", "mean"),
+            precision_statik_i_njejti_numer=("precision_same", "mean"),
+            recall_statik_i_njejti_numer=("recall_same", "mean"),
+        )
+        .reset_index()
+    )
+    same_summary["model"] = same_summary["model"].map(lambda m: MODEL_LABELS.get(m, m))
+    save_table(same_summary, results_dir, "adaptive_threshold_same_alerts")
+    print(same_summary.to_string(index=False))
 
     stat = per_fold[per_fold["regjimi"] == "statik"]
     adap = per_fold[per_fold["regjimi"] == "adaptiv"]
@@ -289,6 +376,16 @@ def main(cfg=None):
         f"i nxjerrë nga kuantili i trajnimit është tashmë i kalibruar mirë për një model që "
         f"prodhon probabilitete, prandaj zëvendësimi i tij me një kuantil mbi dritare "
         f"rrëshqitëse vetëm sa e detyron modelin të alarmojë më shumë se ç'duhet."
+    )
+    su_same = same[same["model"].isin(unsup)]
+    verdict += (
+        f" Me të njëjtin numër alarmesh, një prag i vetëm statik për bllokun jep për "
+        f"detektorët unsupervised F1 {su_same['f1_same'].mean():.4f}, kundrejt "
+        f"{su_same['adaptiv'].mean():.4f} me pragun adaptiv; rritja e F1 vjen pra nga "
+        f"numri më i madh i alarmeve ({su_same['n_alerts'].mean():.0f} për bllok, ose "
+        f"{100 * au['alert_rate'].mean():.2f}% e transaksioneve, kundrejt normës së synuar "
+        f"{100 * su_same['target_rate'].mean():.2f}%), "
+        f"jo nga përshtatja në kohë. Vlera e pragut adaptiv është qëndrueshmëria e ngarkesës."
     )
     (results_dir / "adaptive_threshold_verdict.txt").write_text(verdict + "\n")
     print("\n" + verdict)

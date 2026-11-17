@@ -41,6 +41,7 @@ from src.evaluation.report import (
     strip_vertical,
     value_grid,
 )
+from src.evaluation.stats import wilcoxon_pairs
 from src.models.build import build_model
 
 KERNELS = ["rbf", "poly", "sigmoid", "linear"]
@@ -177,6 +178,24 @@ def summarise(cfg, results_dir, table):
     used = int(cfg.models.ocsvm.train_subsample)
     _learning_figure(cfg, table, learning, used)
 
+    # Equal means can hide a consistent loss in most blocks behind a gain in
+    # one. Every subsample size is therefore also compared with the one in use,
+    # fold by fold.
+    ap_by_size = (
+        table[table["study"] == "nën-mostra"]
+        .assign(train_subsample=lambda d: d["train_subsample"].astype(int))
+        .pivot(index="fold", columns="train_subsample", values="ap")
+    )
+    paired = wilcoxon_pairs(
+        ap_by_size.rename(columns=str), [(str(n), str(used)) for n in SUBSAMPLES if n != used]
+    ).drop(columns=["p_holm", "significant_holm_05"])
+    paired["median_diff"] = [
+        float((ap_by_size[int(a)] - ap_by_size[used]).median()) for a in paired["model_a"]
+    ]
+    paired = paired.rename(columns={"model_a": "train_subsample", "model_b": "kundrejt"})
+    save_table(paired, results_dir, "ocsvm_subsample_paired", float_fmt="%.4f")
+    print(paired.to_string(index=False))
+
     at_used = learning.loc[learning["train_subsample"] == used].iloc[0]
     at_max = learning.iloc[-1]
     best_kernel = kernels.iloc[0]
@@ -270,7 +289,7 @@ def _learning_figure(cfg, table: pd.DataFrame, learning: pd.DataFrame, used: int
         ax.set_xscale("log")
         ax.set_xticks([1000, 10000, 80000], ["1 000", "10 000", "80 000"])
         ax.xaxis.set_minor_formatter(mpl.ticker.NullFormatter())
-        ax.set_title(label, loc="left", fontsize=8.5)
+        ax.set_title(label, loc="left", fontsize=10.5)
         value_grid(ax, "y")
     for ax in (ax1, ax2, ax3):
         ax.set_yscale("log")

@@ -5,13 +5,12 @@ from blocks import bullets, h1, h2, h3, note, numbers, p, tab
 _SINTEZA = [
     h1("6", "Diskutime dhe përfundime"),
     h2("6.1", "Përmbledhje e gjetjeve"),
-    p("""Tabela më poshtë jep përgjigjen e drejtpërdrejtë për secilën nga tri pyetjet hulumtuese dhe
-      evidencën përkatëse. Ajo gjenerohet automatikisht nga rezultatet e eksperimenteve, kështu që
-      përputhet me kapitujt e mëparshëm."""),
+    p("""Tabela [[tab:rq_summary]] jep përgjigjen e drejtpërdrejtë për secilën nga tri pyetjet
+      hulumtuese dhe evidencën përkatëse. Ajo gjenerohet automatikisht nga rezultatet e
+      eksperimenteve, kështu që përputhet me kapitujt e mëparshëm."""),
     tab(
         "rq_summary",
         "Përgjigjet për tri pyetjet hulumtuese dhe evidenca përkatëse.",
-        font_size=8.5,
     ),
     p("""Në këtë punim u ndërtua dhe u vlerësua një sistem i plotë për zbulimin e anomalive mbi një
       rrjedhë të simuluar transaksionesh financiare, i cili lidh Apache Kafka-n me tri algoritme
@@ -19,30 +18,37 @@ _SINTEZA = [
       këto:"""),
     numbers(
         [
-            "Sistemi është i realizueshëm operacionalisht me diferencë të madhe. Vonesa mesatare "
-            "end-to-end është 15 deri 53 herë nën objektivin prej një sekonde në të 16 "
-            "konfigurimet e testuara, percentili 99 nuk e kalon 132 milisekonda, dhe inferenca zë "
-            "nën 10% të vonesës edhe në rastin më të keq.",
+            "Sistemi është i realizueshëm operacionalisht me diferencë të madhe. Në ritmet deri në "
+            "1000 mesazhe në sekondë vonesa mesatare end-to-end është 28 deri 58 milisekonda, 17 "
+            "deri 35 herë nën objektivin prej një sekonde, dhe ndryshon pak nga një ekzekutim në "
+            "tjetrin. Një consumer i vetëm e mban ritmin deri në 5000 mesazhe në sekondë me tre "
+            "nga katër modelet, ndërsa me Isolation Forest-in, të cilin e ngadalëson kostoja fikse "
+            "e inferencës për çdo mikro-grup, kufiri ndodhet rreth 2000 deri 3000.",
             "Në konfigurimin bazë Autoencoder-i ofron balancën më të mirë mes cilësisë dhe kostos, "
             "me AP 0.193 dhe koston më të ulët të inferencës, i ndjekur nga One-Class SVM dhe "
             "Isolation Forest. Diferenca mes Autoencoder-it dhe Isolation Forest-it është "
             "statistikisht e qëndrueshme, ajo mes Autoencoder-it dhe One-Class SVM-së jo. "
             "Referenca supervised mbetet shumë përpara, me AP 0.734, dhe e mund secilin detektor "
             "në të tetë fold-et.",
+            "Ky rezultat vlen për trajnimin mbi transaksione normale të pastruara me etiketat "
+            "historike. Me trajnim mbi gjithë dritaren, mashtrimet përfshirë, Autoencoder-i bie "
+            "nga 0.193 në 0.047 dhe One-Class SVM nga 0.150 në 0.111, në të tetë fold-et, ndërsa "
+            "Isolation Forest-i nuk ndikohet; renditja përmbyset dhe One-Class SVM del i pari.",
             "Asnjë variant i ansamblit nuk e kalon modelin më të mirë individual, sepse detektorët "
             "gabojnë njësoj. Me 100 alarme për bllok, 37% e mashtrimeve nuk i arrin asnjë prej "
             "tyre, ndërsa referenca supervised kap 59% të këtyre mashtrimeve.",
-            "Konfigurimi peshon më shumë se algoritmi. Transformimi kuantil e rrit One-Class "
+            "Konfigurimi peshon sa algoritmi ose më shumë. Transformimi kuantil e rrit One-Class "
             "SVM-në me 0.218 AP në të tetë fold-et, dhe efekti mbetet kur skaluesi zgjidhet vetëm "
             "nga fold-et e mëparshme. Kur secili detektor merr konfigurimin e tij më të mirë, "
             "raporti mes më të mirit dhe më të dobëtit bie nga 2.1 në 1.15.",
             "Ndarja e rastësishme e të dhënave, e zakonshme në literaturë, e rrit AP-në e metodave "
-            "unsupervised rreth tri herë, më shumë se sa ndryshon ajo nga algoritmi më i dobët te "
-            "më i miri.",
+            "unsupervised rreth tri herë, nga 2.5 deri 3.6 herë në dhjetë ndarje të rastësishme, "
+            "më shumë se sa ndryshon ajo nga algoritmi më i dobët te më i miri.",
             "Pragu ka peshë praktike. Me një prag sipas normës së mashtrimit detektorët "
             "unsupervised kapin pak, sepse mashtrimet nuk zënë majën e renditjes së tyre. Pragu "
-            "adaptiv e bën ngarkesën e hetimeve më të qëndrueshme dhe rrit F1 për të tre, "
-            "kryesisht sepse rikthen numrin e synuar të alarmeve.",
+            "adaptiv e bën ngarkesën e hetimeve më të qëndrueshme. Ai rrit edhe F1 për të tre "
+            "detektorët unsupervised, por vetëm sepse jep më shumë alarme: një prag statik me po "
+            "aq alarme arrin të paktën të njëjtin F1.",
         ]
     ),
     h2("6.2", "Interpretimi"),
@@ -81,13 +87,15 @@ _SINTEZA = [
       vjen nga kombinimi i shumë dimensioneve me sinjal të përqendruar në pak komponentë. Në
       probleme ku sinjali shpërndahet mbi shumë veçori, e njëjta rastësi e ndarjeve mund të jetë
       avantazh."""),
-    h3("6.2.3", "Pse paraprocesimi peshon më shumë se algoritmi"),
-    p("""Rezultati që ndoshta të befason më shumë është se zgjedhja e paraprocesimit ndikon më shumë
-      se dallimet mes vetë algoritmeve. Shpjegimi vjen nga mekanizmi i tyre i përbashkët: të tri e
-      përcaktojnë anomalinë përmes largësisë ose ngjeshjes, dhe largësia përcaktohet nga shkalla e
-      veçorive. Kur ndryshon shkalla, ndryshon vetë problemi që zgjidh algoritmi. Efekti nuk vjen
-      nga përzgjedhja pas faktit, sepse mbetet edhe kur skaluesi zgjidhet vetëm nga fold-et e
-      mëparshme."""),
+    h3("6.2.3", "Pse paraprocesimi peshon aq shumë"),
+    p("""Rezultati që ndoshta të befason më shumë është se për dy nga tri detektorët zgjedhja e
+      paraprocesimit ndikon po aq ose më shumë se dallimet mes vetë algoritmeve: për One-Class
+      SVM-në më shumë dhe për Autoencoder-in afërsisht njësoj, ndërsa për Isolation Forest-in më pak
+      (nënkapitulli 5.4.1). Shpjegimi vjen
+      nga mekanizmi i tyre i përbashkët: të tri e përcaktojnë anomalinë përmes largësisë ose
+      ngjeshjes, dhe largësia përcaktohet nga shkalla e veçorive. Kur ndryshon shkalla, ndryshon
+      vetë problemi që zgjidh algoritmi. Efekti nuk vjen nga përzgjedhja pas faktit, sepse mbetet
+      edhe kur skaluesi zgjidhet vetëm nga fold-et e mëparshme."""),
     p("""Asimetria me referencën supervised e mbështet këtë interpretim. Regresioni logjistik
       mëson një drejtim diskriminues dhe, kur veçoritë shkallëzohen ndryshe, rregullon koeficientët,
       kështu që rezultati i tij nuk ndryshon. E njëjta asimetri u pa edhe me ndarjen e rastësishme,
@@ -100,7 +108,8 @@ _SINTEZA = [
       zhurma."""),
     p("""Analiza në nivel transaksioni tregon se kushti nuk plotësohet. Një pjesë e madhe e
       mashtrimeve që arrihen brenda buxhetit arrihen nga të tre detektorët njëkohësisht, ndërsa ato
-      që nuk arrihen nuk i arrin asnjëri. Renditjet e tyre kanë korrelacion 0.81 deri 0.91.
+      që nuk arrihen nuk i arrin asnjëri. Renditjet e tyre kanë korrelacion 0.81 deri 0.91, dhe
+      vetëm mbi mashtrimet 0.80 deri 0.91.
       Detektorët pra gabojnë njësoj, sepse të tre mbështeten te e njëjta gjeometri, dhe në këto
       kushte kombinimi vetëm e hollon sinjalin e anëtarit më të mirë. Procedura lakmitare arrin vetë
       në të njëjtin përfundim, sepse në çdo fold me histori zgjedh vetëm Autoencoder-in."""),
@@ -126,12 +135,17 @@ _SINTEZA = [
       raportojnë vetëm të parën dhe e paraqesin si të dytën japin shpesh renditje që nuk
       përsëriten."""),
     h3("6.2.6", "Kapaciteti i një consumer-i dhe shkallëzimi horizontal"),
-    p("""Në ritmet e testuara consumer-i nuk mbetet pas (nënkapitulli 5.1), por kapaciteti i tij ka
-      kufi. Ai i përpunon mikro-grupet njëri pas tjetrit në një proces të vetëm, kështu që
-      kapaciteti i tij varet kryesisht nga koha që i duhet për një mikro-grup dhe jo nga numri i
-      bërthamave të makinës. Consumer-i i Isolation Forest-it, më i kushtueshmi, përdori 73% të një
-      bërthame në 2000 mesazhe në sekondë, prandaj për të kufiri ndodhet mbi ritmet e testuara, por
-      jo shumë larg tyre."""),
+    p("""Testi i kapacitetit e gjeti kufirin e një consumer-i (nënkapitulli 5.1). Consumer-i i
+      përpunon mikro-grupet njëri pas tjetrit në një proces të vetëm, kështu që kapaciteti i tij
+      varet kryesisht nga koha që i duhet për një mikro-grup dhe jo nga numri i bërthamave të
+      makinës. Për Isolation Forest-in kjo kohë është rreth 20 milisekonda, kryesisht kosto fikse
+      për thirrje, dhe kufiri ndodhet rreth 2000 deri 3000 mesazhe në sekondë. Për Autoencoder-in
+      dhe referencën inferenca është aq e lirë sa kufiri, i cili arrihet rreth 10 000 mesazhe në
+      sekondë, vjen nga pjesa tjetër e punës për çdo mesazh dhe nga procesori që e ndajnë
+      producer-i, broker-i dhe consumer-i; për One-Class SVM-në në këtë ritëm i shtohet edhe vetë
+      inferenca. Për Isolation Forest-in kufiri mund të ngrihej me shumë gjasë edhe pa shtuar
+      consumer-a, me mikro-grupe më të mëdha që e ndajnë koston fikse mbi më shumë mesazhe, me
+      çmimin e një pritjeje pak më të gjatë për mesazh."""),
     p("""Kur ritmi e kalon këtë kufi, zgjidhja e natyrshme në Kafka është shkallëzimi horizontal.
       Topic-u i transaksioneve ndahet në disa particione dhe disa consumer-a punojnë në të njëjtin
       consumer group. Kafka ia cakton çdo particion vetëm një consumer-i të grupit, kështu që
@@ -143,17 +157,33 @@ _SINTEZA = [
       në këtë punim dhe mbetet ndër drejtimet e nënkapitullit 6.6."""),
     h2("6.3", "Krahasimi me literaturën"),
     p("""Vlerat absolute të raportuara këtu janë dukshëm më të ulëta se shumica e rezultateve të
-      publikuara për këtë dataset. Punimi jep tri shpjegime të matura për këtë dallim."""),
+      publikuara për këtë dataset. Tabela [[tab:literature_comparison]] i vendos disa prej tyre
+      pranë rezultateve të këtij punimi, bashkë me mënyrën si u ndanë të dhënat dhe metrikën e
+      raportuar [@pumsirirat2018], [@ileberi2022], [@han2022adbench]. Përfshihen vetëm punimet,
+      teksti i plotë i të cilave u verifikua; disa raportojnë vetëm saktësi ose AUC-ROC, prandaj
+      krahasimi i drejtpërdrejtë i AP-së është i mundur vetëm me ADBench."""),
+    tab(
+        "literature_comparison",
+        "Rezultate të publikuara mbi dataset-in ULB krahasuar me ato të këtij punimi.",
+        widths=[3.3, 4.2, 3.3, 4.2],
+    ),
+    p("""Punimi jep tri shpjegime të matura për dallimin."""),
     p("""I pari është protokolli. Krahasimi i drejtpërdrejtë tregoi se ndarja e rastësishme e
       stratifikuar e rrit AP-në e metodave unsupervised rreth tri herë mbi të njëjtat të dhëna dhe
       me të njëjtat modele. Studimet që përdorin ndarje të rastësishme nuk kanë domosdoshmërisht
       gabime në implementim, por zgjidhin një problem më të lehtë se ai që has një sistem në
-      prodhim."""),
+      prodhim. Rezultatet e ADBench shkojnë në të njëjtin drejtim: me ndarje të rastësishme
+      70/30, Isolation Forest-i arrin aty AP 0.217 dhe One-Class SVM 0.476, ndërsa këtu, me
+      protokoll kronologjik, 0.091 dhe 0.150 [@han2022adbench]. Dallimi nuk vjen vetëm nga ndarja,
+      sepse ndryshojnë edhe paraprocesimi dhe hiperparametrat, por drejtimi i tij përputhet me
+      fryrjen e matur në nënkapitullin 5.6."""),
     p("""I dyti është metrika. Një pjesë e literaturës për këtë dataset raporton AUC-ROC mbi 0.95 si
-      sukses. Këtu AUC-ROC mbi 0.94 arrihet edhe nga detektori më i dobët i studimit, i cili ka AP
-      nën 0.10. Në këtë nivel çekuilibri kjo metrikë nuk e dallon një detektor të përdorshëm nga një
-      i papërdorshëm, siç e argumentuan Davis dhe Goadrich [@davis2006] dhe e treguan Saito dhe
-      Rehmsmeier [@saito2015]."""),
+      sukses; Autoencoder-i i Pumsirirat-it dhe Yan-it, për shembull, arrin AUC-ROC 0.960
+      [@pumsirirat2018]. Këtu AUC-ROC mbi 0.94 arrihet edhe nga detektori më i dobët i studimit, i
+      cili ka AP nën 0.10, dhe Autoencoder-i i këtij punimi arrin AUC-ROC 0.943 me AP 0.193. Në këtë
+      nivel çekuilibri kjo metrikë nuk e dallon një detektor të përdorshëm nga një i papërdorshëm,
+      siç e argumentuan Davis dhe Goadrich [@davis2006] dhe e treguan Saito dhe Rehmsmeier
+      [@saito2015]."""),
     p("""I treti është mungesa e agregimit. Punimet më të suksesshme për zbulimin e mashtrimeve
       mbështeten te veçori të agreguara për llogari mbi dritare kohore [@whitrow2009],
       [@bahnsen2016], ose te modelimi i sekuencës së transaksioneve të një mbajtësi
@@ -167,17 +197,20 @@ _SINTEZA = [
       detektorët unsupervised kapen nga referenca, kështu që dy burimet e informacionit nuk
       mbivendosen plotësisht."""),
     h2("6.4", "Implikime praktike"),
-    p("""Për një institucion që do të ndërtonte një sistem të tillë, rezultatet sugjerojnë pesë
+    p("""Për një institucion që do të ndërtonte një sistem të tillë, rezultatet sugjerojnë gjashtë
       përfundime konkrete."""),
     bullets(
         [
-            "Infrastruktura nuk është pengesa. Me një broker dhe një consumer, vonesa mbetet shumë "
-            "nën objektiv dhe consumer-i nuk mbetet pas deri në 2000 transaksione në sekondë, "
-            "ritmi më i lartë i testuar. Investimi duhet drejtuar te "
-            "cilësia e modelit dhe te të dhënat, jo te optimizimi i transportit.",
-            "Paraprocesimi duhet zgjedhur bashkë me modelin. Në këtë studim ai dha përfitime më të "
-            "mëdha se çdo zgjedhje algoritmi, dhe një sistem që e trajton skaluesin si detaj "
-            "implementimi lë pa shfrytëzuar një përmirësim të konsiderueshëm.",
+            "Infrastruktura nuk është pengesa. Me një broker dhe një consumer në një makinë të "
+            "vetme, vonesa mbetet shumë nën objektiv dhe sistemi e mban ritmin deri në 5000 "
+            "transaksione në sekondë me tre nga katër modelet. Për ritme më të larta ose për "
+            "modele më të kushtueshme zgjidhja e natyrshme është shkallëzimi horizontal i "
+            "nënkapitullit 6.2.6. Investimi duhet drejtuar te cilësia e modelit dhe te të "
+            "dhënat, jo te optimizimi i transportit.",
+            "Paraprocesimi duhet zgjedhur bashkë me modelin. Në këtë studim ai i dha One-Class "
+            "SVM-së një përfitim më të madh se zgjedhja e algoritmit dhe Autoencoder-it afërsisht "
+            "sa ajo, kështu që një sistem që e trajton skaluesin si detaj implementimi lë pa "
+            "shfrytëzuar një përmirësim të konsiderueshëm.",
             "Kostoja e inferencës duhet të jetë kriter zgjedhjeje që në fillim. Dy metoda me "
             "cilësi të ngjashme mund të kenë kosto të inferencës që ndryshon qindra herë, dhe në "
             "një rrjedhë ky dallim përcakton nëse metoda mund të vendoset.",
@@ -185,11 +218,15 @@ _SINTEZA = [
             "supervised dhe analiza e mashtrimeve që nuk kapen sugjerojnë që metodat unsupervised "
             "të përdoren si shtresë plotësuese për periudhën pa etiketa, jo si zëvendësim i "
             "përhershëm.",
-            "Pragu adaptiv është i dobishëm për detektorët unsupervised, por jo për një model të "
-            "kalibruar. Një prag i fiksuar gjatë trajnimit e bën ngarkesën e hetimeve të "
-            "paparashikueshme sa herë që të dhënat ndryshojnë; pragu adaptiv e zbut këtë luhatje "
-            "dhe rikthen numrin e synuar të alarmeve, por te një model që jep probabilitete të "
-            "kalibruara shton alarme të panevojshme.",
+            "Zgjedhja e detektorit varet nga etiketat historike. Nëse ato mund të përdoren për ta "
+            "pastruar dritaren e trajnimit, Autoencoder-i jep balancën më të mirë; nëse jo, "
+            "Isolation Forest-i ose One-Class SVM janë më të sigurt, sepse pa pastrim "
+            "Autoencoder-i humbet rreth tre të katërtat e AP-së.",
+            "Pragu adaptiv shërben për ta mbajtur ngarkesën e hetimeve të qëndrueshme, jo për ta "
+            "përmirësuar zbulimin. Një prag i fiksuar gjatë trajnimit e bën ngarkesën të "
+            "paparashikueshme sa herë që të dhënat ndryshojnë, dhe pragu adaptiv e zbut këtë "
+            "luhatje. Rritja e F1 që e shoqëron vjen nga numri më i madh i alarmeve, dhe te një "
+            "model që jep probabilitete të kalibruara ai shton alarme të panevojshme.",
         ]
     ),
     h2("6.5", "Kufizimet"),
@@ -222,11 +259,12 @@ _SINTEZA = [
             "dhe i deklaruar paraprakisht.",
             "Numri i pozitivëve për bllok testimi është nga 13 deri në 88, prandaj disa vlerësime "
             "për fold janë të zhurmshme, siç shihet në devijimet standarde të mëdha.",
-            "Detektorët unsupervised trajnohen mbi transaksionet normale të dritares, të pastruara "
-            "me etiketat historike, dhe kontaminimi bazë merret nga norma e mashtrimit në dritaren "
-            "e trajnimit. Të dyja përdorin etiketa historike, njësoj si referenca supervised; në "
-            "një sistem krejtësisht pa etiketa, dritarja e trajnimit do të përmbante edhe "
-            "mashtrimet.",
+            "Detektorët unsupervised trajnohen në protokollin kryesor mbi transaksionet normale "
+            "të dritares, të pastruara me etiketat historike. Regjimi pa pastrim u mat në "
+            "nënkapitullin 5.6 dhe e ndryshon renditjen, por vetëm për dy skajet: dritaren "
+            "plotësisht të pastruar dhe atë fare të papastruar. Kontaminimi bazë merret "
+            "gjithashtu nga norma e mashtrimit në dritaren e trajnimit; ai nuk ndikon AP-në, por "
+            "ndikon pragun dhe numrin e alarmeve.",
             "Hiperparametrat u akorduan një herë, në dritaren e ndarjes 70/30, dhe jo brenda çdo "
             "fold-i. Kjo dritare përmban blloqet e testimit të fold-eve 0 deri 3; efekti u "
             "raportua prandaj edhe vetëm për fold-et 4 deri 7, dhe doli i njëjtë. Akordimi për çdo "
@@ -241,9 +279,16 @@ _SINTEZA = [
             "Ritmi i mbërritjes është sintetik dhe konstant. Trafiku real vjen me shpërthime, dhe "
             "shpërthimet do ta rrisnin bishtin e vonesës.",
             "Të gjitha matjet u bënë në një host me një broker dhe një particion, prandaj "
-            "rezultatet nuk thonë asgjë për sjelljen në një sistem të shpërndarë.",
+            "rezultatet nuk thonë asgjë për sjelljen në një sistem të shpërndarë. Në testin e "
+            "kapacitetit producer-i, broker-i dhe consumer-i e ndajnë të njëjtin procesor, kështu "
+            "që kufiri i matur është i gjithë sistemit në këtë makinë dhe jo vetëm i consumer-it.",
+            "Çdo konfigurim u mat tri herë. Tri ekzekutime japin një ide të zhurmës mes tyre, por "
+            "jo një interval besimi të ngushtë; dallimet e vogla mes konfigurimeve duhen lexuar "
+            "si të tilla.",
             "Vonesa end-to-end matet deri te dorëzimi i alarmit producer-it të Kafka-s; konfirmimi "
             "i broker-it për alarmin nuk përfshihet.",
+            "Vonesa u mat pa ruajtjen në PostgreSQL. Ruajtja bëhet në grupe dhe kontrollohet nga "
+            "testet e integrimit, por kostoja e saj në vonesë nuk është matur.",
             "Sistemi nuk trajton dështime, ripërsëritje ose mesazhe të dyfishta, dhe nuk ka "
             "ritrajnim automatik.",
         ]
@@ -257,6 +302,9 @@ _SINTEZA = [
             "atyre supervised ngushtohet kur konteksti është i disponueshëm; analiza e "
             "mashtrimeve që nuk kapen sugjeron se aty ndodhet pjesa më e madhe e hapësirës për "
             "përmirësim.",
+            "Regjimet e ndërmjetme të trajnimit, ku dritarja pastrohet vetëm me etiketat që kanë "
+            "mbërritur deri në atë moment. Kështu do të matej se sa nga përparësia e regjimit "
+            "semi-supervised mbetet kur vonesa e verifikimit i lë disa mashtrime pa etiketë.",
             "Kombinimi hibrid në stilin e Carcillo-s dhe bashkautorëve [@carcillo2021], ku pikët "
             "unsupervised përdoren si veçori shtesë për një model supervised të trajnuar mbi "
             "etiketat e vonuara.",
@@ -279,16 +327,22 @@ _SINTEZA = [
       objektivi operacional prej një sekonde arrihet me diferencë të madhe. Pengesa reale është
       cilësia e zbulimit pa etiketa, dhe punimi u përqendrua te matja e saj."""),
     p("""Dy nga tri hipotezat u konfirmuan dhe një u refuzua. Sistemi arrin vonesë nën një sekondë.
-      Të paktën një metodë unsupervised arrin cilësi qartë mbi rastësinë dhe e ruan renditjen e saj
-      në fold-e, dhe në konfigurimin bazë Autoencoder-i ofron balancën më të mirë mes cilësisë dhe
-      kostos. Qasja ensemble nuk e kalon modelin më të mirë individual; ky rezultat raportohet si
-      gjetje dhe jo si dështim, bashkë me shpjegimin e tij në nivel transaksioni."""),
+      Të tri metodat unsupervised arrijnë cilësi qartë mbi rastësinë në çdo fold, dhe në
+      konfigurimin bazë renditja e tyre ka rregull nëpër fold-e (Kendall W = 0.61), ndonëse dallimi
+      mes dy të parave nuk është i vërtetuar statistikisht dhe renditja ndryshon me paraprocesimin
+      dhe me regjimin e trajnimit. Në konfigurimin bazë, me dritare trajnimi të pastruar me etiketat
+      historike, Autoencoder-i ofron balancën më të mirë mes cilësisë dhe kostos; pa këtë pastrim,
+      përparësia e tij zhduket. Qasja ensemble nuk e kalon modelin më të mirë individual; ky
+      rezultat raportohet si gjetje dhe jo si dështim, bashkë me shpjegimin e tij në nivel
+      transaksioni."""),
     p("""Përtej renditjes së tri algoritmeve, e cila varet nga dataset-i dhe nga protokolli,
       rezultatet tregojnë se në këtë fushë vendimet metodologjike ndikojnë në numrin e raportuar më
       shumë se zgjedhja e algoritmit. Ndarja e rastësishme e rrit AP-në më shumë se sa ndryshon ajo
-      nga algoritmi më i dobët te më i miri, dhe një paraprocesim tjetër ka efekt të ngjashëm. Për
-      këtë arsye rezultatet në këtë fushë kanë kuptim vetëm kur raportohen bashkë me pasigurinë e
-      tyre, protokollin e ndarjes dhe procedurën e paraprocesimit dhe të akordimit."""),
+      nga algoritmi më i dobët te më i miri, një paraprocesim tjetër ka efekt të ngjashëm te
+      One-Class SVM-ja, dhe trajnimi pa pastrimin e dritares e përmbys renditjen. Për këtë arsye
+      rezultatet në këtë fushë kanë kuptim vetëm kur raportohen bashkë me pasigurinë e tyre,
+      protokollin e ndarjes, regjimin e trajnimit dhe procedurën e paraprocesimit dhe të
+      akordimit."""),
 ]
 
 BLOCKS = _SINTEZA

@@ -8,6 +8,8 @@ Full-window replays at low rates take a while; --max-messages caps run length
 """
 
 import argparse
+import json
+import re
 import subprocess
 import sys
 import tempfile
@@ -43,6 +45,7 @@ def run_one(
     store: bool = False,
     adaptive: bool = False,
     label: str = "",
+    out_dir: Path | None = None,
 ) -> None:
     """One producer/consumer pair against the broker.
 
@@ -65,6 +68,8 @@ def run_one(
         "--alert-topic",
         alert_topic,
     ]
+    if label:
+        out_dir = REPO_ROOT / cfg.results_dir / "latency" / label
     ready_file = Path(tempfile.gettempdir()) / f"consumer-ready-{run_id}"
     consumer = subprocess.Popen(
         [
@@ -77,7 +82,7 @@ def run_one(
             run_tag,
             "--ready-file",
             str(ready_file),
-            *(["--out-dir", str(REPO_ROOT / cfg.results_dir / "latency" / label)] if label else []),
+            *(["--out-dir", str(out_dir)] if out_dir else []),
             *env_args,
             *(["--store"] if store else []),
             *(["--adaptive"] if adaptive else ["--no-adaptive"]),
@@ -107,10 +112,29 @@ def run_one(
             *env_args,
         ],
         cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
     )
+    print(producer.stdout, end="", flush=True)
     if producer.returncode != 0:
         consumer.kill()
-        raise RuntimeError(f"producer failed for {run_tag}")
+        raise RuntimeError(f"producer failed for {run_tag}: {producer.stderr[-500:]}")
+    # At high rates the producer itself may not keep the schedule. Its
+    # achieved rate is kept next to the run, so a ceiling it imposes is not
+    # mistaken for one of the consumer.
+    achieved = re.search(r"at ([0-9.]+) msg/s", producer.stdout)
+    target_dir = out_dir or REPO_ROOT / cfg.results_dir / "latency"
+    target_dir.mkdir(parents=True, exist_ok=True)
+    (target_dir / f"producer_{run_tag}.json").write_text(
+        json.dumps(
+            {
+                "target_rate_msg_s": rate,
+                "achieved_rate_msg_s": float(achieved.group(1)) if achieved else None,
+                "messages": max_messages,
+            },
+            indent=2,
+        )
+    )
     if consumer.wait(timeout=600) != 0:
         raise RuntimeError(f"consumer failed for {run_tag}")
 
@@ -125,6 +149,18 @@ def main():
         "--adaptive", action="store_true", help="sliding-window quantile threshold in the consumer"
     )
     parser.add_argument(
+        "--repeats",
+        type=int,
+        default=1,
+        help="measure the whole grid this many times, one rep<k>/ folder per pass; the "
+        "passes are interleaved so a slow drift of the machine spreads over every configuration",
+    )
+    parser.add_argument(
+        "--out-subdir",
+        default="",
+        help="folder under results/latency for these runs, e.g. runs or capacity",
+    )
+    parser.add_argument(
         "--label",
         default="",
         help="mark this run as a demonstration: it still reaches PostgreSQL, but its latency "
@@ -134,18 +170,22 @@ def main():
 
     cfg = load_config()
     rates = args.rates or cfg.kafka.replay_rates
-    for model in args.models:
-        for rate in rates:
-            print(f"=== streaming run: {model} @ {rate} msg/s ===")
-            run_one(
-                load_config(),
-                model,
-                rate,
-                args.max_messages,
-                store=args.store,
-                adaptive=args.adaptive,
-                label=args.label,
-            )
+    base = REPO_ROOT / cfg.results_dir / "latency" / args.out_subdir if args.out_subdir else None
+    for rep in range(1, args.repeats + 1):
+        out_dir = base / f"rep{rep}" if base is not None else None
+        for model in args.models:
+            for rate in rates:
+                print(f"=== streaming run {rep}/{args.repeats}: {model} @ {rate} msg/s ===")
+                run_one(
+                    load_config(),
+                    model,
+                    rate,
+                    args.max_messages,
+                    store=args.store,
+                    adaptive=args.adaptive,
+                    label=args.label,
+                    out_dir=out_dir,
+                )
     write_manifest(REPO_ROOT / cfg.results_dir, "run_streaming", cfg.raw)
 
 

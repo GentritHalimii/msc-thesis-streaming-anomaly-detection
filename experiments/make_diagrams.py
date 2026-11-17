@@ -75,7 +75,7 @@ def _box(
     face=SURFACE,
     edge=MUTED,
     lw=0.9,
-    fontsize=8.0,
+    fontsize=10,
     color=INK_2,
     weight="normal",
     pad=0.22,
@@ -117,12 +117,24 @@ def _component(ax, x, y, w, h, title, body, color):
         title,
         ha="center",
         va="center",
-        fontsize=8.2,
+        fontsize=10.2,
         fontweight="bold",
         color=INK,
     )
     if body:
-        _box(ax, x, y + 0.05, w, h - 0.62, body, face="none", edge="none", lw=0, fontsize=7.4)
+        _box(
+            ax,
+            x,
+            y + 0.05,
+            w,
+            h - 0.62,
+            body,
+            face="none",
+            edge="none",
+            lw=0,
+            fontsize=8.8,
+            pad=0.1,
+        )
 
 
 def _arrow(ax, start, end, color=MUTED, lw=1.1, connection="arc3"):
@@ -165,12 +177,12 @@ def leakage(cfg):
             "Zgjedhja bëhet në një ndarje të brendshme kohore të dritares së trajnimit.",
         ),
     ]
-    height = 7.7
+    height = 8.6
     fig, ax = _canvas(height)
-    risk_x, risk_w, gap = 2.95, 5.2, 0.8
+    risk_x, risk_w, gap = 3.1, 5.2, 0.7
     guard_x = risk_x + risk_w + gap
     guard_w = TEXT_WIDTH_CM - guard_x - 0.05
-    row_h, row_gap = 1.38, 0.34
+    row_h, row_gap = 1.6, 0.34
     top = height - 0.85
 
     for x, w, title, color in (
@@ -183,7 +195,7 @@ def leakage(cfg):
             title,
             ha="center",
             va="center",
-            fontsize=9,
+            fontsize=11,
             fontweight="bold",
             color=color,
         )
@@ -195,7 +207,7 @@ def leakage(cfg):
             name,
             ha="left",
             va="center",
-            fontsize=8.5,
+            fontsize=10.5,
             fontweight="bold",
             color=INK,
         )
@@ -213,7 +225,7 @@ def architecture(cfg):
     that define the end-to-end latency are written on the components that
     stamp them.
     """
-    height = 7.6
+    height = 8.2
     fig, ax = _canvas(height)
     col_w = TEXT_WIDTH_CM / 5
     box_w = col_w - 0.5
@@ -228,7 +240,7 @@ def architecture(cfg):
             f"Shtresa {i + 1}",
             ha="center",
             va="center",
-            fontsize=7.5,
+            fontsize=9.5,
             color=MUTED,
         )
         ax.text(
@@ -237,12 +249,12 @@ def architecture(cfg):
             name,
             ha="center",
             va="center",
-            fontsize=9,
+            fontsize=11,
             fontweight="bold",
             color=INK,
         )
 
-    main_y, main_h = 3.55, 2.65
+    main_y, main_h = 3.55, 3.3
     components = [
         ("Producer", "CSV i renditur sipas kohës; ritëm konstant r; vula kohore t₀"),
         ("Apache Kafka", "KRaft, një broker; topic transactions"),
@@ -274,7 +286,7 @@ def architecture(cfg):
         "Vonesa end-to-end matet për çdo mesazh si t₁ − t₀: nga vula kohore e "
         "producer-it deri te publikimi i vendimit."
     )
-    _box(ax, 0.25, low_y, 3 * col_w - 0.5, low_h, note, face=SURFACE, edge="#d6d5cd", fontsize=7.8)
+    _box(ax, 0.25, low_y, 3 * col_w - 0.5, low_h, note, face=SURFACE, edge="#d6d5cd", fontsize=9.8)
     save_figure(fig, REPO_ROOT / cfg.results_dir, "diagram_architecture")
 
 
@@ -303,7 +315,7 @@ def protocol(cfg):
             str(frauds),
             ha="center",
             va="center",
-            fontsize=7.5,
+            fontsize=9.5,
             fontweight="bold",
             color=SURFACE,
         )
@@ -316,7 +328,7 @@ def protocol(cfg):
     ax.grid(False)
     cut = cfg.split.train_fraction
     ax.axvline(cut, color=INK_2, lw=0.8, ls=(0, (3, 2)), zorder=1)
-    ax.text(cut + 0.006, len(folds) - 0.45, "prerja 70/30", fontsize=7.5, color=INK_2, va="bottom")
+    ax.text(cut + 0.006, len(folds) - 0.45, "prerja 70/30", fontsize=9.5, color=INK_2, va="bottom")
     ax.set_ylim(-0.6, len(folds) + 0.1)
     legend_above(
         ax,

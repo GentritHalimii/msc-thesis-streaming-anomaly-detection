@@ -759,7 +759,7 @@ def add_table(
     caption: str,
     *,
     number: int,
-    font_size: float = 9.5,
+    font_size: float = 11.0,
     col_widths: list[float] | None = None,
     max_rows: int | None = None,
     bookmark: str | None = None,

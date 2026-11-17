@@ -20,6 +20,8 @@ BLOCKS = [
             "mbështetet çdo analizë e mëvonshme.",
             "make tune dhe make protocol-tuned kryejnë kërkimin e hiperparametrave mbi ndarjen e "
             "brendshme kohore dhe pastaj e përsërisin protokollin me hiperparametrat e gjetur.",
+            "make protocol-unfiltered e përsërit protokollin me detektorët e trajnuar mbi gjithë "
+            "dritaren, mashtrimet përfshirë, dhe i krahason të dy regjimet (nënkapitulli 5.6).",
             "make evaluate gjeneron tabelat dhe figurat që mbështeten te pikët e ruajtura, pa "
             "trajnuar përsëri asnjë model; ky hap zgjat disa minuta.",
             "make deep-studies ekzekuton studimet për secilin algoritëm, distancat e analizës "
@@ -31,8 +33,9 @@ BLOCKS = [
             "PostgreSQL-in dhe Grafana-n.",
             "make test-integration kontrollon barazinë e pikëve mes regjimit offline dhe atij në "
             "rrjedhë me një broker real, si dhe kalimin e plotë të të dhënave nëpër PostgreSQL.",
-            "make stream dhe make latency-report ekzekutojnë matjet e vonesës dhe prodhojnë "
-            "tabelat operacionale.",
+            "make stream, make stream-adaptive dhe make stream-capacity matin, tri herë secila, "
+            "vonesën, koston e pragut adaptiv dhe kapacitetin; make latency-report prodhon prej "
+            "tyre tabelat operacionale.",
             "make thesis gjeneron këtë dokument nga rezultatet e ruajtura.",
             "make webapp ngre panelin interaktiv mbi të njëjtat rezultate në "
             "http://127.0.0.1:8800, nga ku çdo hap i mësipërm mund të ekzekutohet edhe nga "
@@ -78,8 +81,10 @@ BLOCKS = [
         ]
     ),
     h2("8.3", "Shtojca C: rezultatet e plota për fold"),
-    p("""Tabela kryesore e Kapitullit 5 jep mesataret mbi fold-et. Këtu jepen vlerat për çdo fold,
-      që lexuesi të shohë vetë shpërndarjen dhe qëndrueshmërinë e rezultateve."""),
+    p("""Tabela [[tab:benchmark_summary]] e Kapitullit 5 jep mesataret mbi fold-et. Tabela
+      [[tab:benchmark_per_fold]] jep vlerat për çdo fold dhe model: numrin e mashtrimeve në bllokun
+      e testimit, AP-në, AUC-ROC-në, metrikat në pragun nga trajnimi dhe recall-in me 100 alarme, që
+      lexuesi të shohë vetë shpërndarjen dhe qëndrueshmërinë e rezultateve."""),
     tab(
         "benchmark_per_fold",
         "AP dhe metrikat e pragut për çdo fold dhe model.",
@@ -99,11 +104,11 @@ BLOCKS = [
             "model": "Modeli",
             "test_frauds": "Mashtrime",
             "ap": "AP",
-            "roc_auc": "ROC-AUC",
+            "roc_auc": "AUC",
             "precision_thr": "Precision",
             "recall_thr": "Recall",
             "f1_thr": "F1",
-            "recall_at_100": "Recall@100",
+            "recall_at_100": "R@100",
         },
         replace={
             "model": {
@@ -115,18 +120,17 @@ BLOCKS = [
         },
         sort=["model", "fold"],
         round={
-            "ap": 4,
-            "roc_auc": 4,
-            "precision_thr": 4,
-            "recall_thr": 4,
-            "f1_thr": 4,
-            "recall_at_100": 4,
+            "ap": 3,
+            "roc_auc": 3,
+            "precision_thr": 3,
+            "recall_thr": 3,
+            "f1_thr": 3,
+            "recall_at_100": 3,
         },
-        font_size=8.0,
     ),
     h2("8.4", "Shtojca D: rezultatet e ndarjes së vetme 70/30"),
-    p("""Për krahasim me literaturën, tabela më poshtë jep
-      rezultatet e ndarjes së vetme kronologjike 70/30. Kolonat e pragut orakull janë kufi i sipërm
+    p("""Për krahasim me literaturën, Tabela [[tab:metrics_main]] jep rezultatet e ndarjes së
+      vetme kronologjike 70/30. Kolonat e pragut orakull janë kufi i sipërm
       që nuk arrihet në praktikë dhe nuk duhen krahasuar me ato të pragut nga trajnimi. Memoria
       (MB) jepet si rritja e memories rezidente gjatë trajnimit, siç përcaktohet në nënkapitullin
       4.6.3."""),
@@ -158,17 +162,18 @@ BLOCKS = [
             "inference_us_per_tx": "µs/tx",
         },
         round={
-            "ap": 4,
-            "roc_auc": 4,
-            "precision_pct": 4,
-            "recall_pct": 4,
-            "f1_pct": 4,
-            "f1_oracle": 4,
+            "ap": 3,
+            "roc_auc": 3,
+            "precision_pct": 3,
+            "recall_pct": 3,
+            "f1_pct": 3,
+            "f1_oracle": 3,
             "fit_time_s": 2,
             "fit_delta_rss_mb": 1,
-            "inference_us_per_tx": 3,
+            "inference_us_per_tx": 2,
         },
-        font_size=8.5,
+        # Four models and nine quantities read better with the models as columns.
+        transpose="Metrika",
     ),
     p("""Figura [[fig:curves_pr_roc]] jep kurbat precision-recall dhe ROC të po kësaj ndarjeje. Në
       hapësirën ROC tri metodat unsupervised duken pothuajse të barabarta, me AUC-ROC nga 0.936 deri
@@ -182,7 +187,10 @@ BLOCKS = [
     p("""Pasiguria kryesore e punimit raportohet si shpërndarje mbi tetë fold-et, e cila tregon sa
       ndryshon rezultati kur ndryshon periudha. Ajo nuk e mat pasigurinë e mostrimit brenda një
       blloku të vetëm testimi; për prerjen e vetme 70/30 kjo e dyta llogaritet me bootstrap mbi
-      transaksionet e bllokut të testimit [@efron1993]."""),
+      transaksionet e bllokut të testimit [@efron1993]. Tabela [[tab:bootstrap_ci]] jep intervalin
+      e besimit 95% të AP-së për çdo model, dhe Tabela [[tab:bootstrap_pairwise]] diferencat mes
+      modeleve, të llogaritura mbi të njëjtat mostra bootstrap, me intervalin e tyre dhe pjesën e
+      mostrave ku diferenca është pozitive."""),
     tab(
         "bootstrap_ci",
         "AP e prerjes së vetme 70/30 me interval besimi 95% nga bootstrap.",
@@ -193,7 +201,6 @@ BLOCKS = [
             "ap_ci95_high": "Kufiri i sipërm",
         },
         round={"ap": 4, "ap_ci95_low": 4, "ap_ci95_high": 4},
-        font_size=9.5,
     ),
     tab(
         "bootstrap_pairwise",
@@ -215,7 +222,6 @@ BLOCKS = [
         },
         round={"delta_ap_mean": 4, "delta_ci95_low": 4, "delta_ci95_high": 4},
         fmt={"frac_replicates_positive": ".1%"},
-        font_size=9.0,
     ),
     p("""Kolona e fundit e tabelës së diferencave tregon në sa pjesë të mostrave bootstrap diferenca
       e ruan shenjën. Krahasimi i saj me testet e Kapitullit 5 tregon një dallim që shpesh
