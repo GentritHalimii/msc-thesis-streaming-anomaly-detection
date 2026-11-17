@@ -26,37 +26,108 @@ algoritëm, dhe analiza e gabimeve në nivel transaksioni.
 
 ## Rezultatet kryesore
 
-- **Vonesa (PH1).** Mesatarja end-to-end 19–68 ms në 16 konfigurime (50 deri 2000 msg/s), 15–53
-  herë nën objektivin prej 1 s; p99 maksimal 132 ms. Consumer-i nuk mbetet pas në asnjë
-  konfigurim: në 2000 msg/s throughput-i është 1 984–1 999 msg/s.
+- **Vonesa (PH1).** Deri në 1000 msg/s vonesa mesatare end-to-end është 28–58 ms, 17–35 herë nën
+  objektivin prej 1 s (12 konfigurime, mesatare e tri ekzekutimeve). p99 nuk e kalon 116 ms
+  mesatarisht dhe 154 ms në ekzekutimin më të keq.
+- **Kapaciteti.** Një consumer i vetëm e mban ritmin deri në 5000 msg/s me Autoencoder-in,
+  One-Class SVM-në dhe referencën. Isolation Forest-i ngopet rreth 2000–3000 msg/s, sepse çdo
+  thirrje e modelit kushton rreth 20 ms. Në 10 000 msg/s arrihet kufiri i gjithë makinës.
 - **Krahasimi (PH2), konfigurimi bazë.** Autoencoder 0.193, One-Class SVM 0.150, Isolation
-  Forest 0.091; referenca supervised 0.734. Autoencoder-i ka edhe koston më të ulët të inferencës; dallimi i tij nga One-Class SVM nuk është domethënës (Wilcoxon, Holm).
-- **Ansambli (PH3).** Rezultat negativ nën të dy regjimet e hiperparametrave. Detektorët gabojnë
-  njësoj: me 100 alarme për bllok, 37% e mashtrimeve nuk i arrin asnjë prej tyre, ndërsa
-  referenca supervised kap 59% të tyre.
-- **Konfigurimi peshon më shumë se algoritmi.** Transformimi kuantil e ngre One-Class SVM-në me
-  +0.218 AP (në 0.368) në 8/8 fold-e, edhe kur skaluesi zgjidhet vetëm nga fold-et e mëparshme;
-  akordimi e çon Autoencoder-in në 0.335 dhe Isolation Forest-in në 0.168. Me konfigurimin më të
-  mirë për secilin, raporti mes më të mirit dhe më të dobëtit bie nga 2.1 në 1.15.
-- **Protokolli.** Ndarja e rastësishme e fryn AP-në unsupervised rreth 3.0 herë (4.5 herë për
-  Isolation Forest); referencën supervised nuk e fryn (0.92).
-- **Pragu.** Me prag sipas normës së mashtrimit detektorët unsupervised kapin pak; F1 arrin
-  kulmin me kontaminim 0.5%. Pragu adaptiv e ul paqëndrueshmërinë e ngarkesës (CV 0.84 → 0.62)
-  dhe rrit F1 unsupervised nga 0.124 në 0.166; referencës supervised ia ul F1-in.
-- **Kostoja e One-Class SVM-së.** 1 000 mostra trajnimi japin të njëjtën cilësi si 20 000, me
-  kohë trajnimi 160 herë dhe kosto të inferencës 9 herë më të vogël.
+  Forest 0.091; referenca supervised 0.734. Renditja ka rregull nëpër fold-e (Kendall W = 0.61),
+  por dallimi mes Autoencoder-it dhe One-Class SVM-së nuk është domethënës (Wilcoxon, Holm).
+- **Regjimi i trajnimit.** Këto vlera vlejnë kur dritarja e trajnimit pastrohet me etiketat
+  historike (regjimi semi-supervised). Me trajnim mbi gjithë dritaren, mashtrimet përfshirë,
+  renditja përmbyset: One-Class SVM 0.111, Isolation Forest 0.097, Autoencoder 0.047.
+- **Ansambli (PH3).** Rezultat negativ: varianti më i mirë arrin 0.189, nën Autoencoder-in
+  (0.193). Detektorët gabojnë njësoj: me 100 alarme për bllok, 37% e mashtrimeve nuk i arrin
+  asnjë prej tyre, ndërsa referenca supervised kap 59% të tyre.
+- **Konfigurimi peshon sa algoritmi ose më shumë.** Transformimi kuantil e ngre One-Class SVM-në
+  me +0.218 AP (në 0.368) në 8/8 fold-e, edhe kur skaluesi zgjidhet vetëm nga fold-et e
+  mëparshme; akordimi e çon Autoencoder-in në 0.335 dhe Isolation Forest-in në 0.168. Me
+  konfigurimin më të mirë për secilin, raporti mes më të mirit dhe më të dobëtit bie nga 2.1 në
+  1.15.
+- **Protokolli.** Ndarja e rastësishme e fryn AP-në unsupervised rreth 3.0 herë (2.5–3.6 mbi
+  dhjetë seed-e; 4.1 herë për Isolation Forest); referencën supervised nuk e fryn (0.94).
+- **Pragu.** Pragu adaptiv e ul paqëndrueshmërinë e ngarkesës (CV 0.84 → 0.62). F1 unsupervised
+  rritet nga 0.124 në 0.166 vetëm sepse jep më shumë alarme: një prag statik me po aq alarme arrin
+  të paktën të njëjtin F1.
+- **Kostoja e One-Class SVM-së.** Me 1 000 mostra trajnimi AP-ja mesatare është sa me 20 000
+  (0.151 kundrejt 0.150), me trajnim 160 herë dhe inferencë 9 herë më të shpejtë, por fold pas
+  fold-i është pak më e ulët në 6 nga 8 (Wilcoxon p = 0.38).
+
+---
+
+## Si të ekzekutohet dhe si rigjenerohen rezultatet
+
+Depoja përmban vetëm kodin. Dataset-i shkarkohet veçmas, ndërsa `results/` krijohet nga
+komandat më poshtë: çdo hap shkruan aty tabelat, figurat dhe një manifest me commit-in,
+konfigurimin dhe versionet e paketave. Hapat ekzekutohen sipas radhës, sepse secili lexon atë
+që shkroi i mëparshmi.
+
+**Kërkesat:** [uv](https://docs.astral.sh/uv/) dhe `make` (Python 3.12 e instalon vetë `uv`);
+Docker me Compose për hapin 3; LibreOffice në `/snap/bin/libreoffice` për `make thesis`.
+
+### 1. Mjedisi dhe të dhënat
+
+```bash
+make setup      # mjedisi me Python 3.12 dhe varësitë e fiksuara në uv.lock
+make test       # testet njësi; ato që kërkojnë dataset-in ose rezultatet anashkalohen deri atëherë
+```
+
+Dataset-i Kaggle / ULB *Credit Card Fraud Detection* (284,807 transaksione, 492 mashtrime,
+0.172%) nuk përfshihet në depo. Shkarkohet nga
+<https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud> dhe vendoset në
+`data/raw/creditcard.csv`.
+
+### 2. Eksperimentet offline
+
+```bash
+make train                # modelet mbi ndarjen 70/30 → results/artifacts
+make protocol             # protokolli rolling-origin me 8 fold-e; pikët → results/folds
+make protocol-unfiltered  # detektorët e trajnuar mbi gjithë dritaren, mashtrimet përfshirë
+make tune                 # kërkimi Optuna mbi një ndarje të brendshme kohore
+make protocol-tuned       # protokolli me hiperparametrat e akorduar
+make evaluate             # tabelat dhe figurat nga pikët e ruajtura, pa ritrajnuar (minuta)
+make deep-studies         # studimet për secilin algoritëm; ritrajnojnë modelet (disa orë)
+```
+
+### 3. Rrjedha me Kafka
+
+```bash
+docker compose -f docker/docker-compose.yml up -d   # Kafka (KRaft), PostgreSQL, Grafana
+make test-integration     # pikët në rrjedhë janë të njëjta me ato offline; kalimi nëpër PostgreSQL
+make stream               # vonesa: 4 modele × 4 ritme (50–2000 msg/s) × 3 kalime, rreth 2 orë
+make stream-adaptive      # kostoja e pragut adaptiv në 200 msg/s
+make stream-capacity      # kapaciteti: 3000, 5000 dhe 10 000 msg/s me 80 000 mesazhe
+make latency-report       # tabelat dhe figura e vonesës nga matjet
+```
+
+Kafka lidhet në portën **19092**, PostgreSQL në **15432** dhe Grafana në **3000**
+(9092/5432 lihen të lira për stack-e të tjera lokale).
+
+### 4. Punimi dhe paneli
+
+```bash
+uv run python -m experiments.make_rq_summary   # rifreskon tabelën e pyetjeve hulumtuese pas hapit 3
+make thesis               # thesis/out/Punimi_Diplomes_GentritHalimi.docx nga results/
+make webapp               # paneli i rezultateve në http://127.0.0.1:8800
+```
+
+- `make thesis` kërkon rezultatet e hapave 2 dhe 3. LibreOffice përdoret vetëm për numrat e
+  faqeve në përmbajtje; pa të, `uv run python thesis/build_thesis.py --single-pass` e ndërton
+  dokumentin pa ta, dhe Word-i i plotëson me Ctrl+A, F9.
+- `make figures` i vizaton përsëri të gjitha figurat nga tabelat e ruajtura, pa ritrajnuar.
+- Me të njëjtat seed-e metrikat e cilësisë dalin identike. Kohët (µs/tx dhe vonesa) maten nga e
+  para në çdo ekzekutim, prandaj ndryshojnë pak.
+- `make clean` i fshin rezultatet e gjeneruara.
 
 ---
 
 ## Paneli i rezultateve
 
-```bash
-make webapp             # http://127.0.0.1:8800
-```
-
-Një aplikacion web lokal mbi të njëjtat rezultate. Ai nuk ruan asnjë kopje të tyre: çdo
-tabelë, figurë dhe verdikt lexohet nga `results/` në çastin kur kërkohet faqja, prandaj
-paneli nuk mund të bjerë ndesh me studimin.
+Një aplikacion web lokal mbi të njëjtat rezultate (`make webapp`). Ai nuk ruan asnjë kopje të
+tyre: çdo tabelë, figurë dhe verdikt lexohet nga `results/` në çastin kur kërkohet faqja,
+prandaj paneli nuk mund të bjerë ndesh me studimin.
 
 | Çfarë ofron | Pse |
 |---|---|
@@ -74,47 +145,10 @@ paneli të punojë edhe pa rrjet dhe ngjyrat e serive të jenë identike me ato 
 
 ---
 
-## Dataset-i (nuk përfshihet në depo)
-
-Kaggle / ULB *Credit Card Fraud Detection*: 284,807 transaksione, 492 mashtrime (0.172%).
-
-1. Shkarko nga <https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud>
-2. Vendose në `data/raw/creditcard.csv`
-
-## Si të riprodhohet
-
-```bash
-make setup              # mjedis uv me Python 3.12 dhe lockfile të fiksuar
-make test               # teste njësi: rrjedhja e informacionit, protokolli, metrikat, stili
-make train              # përshtat modelet mbi ndarjen 70/30
-make protocol           # 8 fold-e rolling-origin (hapi bazë, ~2 min)
-make tune               # kërkim Optuna mbi ndarje të brendshme kohore
-make protocol-tuned     # ri-ekzekuton protokollin me hiperparametrat e akorduar
-make protocol-unfiltered # detektorët e trajnuar mbi gjithë dritaren, mashtrimet përfshirë
-make evaluate           # tabelat dhe figurat nga pikët e ruajtura (minuta)
-make deep-studies       # studimet për algoritëm; ripërshtatin modelet (orë)
-make thesis             # gjeneron punimin .docx nga results/
-make webapp             # paneli interaktiv mbi results/
-
-docker compose -f docker/docker-compose.yml up -d
-make test-integration   # pariteti offline≈streaming + PostgreSQL
-make stream             # skanimi i vonesës: modele × ritme, tri herë
-make stream-adaptive    # i njëjti skanim me prag adaptiv
-make stream-capacity    # ritme mbi atë të operimit, për kufirin e një consumer-i
-make latency-report
-```
-
-Kafka lidhet në portën **19092**, PostgreSQL në **15432** dhe Grafana në **3000**
-(9092/5432 lihen të lira për stack-e të tjera lokale).
-
----
-
 ## Metodologjia që një komision do ta shqyrtojë
 
 **Ndarje kronologjike, pa përzierje.** Renditje e qëndrueshme sipas `Time`; asnjë rresht i
-testimit nuk paraprin një rresht trajnimi. Modelet unsupervised shohin vetëm transaksione
-normale të dritares së trajnimit, të pastruara me etiketat historike; `make protocol-unfiltered`
-mat edhe regjimin pa këtë pastrim.
+testimit nuk paraprin një rresht trajnimi.
 
 **`Time` nuk është veçori hyrëse.** Ajo rendit rrjedhën dhe përcakton ndarjen. Po të ishte
 veçori, në ndarje kronologjike çdo pikë testimi do të merrte një z-vlerë ekstreme në atë
@@ -124,9 +158,11 @@ dimension dhe do të prishte çdo detektor të bazuar në distancë. E verifikua
 e arritshme nga Wilcoxon-i është 2/2^N, pra N=6 jep 0.031 dhe nuk mbijeton Holm-in; me më
 shumë fold-e disa blloqe bien nën 10 pozitivë. Me N=8 çdo bllok mban ≥13 pozitivë.
 
-**Skaluesi përshtatet mbi dritaren e trajnimit me mashtrimet brenda.** Në momentin e vendosjes
-etiketat nuk ekzistojnë, prandaj një skalues i përshtatur mbi të dhëna të pastra do të ishte
-përparësi që sistemi real nuk e ka. Pasoja testohet, nuk supozohet.
+**Skaluesi dhe detektorët mësojnë nga të dhëna të ndryshme.** Skaluesi përshtatet mbi gjithë
+dritaren e trajnimit, mashtrimet përfshirë, sepse një skalues i përshtatur mbi të dhëna të
+pastra do t'i jepte modelit një avantazh që një sistem pa etiketa nuk e ka. Detektorët
+trajnohen mbi transaksionet normale, të pastruara me etiketat historike (regjimi
+semi-supervised); `make protocol-unfiltered` mat edhe regjimin pa këtë pastrim.
 
 **Pragjet nuk e prekin kurrë testin.** Pragu parësor është percentili (1−c) i pikëve të
 trajnimit. Pragu orakull raportohet vetëm si kufi i sipërm, në kolonë të veçantë.
@@ -156,6 +192,6 @@ webapp/        paneli lokal i rezultateve (make webapp)
 ## Shënime mbi ndershmërinë e rezultateve
 
 Vlerat e raportuara janë më të ulëta se shumica e punimeve mbi këtë dataset. Kjo është e
-qëllimshme dhe e shpjeguar: `results/protocol_inflation.csv` mat sa i fryn rezultatet ndarja e
-rastësishme. Rezultati negativ i ansamblit raportohet ashtu siç doli, së bashku me shpjegimin e
-tij në nivel transaksioni.
+qëllimshme dhe e shpjeguar: `make evaluate` mat sa i fryn rezultatet ndarja e rastësishme
+(`results/protocol_inflation.csv`). Rezultati negativ i ansamblit raportohet ashtu siç doli,
+së bashku me shpjegimin e tij në nivel transaksioni.
